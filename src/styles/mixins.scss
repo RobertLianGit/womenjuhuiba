@@ -1,0 +1,78 @@
+// 卡片样式
+@mixin card {
+  background: $bg-card;
+  border-radius: $radius-md;
+  padding: $space-md;
+  box-shadow: $shadow-card;
+}
+
+// 主要按钮
+@mixin btn-primary {
+  background: linear-gradient(135deg, $primary, $secondary);
+  color: $text-white;
+  border: none;
+  border-radius: $radius-md;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+
+  &::after {
+    border: none;
+  }
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+// 次要按钮
+@mixin btn-secondary {
+  background: transparent;
+  color: $primary;
+  border: 2px solid $primary;
+  border-radius: $radius-md;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+
+  &::after {
+    border: none;
+  }
+}
+
+// 文字超长省略
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行文字省略
+@mixin ellipsis-multi($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 页面容器
+@mixin page-container {
+  padding: $space-md;
+  min-height: 100vh;
+}
+
+// 标签
+@mixin tag($bg, $color) {
+  display: inline-block;
+  padding: 4px 10px;
+  background: $bg;
+  color: $color;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}

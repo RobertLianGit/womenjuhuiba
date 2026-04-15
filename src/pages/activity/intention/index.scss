@@ -1,0 +1,69 @@
+.intention-page {
+  @include page-container;
+  padding-bottom: 40px;
+}
+
+.form-card {
+  @include card;
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-primary;
+    display: block;
+    margin-bottom: $space-lg;
+  }
+
+  .form-item {
+    margin-bottom: $space-lg;
+
+    .label {
+      font-size: 15px;
+      font-weight: 600;
+      color: $text-primary;
+      display: block;
+      margin-bottom: $space-sm;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #FFE4D0;
+      border-radius: $radius-md;
+      font-size: 15px;
+      background: #FAFAFA;
+
+      &:focus { border-color: $primary; }
+    }
+  }
+
+  .switch-row {
+    display: flex;
+    gap: $space-md;
+
+    .switch {
+      flex: 1;
+      text-align: center;
+      padding: 12px;
+      border-radius: $radius-md;
+      font-size: 15px;
+      font-weight: 600;
+      background: #F5F5F5;
+      color: $text-secondary;
+
+      &.active {
+        background: linear-gradient(135deg, $primary, $secondary);
+        color: #fff;
+      }
+    }
+  }
+
+  .btn-primary { @include btn-primary; }
+
+  .success-msg {
+    text-align: center;
+    color: $success;
+    font-size: 16px;
+    padding: 16px;
+  }
+}

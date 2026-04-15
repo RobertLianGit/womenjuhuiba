@@ -1,0 +1,138 @@
+.plan-page {
+  @include page-container;
+  padding-bottom: 100px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: $text-secondary;
+}
+
+.prompt-card {
+  @include card;
+  background: linear-gradient(135deg, #FFF0E6, #FFF8F5);
+  border: 1px solid #FFD9B8;
+  margin-bottom: $space-md;
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: $text-secondary;
+    display: block;
+    margin-bottom: $space-md;
+  }
+
+  .btn-copy {
+    @include btn-primary;
+    font-size: 14px;
+    padding: 10px 20px;
+    width: auto;
+  }
+}
+
+.form-card {
+  @include card;
+  margin-bottom: $space-md;
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: $text-primary;
+    display: block;
+    margin-bottom: $space-sm;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: $text-secondary;
+    display: block;
+    margin-bottom: $space-md;
+  }
+
+  .textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 2px solid #FFE4D0;
+    border-radius: $radius-md;
+    font-size: 14px;
+    resize: none;
+
+    &:focus { border-color: $primary; }
+  }
+
+  .scenes-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-sm;
+    margin-bottom: $space-md;
+
+    .scene-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #FFF0E6;
+      color: $primary;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+
+      .remove {
+        font-size: 16px;
+        cursor: pointer;
+        opacity: 0.6;
+
+        &:hover { opacity: 1; }
+      }
+    }
+  }
+
+  .add-scene {
+    display: flex;
+    gap: $space-sm;
+
+    .input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid #FFE4D0;
+      border-radius: $radius-md;
+      font-size: 14px;
+
+      &:focus { border-color: $primary; }
+    }
+
+    .btn-add {
+      padding: 10px 20px;
+      background: $primary;
+      color: #fff;
+      border: none;
+      border-radius: $radius-md;
+      font-size: 14px;
+      font-weight: 600;
+
+      &::after { border: none; }
+    }
+  }
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $space-md;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+
+  .btn-primary { @include btn-primary; }
+}

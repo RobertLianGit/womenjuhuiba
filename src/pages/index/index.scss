@@ -1,0 +1,88 @@
+.index-page {
+  min-height: 100vh;
+  background: $bg-page;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-bar {
+  padding: 16px $space-md;
+  background: linear-gradient(135deg, $primary, $secondary);
+  color: $text-white;
+
+  .greeting {
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
+.tab-bar {
+  display: flex;
+  background: #fff;
+  padding: 0 $space-md;
+  border-bottom: 1px solid #F0F0F0;
+
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 14px 0;
+    font-size: 15px;
+    color: $text-secondary;
+    font-weight: 500;
+    position: relative;
+
+    &.active {
+      color: $primary;
+      font-weight: 600;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        background: $primary;
+        border-radius: 2px;
+      }
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  padding: $space-md;
+  height: calc(100vh - 120px);
+}
+
+.loading-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: $text-secondary;
+  font-size: 14px;
+}
+
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 32px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, $primary, $secondary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 24px rgba(255, 107, 107, 0.4);
+  z-index: 100;
+
+  .fab-icon {
+    font-size: 32px;
+    color: #fff;
+    line-height: 1;
+    font-weight: 300;
+  }
+}

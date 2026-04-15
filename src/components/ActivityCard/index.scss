@@ -1,0 +1,34 @@
+.activity-card {
+  @include card;
+  margin-bottom: $space-md;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $space-xs;
+
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: $text-primary;
+      flex: 1;
+      margin-right: $space-sm;
+      @include ellipsis;
+    }
+  }
+
+  .countdown {
+    display: block;
+    font-size: 13px;
+    color: $primary;
+    margin-bottom: 4px;
+  }
+
+  .desc {
+    display: block;
+    font-size: 14px;
+    color: $text-secondary;
+    @include ellipsis;
+  }
+}

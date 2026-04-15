@@ -1,0 +1,56 @@
+.create-page {
+  @include page-container;
+
+  .form {
+    .form-item {
+      margin-bottom: $space-lg;
+
+      .label {
+        font-size: 15px;
+        font-weight: 600;
+        color: $text-primary;
+        margin-bottom: $space-sm;
+      }
+
+      .input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid #FFE4D0;
+        border-radius: $radius-md;
+        font-size: 16px;
+        background: #fff;
+
+        &:focus {
+          border-color: $primary;
+        }
+      }
+
+      .textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 14px 16px;
+        border: 2px solid #FFE4D0;
+        border-radius: $radius-md;
+        font-size: 16px;
+        background: #fff;
+        resize: none;
+
+        &:focus {
+          border-color: $primary;
+        }
+      }
+    }
+
+    .error {
+      display: block;
+      color: $error;
+      font-size: 14px;
+      margin-bottom: $space-md;
+      text-align: center;
+    }
+
+    .btn-primary {
+      @include btn-primary;
+    }
+  }
+}

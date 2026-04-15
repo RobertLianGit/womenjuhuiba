@@ -1,0 +1,52 @@
+.join-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, $primary, $secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px $space-md;
+}
+
+.loading-state, .success-card, .error-card, .join-card {
+  background: #fff;
+  border-radius: $radius-xl;
+  padding: 48px 32px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.loading-state {
+  .loading-icon { font-size: 48px; display: block; margin-bottom: 16px; }
+  .loading-text { font-size: 16px; color: $text-secondary; }
+}
+
+.error-card {
+  .icon { font-size: 64px; display: block; margin-bottom: 16px; }
+  .msg { font-size: 16px; color: $error; }
+}
+
+.success-card {
+  .icon { font-size: 64px; display: block; margin-bottom: 16px; }
+  .msg { font-size: 18px; font-weight: 600; color: $text-primary; margin-bottom: 8px; }
+  .sub { font-size: 14px; color: $text-secondary; }
+}
+
+.join-card {
+  .emoji { font-size: 64px; display: block; margin-bottom: 16px; }
+  .title { font-size: 20px; font-weight: 700; color: $text-primary; display: block; margin-bottom: 8px; }
+  .activity-name { font-size: 14px; color: $text-secondary; display: block; margin-bottom: 24px; }
+  .input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #FFE4D0;
+    border-radius: $radius-md;
+    font-size: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+
+    &:focus { border-color: $primary; }
+  }
+  .btn-primary { @include btn-primary; }
+}

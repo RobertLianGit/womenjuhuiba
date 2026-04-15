@@ -1,0 +1,141 @@
+.detail-page {
+  min-height: 100vh;
+  background: $bg-page;
+  padding-bottom: 40px;
+}
+
+.loading-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: $text-secondary;
+}
+
+.activity-header {
+  background: linear-gradient(135deg, $primary, $secondary);
+  padding: $space-lg $space-md;
+  color: #fff;
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $space-sm;
+  }
+
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    flex: 1;
+    margin-right: $space-sm;
+  }
+
+  .desc {
+    font-size: 14px;
+    opacity: 0.9;
+    display: block;
+    margin-top: $space-xs;
+  }
+}
+
+.share-card {
+  @include card;
+  margin: $space-md;
+  background: #FFF9F0;
+
+  .share-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: $text-primary;
+    display: block;
+    margin-bottom: $space-sm;
+  }
+
+  .invite-token {
+    font-size: 20px;
+    font-weight: 700;
+    color: $primary;
+    letter-spacing: 4px;
+    display: block;
+    margin-bottom: $space-md;
+  }
+
+  .btn-copy {
+    @include btn-primary;
+    font-size: 14px;
+    padding: 10px 20px;
+    width: auto;
+    display: inline-block;
+  }
+}
+
+.scenes-card {
+  @include card;
+  margin: 0 $space-md $space-md;
+
+  .scenes-title {
+    font-size: 15px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: $space-sm;
+  }
+
+  .scenes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-sm;
+  }
+
+  .scene-tag {
+    @include tag($primary, #fff);
+  }
+}
+
+.actions {
+  padding: 0 $space-md;
+
+  .action-card {
+    @include card;
+    margin-bottom: $space-md;
+
+    .action-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-primary;
+      display: block;
+      margin-bottom: $space-xs;
+    }
+
+    .action-desc {
+      font-size: 14px;
+      color: $text-secondary;
+      display: block;
+      margin-bottom: $space-md;
+    }
+
+    .plan-content {
+      font-size: 14px;
+      color: $text-secondary;
+      display: block;
+      margin-bottom: $space-md;
+      white-space: pre-wrap;
+    }
+  }
+
+  .btn-primary { @include btn-primary; margin-bottom: $space-sm; }
+  .btn-secondary { @include btn-secondary; margin-bottom: $space-sm; }
+
+  .btn-link {
+    background: transparent;
+    color: $primary;
+    border: none;
+    font-size: 14px;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    width: auto;
+
+    &::after { border: none; }
+  }
+}

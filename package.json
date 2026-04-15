@@ -1,0 +1,44 @@
+{
+  "name": "party-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "开始聚会吧 - 朋友聚会全程工具",
+  "templateInfo": {
+    "name": "default",
+    "typescript": true,
+    "css": "sass"
+  },
+  "scripts": {
+    "dev:weapp": "npm run build -- --watch",
+    "dev:h5": "npm run build:h5 -- --watch",
+    "build:h5": "taro build --type h5",
+    "build:weapp": "taro build --type weapp",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx src"
+  },
+  "dependencies": {
+    "@tarojs/components": "^4.1.11",
+    "@tarojs/plugin-framework-react": "^4.1.11",
+    "@tarojs/plugin-platform-h5": "^4.1.11",
+    "@tarojs/react": "^4.1.11",
+    "@tarojs/runtime": "^4.1.11",
+    "@tarojs/taro": "^4.1.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@tarojs/cli": "^4.1.11",
+    "@types/react": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "babel-preset-taro": "^4.1.11",
+    "eslint": "^8.57.0",
+    "eslint-config-taro": "^4.1.11",
+    "eslint-plugin-react": "^7.34.0",
+    "sass": "^1.77.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

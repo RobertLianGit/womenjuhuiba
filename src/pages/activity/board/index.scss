@@ -1,0 +1,165 @@
+.board-page {
+  @include page-container;
+  padding-bottom: 40px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: $text-secondary;
+}
+
+.overview {
+  @include card;
+  display: flex;
+  align-items: center;
+  margin-bottom: $space-md;
+  background: linear-gradient(135deg, #FFF0E6, #FFF8F5);
+
+  .stat {
+    flex: 1;
+    text-align: center;
+
+    .stat-num {
+      display: block;
+      font-size: 28px;
+      font-weight: 700;
+      color: $primary;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 12px;
+      color: $text-secondary;
+    }
+  }
+
+  .btn-copy-list {
+    background: $primary;
+    color: #fff;
+    border: none;
+    border-radius: $radius-md;
+    font-size: 13px;
+    padding: 8px 16px;
+
+    &::after { border: none; }
+  }
+}
+
+.scene-section {
+  @include card;
+  margin-bottom: $space-md;
+
+  .scene-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: $text-primary;
+    display: block;
+    margin-bottom: $space-md;
+    padding-bottom: $space-sm;
+    border-bottom: 1px solid #F0F0F0;
+  }
+}
+
+.person-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #F5F5F5;
+
+  &:last-child { border-bottom: none; }
+
+  .person-info {
+    flex: 1;
+
+    .name {
+      font-size: 15px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    .count {
+      font-size: 13px;
+      color: $text-secondary;
+      margin-left: 8px;
+    }
+
+    .temp-tag {
+      @include tag(#FFD93D, #B68C00);
+      margin-left: 8px;
+    }
+
+    .notes {
+      display: block;
+      font-size: 12px;
+      color: $text-placeholder;
+      margin-top: 2px;
+    }
+  }
+
+  .remove {
+    font-size: 20px;
+    color: $text-placeholder;
+    padding: 4px 8px;
+
+    &:active { color: $error; }
+  }
+}
+
+.add-section {
+  @include card;
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: $text-primary;
+    display: block;
+    margin-bottom: $space-md;
+  }
+
+  .add-row {
+    display: flex;
+    gap: $space-sm;
+    align-items: center;
+
+    .input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 2px solid #FFE4D0;
+      border-radius: $radius-md;
+      font-size: 14px;
+
+      &:focus { border-color: $primary; }
+    }
+
+    .count-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 600;
+
+      button {
+        background: #FFF0E6;
+        color: $primary;
+        border: none;
+        border-radius: 4px;
+
+        &::after { border: none; }
+      }
+    }
+
+    .btn-add {
+      background: $primary;
+      color: #fff;
+      border: none;
+      border-radius: $radius-md;
+      font-size: 13px;
+
+      &::after { border: none; }
+    }
+  }
+}

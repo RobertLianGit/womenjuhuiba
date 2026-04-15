@@ -1,0 +1,111 @@
+.vote-page {
+  @include page-container;
+  padding-bottom: 100px;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: $text-secondary;
+}
+
+.header {
+  margin-bottom: $space-lg;
+
+  .title {
+    font-size: 20px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: $text-secondary;
+    display: block;
+  }
+}
+
+.empty-card {
+  @include card;
+  text-align: center;
+  padding: 40px;
+
+  .empty-text {
+    font-size: 16px;
+    color: $text-secondary;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .empty-sub {
+    font-size: 14px;
+    color: $text-placeholder;
+  }
+}
+
+.options {
+  margin-bottom: $space-lg;
+
+  .option {
+    @include card;
+    display: flex;
+    align-items: center;
+    margin-bottom: $space-md;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+
+    &.selected {
+      border-color: $primary;
+      background: #FFF9F0;
+    }
+
+    .option-check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      margin-right: $space-md;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: $primary;
+      font-weight: 700;
+      flex-shrink: 0;
+
+      .selected & {
+        background: $primary;
+        border-color: $primary;
+        color: #fff;
+      }
+    }
+
+    .option-text {
+      font-size: 15px;
+      color: $text-primary;
+      flex: 1;
+    }
+  }
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $space-md;
+  background: #fff;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+
+  .btn-primary { @include btn-primary; }
+}
+
+.voted-msg {
+  text-align: center;
+  padding: 24px;
+  color: $success;
+  font-size: 16px;
+}

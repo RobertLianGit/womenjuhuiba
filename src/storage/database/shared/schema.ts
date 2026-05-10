@@ -111,7 +111,7 @@ export const registrations = pgTable(
   {
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     activity_id: varchar("activity_id", { length: 36 }).notNull().references(() => activities.id, { onDelete: "cascade" }),
-    scene_id: varchar("scene_id", { length: 36 }).notNull().references(() => scenes.id, { onDelete: "cascade" }),
+    scene_id: varchar("scene_id", { length: 36 }).references(() => scenes.id, { onDelete: "cascade" }),
     user_id: varchar("user_id", { length: 36 }).notNull(),
     user_name: varchar("user_name", { length: 100 }).notNull(),
     people_count: integer("people_count").notNull().default(1),

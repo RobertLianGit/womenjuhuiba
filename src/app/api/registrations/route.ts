@@ -5,17 +5,46 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { activity_id, scene_id, user_id, user_name, people_count, notes } = body;
 
-  if (!activity_id || !scene_id || !user_id || !user_name) {
+  if (!activity_id || !user_id || !user_name) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
+
+  // If no scene_id, check for existing whole-activity registration first
+  if (!scene_id) {
+    const { data: existing } = await client
+      .from('registrations')
+      .select('id')
+      .eq('activity_id', activity_id)
+      .is('scene_id', null)
+      .eq('user_id', user_id)
+      .maybeSingle();
+
+    if (existing) {
+      // Update existing whole-activity registration
+      const { data, error } = await client
+        .from('registrations')
+        .update({
+          user_name,
+          people_count: people_count || 1,
+          notes: notes || null,
+        })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ data });
+    }
+  }
+
   const { data, error } = await client
     .from('registrations')
     .upsert(
       {
         activity_id,
-        scene_id,
+        scene_id: scene_id || null,
         user_id,
         user_name,
         people_count: people_count || 1,

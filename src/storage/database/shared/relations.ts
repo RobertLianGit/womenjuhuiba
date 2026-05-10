@@ -1,3 +1,1 @@
-import { relations } from "drizzle-orm/relations";
-import {  } from "./schema";
-
+// Relations file - placeholder for Drizzle ORM relations

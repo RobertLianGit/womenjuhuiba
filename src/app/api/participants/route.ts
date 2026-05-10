@@ -76,7 +76,6 @@ export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const passphrase = searchParams.get('passphrase');
-  const activity_id = searchParams.get('activity_id');
 
   if (!id) {
     return NextResponse.json({ error: '缺少 id' }, { status: 400 });
@@ -84,8 +83,14 @@ export async function DELETE(request: NextRequest) {
 
   const client = getSupabaseClient();
 
+  // Look up activity_id from the participant
+  const { data: participant } = await client.from('participants').select('activity_id').eq('id', id).single();
+  if (!participant) {
+    return NextResponse.json({ error: '参与人不存在' }, { status: 404 });
+  }
+
   // 删除参与人需要管理口令
-  if (!(await verifyPassphrase(client, activity_id || '', passphrase || undefined))) {
+  if (!(await verifyPassphrase(client, participant.activity_id, passphrase || undefined))) {
     return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
   }
 

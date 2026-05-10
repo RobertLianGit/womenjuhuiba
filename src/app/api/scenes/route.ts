@@ -65,7 +65,6 @@ export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const passphrase = searchParams.get('passphrase');
-  const activity_id = searchParams.get('activity_id');
 
   if (!id) {
     return NextResponse.json({ error: '缺少 id' }, { status: 400 });
@@ -73,8 +72,14 @@ export async function DELETE(request: NextRequest) {
 
   const client = getSupabaseClient();
 
+  // Look up activity_id from the scene
+  const { data: scene } = await client.from('scenes').select('activity_id').eq('id', id).single();
+  if (!scene) {
+    return NextResponse.json({ error: '分段不存在' }, { status: 404 });
+  }
+
   // 删除分段需要管理口令
-  if (!(await verifyPassphrase(client, activity_id || '', passphrase || undefined))) {
+  if (!(await verifyPassphrase(client, scene.activity_id, passphrase || undefined))) {
     return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
   }
 
@@ -85,4 +90,46 @@ export async function DELETE(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
+}
+
+export async function PATCH(request: NextRequest) {
+  const body = await request.json();
+  const { searchParams } = new URL(request.url);
+  const id = body.id || searchParams.get('id');
+  const { name, time_range, location, passphrase } = body;
+
+  if (!id) {
+    return NextResponse.json({ error: '缺少 id' }, { status: 400 });
+  }
+
+  const client = getSupabaseClient();
+
+  // Look up activity_id from the scene
+  const { data: scene } = await client.from('scenes').select('activity_id').eq('id', id).single();
+  if (!scene) {
+    return NextResponse.json({ error: '分段不存在' }, { status: 404 });
+  }
+
+  // 编辑分段需要管理口令
+  if (!(await verifyPassphrase(client, scene.activity_id, passphrase))) {
+    return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (name !== undefined) updateData.name = name;
+  if (time_range !== undefined) updateData.time_range = time_range || null;
+  if (location !== undefined) updateData.location = location || null;
+
+  const { data, error } = await client
+    .from('scenes')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data });
 }

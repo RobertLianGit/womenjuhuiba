@@ -20,6 +20,8 @@ export const activities = pgTable(
     creator_name: varchar("creator_name", { length: 100 }).notNull(),
     intention_deadline: timestamp("intention_deadline", { withTimezone: true }),
     passphrase: varchar("passphrase", { length: 50 }).notNull().default(''),
+    vote_type: varchar("vote_type", { length: 20 }).notNull().default('single'),
+    max_votes: integer("max_votes").notNull().default(1),
     vote_deadline: timestamp("vote_deadline", { withTimezone: true }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

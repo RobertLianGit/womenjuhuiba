@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, isOrganizer, getPassphrase } from '@/lib/party';
-import { Send, BarChart3, Clock, Users, MapPin, CheckCircle2 } from 'lucide-react';
+import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { Send, BarChart3, Clock, Users, MapPin, CheckCircle2, KeyRound } from 'lucide-react';
 
 interface Intention {
   id: string;
@@ -111,9 +111,30 @@ function IntentionPageContent() {
             <h1 className="text-3xl font-bold">意愿收集</h1>
             {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
           </div>
-          <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
-            返回活动
-          </Link>
+          <div className="flex items-center gap-3">
+            {!isCreator && (
+              <button
+                onClick={() => {
+                  const input = prompt('请输入管理口令：');
+                  if (!input?.trim()) return;
+                  fetch(`/api/activities/${activityId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'verify', passphrase: input.trim() }),
+                  }).then(r => r.json()).then(result => {
+                    if (result.error) { alert('口令验证失败'); }
+                    else { setPassphrase(activityId, input.trim()); window.location.reload(); }
+                  });
+                }}
+                className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground border-2 border-outline px-2 py-1 hover:bg-muted cursor-pointer"
+              >
+                <KeyRound className="w-3 h-3" />验证口令
+              </button>
+            )}
+            <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
+              返回活动
+            </Link>
+          </div>
         </div>
 
         {/* Tab Switcher */}

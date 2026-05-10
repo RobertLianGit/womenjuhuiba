@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, getPassphrase } from '@/lib/party';
-import { Receipt, ArrowRight, Check } from 'lucide-react';
+import { isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { Receipt, ArrowRight, KeyRound } from 'lucide-react';
 
 interface Scene {
   id: string;
@@ -87,7 +87,6 @@ function SettleContent() {
   };
 
   // Calculate per-person bills
-  const sceneMap = new Map(scenes.map(s => [s.id, s.name]));
   const personBills: PersonBill[] = [];
   const nameMap = new Map<string, PersonBill>();
 
@@ -141,9 +140,30 @@ function SettleContent() {
             <h1 className="text-3xl font-bold flex items-center gap-2"><Receipt className="w-8 h-8 text-primary" />记账结算</h1>
             {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
           </div>
-          <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
-            返回活动
-          </Link>
+          <div className="flex items-center gap-3">
+            {!isCreator && (
+              <button
+                onClick={() => {
+                  const input = prompt('请输入管理口令：');
+                  if (!input?.trim()) return;
+                  fetch(`/api/activities/${activityId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'verify', passphrase: input.trim() }),
+                  }).then(r => r.json()).then(result => {
+                    if (result.error) { alert('口令验证失败'); }
+                    else { setPassphrase(activityId, input.trim()); window.location.reload(); }
+                  });
+                }}
+                className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground border-2 border-outline px-2 py-1 hover:bg-muted cursor-pointer"
+              >
+                <KeyRound className="w-3 h-3" />验证口令
+              </button>
+            )}
+            <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
+              返回活动
+            </Link>
+          </div>
         </div>
 
         {/* Bills per scene */}

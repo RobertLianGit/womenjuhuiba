@@ -4,8 +4,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName } from '@/lib/party';
-import { UserPlus, X, Check, AlertCircle } from 'lucide-react';
+import { getUserId, getUserName, isOrganizer, setPassphrase } from '@/lib/party';
+import { UserPlus, X, Check, AlertCircle, FileText, KeyRound } from 'lucide-react';
 
 interface Scene {
   id: string;
@@ -23,6 +23,18 @@ interface Registration {
   notes: string | null;
 }
 
+interface Plan {
+  content: string;
+}
+
+interface Intention {
+  id: string;
+  user_id: string;
+  user_name: string;
+  wants: string | null;
+  estimated_people: number;
+}
+
 export default function RegisterPage() {
   return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><RegisterContent /></Suspense>;
 }
@@ -32,21 +44,36 @@ function RegisterContent() {
   const activityId = searchParams.get('activity_id') || '';
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [intentions, setIntentions] = useState<Intention[]>([]);
   const [form, setForm] = useState({ user_name: '', selected_scenes: [] as string[], people_count: 1, notes: '' });
   const [loading, setLoading] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState('');
+  const [autoRegistered, setAutoRegistered] = useState(false);
+  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
 
   const userId = getUserId();
+  const isCreator = isOrganizer(activityId, activityPassphrase);
 
   useEffect(() => {
     if (!activityId) return;
     Promise.all([
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/registrations?activity_id=${activityId}`).then(r => r.json()),
-    ]).then(([sceneRes, regRes]) => {
-      setScenes(sceneRes.data || []);
-      setRegistrations(regRes.data || []);
+      fetch(`/api/plans?activity_id=${activityId}`).then(r => r.json()),
+      fetch(`/api/intentions?activity_id=${activityId}`).then(r => r.json()),
+      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
+    ]).then(([sceneRes, regRes, planRes, intRes, actRes]) => {
+      const sceneData = sceneRes.data || [];
+      const regData = regRes.data || [];
+      setScenes(sceneData);
+      setRegistrations(regData);
+      if (planRes.data) {
+        setPlan({ content: planRes.data.content || '' });
+      }
+      setIntentions(intRes.data || []);
+      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);
@@ -55,6 +82,43 @@ function RegisterContent() {
     const name = getUserName();
     if (name) setForm(f => ({ ...f, user_name: name }));
   }, []);
+
+  // Auto-register intention submitters for all scenes
+  useEffect(() => {
+    if (autoRegistered || scenes.length === 0 || intentions.length === 0) return;
+
+    const registerIntentionUsers = async () => {
+      for (const intention of intentions) {
+        // Skip if this user already has registrations
+        const existingRegs = registrations.filter(r => r.user_id === intention.user_id);
+        if (existingRegs.length > 0) continue;
+
+        // Register for all scenes
+        for (const scene of scenes) {
+          await fetch('/api/registrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              activity_id: activityId,
+              scene_id: scene.id,
+              user_id: intention.user_id,
+              user_name: intention.user_name,
+              people_count: intention.estimated_people || 1,
+              notes: null,
+            }),
+          });
+        }
+      }
+
+      // Refresh registrations
+      const res = await fetch(`/api/registrations?activity_id=${activityId}`);
+      const data = await res.json();
+      setRegistrations(data.data || []);
+      setAutoRegistered(true);
+    };
+
+    registerIntentionUsers();
+  }, [scenes, intentions, registrations, autoRegistered, activityId]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -103,11 +167,47 @@ function RegisterContent() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">分段报名</h1>
-          <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
-            返回活动
-          </Link>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">分段报名</h1>
+            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
+          </div>
+          <div className="flex items-center gap-3">
+            {!isCreator && (
+              <button
+                onClick={() => {
+                  const input = prompt('请输入管理口令：');
+                  if (!input?.trim()) return;
+                  fetch(`/api/activities/${activityId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'verify', passphrase: input.trim() }),
+                  }).then(r => r.json()).then(result => {
+                    if (result.error) { alert('口令验证失败'); }
+                    else { setPassphrase(activityId, input.trim()); window.location.reload(); }
+                  });
+                }}
+                className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground border-2 border-outline px-2 py-1 hover:bg-muted cursor-pointer"
+              >
+                <KeyRound className="w-3 h-3" />验证口令
+              </button>
+            )}
+            <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
+              返回活动
+            </Link>
+          </div>
         </div>
+
+        {/* Plan Content */}
+        {plan && plan.content && (
+          <section className="mb-8">
+            <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2"><FileText className="w-5 h-5 text-primary" />活动方案</h2>
+              <div className="bg-muted border-2 border-outline p-4 text-sm whitespace-pre-wrap max-h-[300px] overflow-y-auto">
+                {plan.content}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Scene Summary */}
         <section className="mb-8">

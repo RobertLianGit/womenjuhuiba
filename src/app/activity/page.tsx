@@ -8,7 +8,7 @@ import { isOrganizer, setPassphrase, getPassphrase } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
   Share2, Copy, Check, ArrowRight, Crown, Calendar, ChevronRight,
-  Send, CheckCircle2, UserCheck, KeyRound, Lock, Users
+  Send, CheckCircle2, UserCheck, KeyRound, Lock
 } from 'lucide-react';
 
 interface Activity {
@@ -127,7 +127,10 @@ function ActivityPage() {
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/activity?id=${id}`;
-    navigator.clipboard.writeText(url);
+    const text = activity
+      ? `${activity.title}（组织者：${activity.creator_name}）\n${url}`
+      : url;
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

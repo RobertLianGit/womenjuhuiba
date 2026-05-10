@@ -4,8 +4,8 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer } from '@/lib/party';
-import { LayoutDashboard, Plus, Trash2, Copy, Check, UserPlus } from 'lucide-react';
+import { isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { LayoutDashboard, Trash2, Copy, Check, UserPlus, Lock, KeyRound } from 'lucide-react';
 
 interface Scene {
   id: string;
@@ -58,6 +58,53 @@ function DashboardContent() {
     }).catch(() => setLoading(false));
   }, [activityId]);
 
+  // Auto-sync: also load registrations as participants
+  useEffect(() => {
+    if (!activityId || scenes.length === 0) return;
+
+    const syncRegistrations = async () => {
+      // Fetch registrations
+      const regRes = await fetch(`/api/registrations?activity_id=${activityId}`);
+      const regData = await regRes.json();
+      const registrations = regData.data || [];
+
+      // Fetch current participants
+      const partRes = await fetch(`/api/participants?activity_id=${activityId}`);
+      const partData = await partRes.json();
+      const currentParticipants: Participant[] = partData.data || [];
+
+      // For each registration that's not already in participants, add it
+      for (const reg of registrations) {
+        const alreadyExists = currentParticipants.some(
+          p => p.user_id === reg.user_id && p.scene_id === reg.scene_id && !p.is_manual
+        );
+        if (!alreadyExists) {
+          const addRes = await fetch('/api/participants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              activity_id: activityId,
+              scene_id: reg.scene_id,
+              user_id: reg.user_id,
+              user_name: reg.user_name,
+              people_count: reg.people_count,
+              is_manual: false,
+              is_temp: false,
+            }),
+          });
+          const addResult = await addRes.json();
+          if (addResult.data) {
+            currentParticipants.push(addResult.data);
+          }
+        }
+      }
+
+      setParticipants(currentParticipants);
+    };
+
+    syncRegistrations();
+  }, [activityId, scenes]);
+
   const sceneParticipants = participants.filter(p => p.scene_id === activeScene);
   const totalPeople = sceneParticipants.reduce((sum, p) => sum + p.people_count, 0);
   const manualCount = sceneParticipants.filter(p => p.is_manual).length;
@@ -66,6 +113,7 @@ function DashboardContent() {
 
   const handleAddParticipant = async () => {
     if (!addForm.user_name || !activeScene) return;
+    const passphrase = getPassphrase(activityId);
     const res = await fetch('/api/participants', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,6 +124,7 @@ function DashboardContent() {
         people_count: addForm.people_count,
         is_manual: true,
         is_temp: addForm.is_temp,
+        passphrase,
       }),
     });
     const result = await res.json();
@@ -83,11 +132,14 @@ function DashboardContent() {
       setParticipants(prev => [...prev, result.data]);
       setShowAddModal(false);
       setAddForm({ user_name: '', people_count: 1, is_temp: false });
+    } else {
+      alert(result.error || '添加失败，请确认管理口令');
     }
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/participants?id=${id}`, { method: 'DELETE' });
+    const passphrase = getPassphrase(activityId);
+    await fetch(`/api/participants?id=${id}&passphrase=${passphrase}`, { method: 'DELETE' });
     setParticipants(prev => prev.filter(p => p.id !== id));
   };
 
@@ -102,23 +154,6 @@ function DashboardContent() {
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
-  if (!isCreator) {
-    return (
-      <div className="min-h-screen bg-background text-foreground font-sans">
-        <Navbar />
-        <main className="max-w-6xl mx-auto px-6 py-8">
-          <div className="bg-card border-2 border-outline p-8 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-            <h2 className="text-2xl font-bold mb-3">仅组织者可访问</h2>
-            <p className="text-muted-foreground mb-4">组织者看板只有活动创建者才能管理参与人。</p>
-            <Link href={`/activity?id=${activityId}`} className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-              返回活动详情
-            </Link>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Navbar />
@@ -126,12 +161,34 @@ function DashboardContent() {
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold flex items-center gap-2"><LayoutDashboard className="w-8 h-8 text-primary" />组织者看板</h1>
-            <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>
+            <h1 className="text-3xl font-bold flex items-center gap-2"><LayoutDashboard className="w-8 h-8 text-primary" />参与人看板</h1>
+            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
+            {!isCreator && <span className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 border-2 border-outline">查看</span>}
           </div>
-          <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
-            返回活动
-          </Link>
+          <div className="flex items-center gap-3">
+            {!isCreator && (
+              <button
+                onClick={() => {
+                  const input = prompt('请输入管理口令：');
+                  if (!input?.trim()) return;
+                  fetch(`/api/activities/${activityId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'verify', passphrase: input.trim() }),
+                  }).then(r => r.json()).then(result => {
+                    if (result.error) { alert('口令验证失败'); }
+                    else { setPassphrase(activityId, input.trim()); window.location.reload(); }
+                  });
+                }}
+                className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground border-2 border-outline px-2 py-1 hover:bg-muted cursor-pointer"
+              >
+                <KeyRound className="w-3 h-3" />验证口令
+              </button>
+            )}
+            <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
+              返回活动
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -192,15 +249,18 @@ function DashboardContent() {
                 <span className="text-muted-foreground">x{p.people_count}</span>
                 <span className={`${sourceBg} border-2 border-outline px-2 py-0.5 text-xs font-bold`}>{sourceLabel}</span>
                 <div className="flex-1" />
-                <button onClick={() => handleDelete(p.id)} className="text-error border-2 border-outline p-1.5 hover:bg-muted cursor-pointer">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {isCreator && (
+                  <button onClick={() => handleDelete(p.id)} className="text-error border-2 border-outline p-1.5 hover:bg-muted cursor-pointer">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             );
           })}
           {sceneParticipants.length === 0 && (
             <div className="bg-card border-2 border-outline p-8 text-center text-muted-foreground" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-              暂无参与人，点击下方按钮添加
+              暂无参与人
+              {isCreator && '，点击下方按钮添加'}
             </div>
           )}
         </div>
@@ -208,13 +268,21 @@ function DashboardContent() {
         {/* Bottom Action Bar */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t-2 border-outline p-4 z-30">
           <div className="max-w-6xl mx-auto flex items-center gap-3">
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary text-primary-foreground border-2 border-outline px-5 py-2.5 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
-              style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-            >
-              <UserPlus className="w-4 h-4" />手动添加
-            </button>
+            {isCreator && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-primary text-primary-foreground border-2 border-outline px-5 py-2.5 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+              >
+                <UserPlus className="w-4 h-4" />手动添加
+              </button>
+            )}
+            {!isCreator && (
+              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <Lock className="w-4 h-4" />
+                <span>管理操作需验证管理口令</span>
+              </div>
+            )}
             <button
               onClick={handleCopyList}
               className="bg-card border-2 border-outline px-5 py-2.5 font-bold hover:bg-muted transition-colors cursor-pointer flex items-center gap-2"

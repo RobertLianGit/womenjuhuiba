@@ -25,11 +25,18 @@ export async function PATCH(
     return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
   }
 
+  // Special case: just verifying passphrase, don't update anything
+  if (body.status === 'verify') {
+    return NextResponse.json({ data: { verified: true } });
+  }
+
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (body.status !== undefined) updateData.status = body.status;
   if (body.intention_deadline !== undefined) updateData.intention_deadline = body.intention_deadline;
   if (body.vote_deadline !== undefined) updateData.vote_deadline = body.vote_deadline;
+  if (body.vote_type !== undefined) updateData.vote_type = body.vote_type;
+  if (body.max_votes !== undefined) updateData.max_votes = body.max_votes;
 
   const { data, error } = await client
     .from('activities')

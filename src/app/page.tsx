@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase } from '@/lib/party';
-import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, User } from 'lucide-react';
+import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -38,8 +38,6 @@ export default function HomePage() {
   const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '' });
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'mine' | 'joined'>('mine');
-
-  const userId = getUserId();
 
   useEffect(() => {
     fetch('/api/activities')
@@ -96,7 +94,7 @@ export default function HomePage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Hero */}
-        <section className="mb-10">
+        <section className="mb-8">
           <div className="bg-card border-2 border-outline p-10 md:p-14 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
             <div className="absolute top-4 right-6 w-16 h-16 bg-primary opacity-20 -z-0" />
             <div className="absolute bottom-3 right-20 w-10 h-10 bg-accent-blue opacity-15 -z-0" />
@@ -113,6 +111,46 @@ export default function HomePage() {
                 </span>
               </button>
             </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="mb-8">
+          <div className="bg-card border-2 border-outline p-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <h2 className="text-lg font-bold mb-4">怎么用？</h2>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-center text-sm">
+              <div className="bg-primary text-primary-foreground border-2 border-outline p-3">
+                <div className="font-bold text-lg mb-1">1</div>
+                <div className="font-medium">创建活动</div>
+                <div className="text-xs opacity-80 mt-1">设名称和时间</div>
+              </div>
+              <div className="bg-accent-blue text-white border-2 border-outline p-3">
+                <div className="font-bold text-lg mb-1">2</div>
+                <div className="font-medium">收集意愿</div>
+                <div className="text-xs opacity-80 mt-1">大家想去哪</div>
+              </div>
+              <div className="bg-success text-white border-2 border-outline p-3">
+                <div className="font-bold text-lg mb-1">3</div>
+                <div className="font-medium">投票决定</div>
+                <div className="text-xs opacity-80 mt-1">少数服从多数</div>
+              </div>
+              <div className="bg-warning text-primary-foreground border-2 border-outline p-3">
+                <div className="font-bold text-lg mb-1">4</div>
+                <div className="font-medium">确认方案</div>
+                <div className="text-xs opacity-80 mt-1">分段和时间</div>
+              </div>
+              <div className="bg-accent-blue text-white border-2 border-outline p-3">
+                <div className="font-bold text-lg mb-1">5</div>
+                <div className="font-medium">报名参加</div>
+                <div className="text-xs opacity-80 mt-1">选段填人</div>
+              </div>
+              <div className="bg-primary text-primary-foreground border-2 border-outline p-3">
+                <div className="font-bold text-lg mb-1">6</div>
+                <div className="font-medium">记账结算</div>
+                <div className="text-xs opacity-80 mt-1">AA不伤感情</div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">无需登录，输入昵称即可参与。组织者创建活动后获得管理口令，用于控制活动阶段和管理操作。</p>
           </div>
         </section>
 

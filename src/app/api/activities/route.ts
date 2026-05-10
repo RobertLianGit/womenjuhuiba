@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
 
 /** 脱敏函数：移除 passphrase */
 function sanitize(activity: Record<string, unknown>) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passphrase: _, ...safe } = activity;
   return safe;
 }

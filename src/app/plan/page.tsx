@@ -43,8 +43,7 @@ function PlanPageContent() {
   const activityId = searchParams.get('activity_id') || '';
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [activity, setActivity] = useState<Activity | null>(null);
-  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId);
+    const isCreator = isOrganizer(activityId);
   const [plan, setPlan] = useState<{ content: string; prompt_generated: string }>({ content: '', prompt_generated: '' });
   const [addForm, setAddForm] = useState({ name: '', time_range: '', location: '' });
   const [showAddForm, setShowAddForm] = useState(false);
@@ -72,7 +71,7 @@ function PlanPageContent() {
       setScenes(sceneRes.data || []);
       const actData = actRes.data;
       setActivity(actData || null);
-      if (actData) setActivityPassphrase(actData.passphrase);
+
       if (planRes.data) {
         setPlan({ content: planRes.data.content || '', prompt_generated: planRes.data.prompt_generated || '' });
       }

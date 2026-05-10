@@ -27,8 +27,7 @@ interface Scene {
 function IntentionPageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId);
+    const isCreator = isOrganizer(activityId);
   const [tab, setTab] = useState<'form' | 'summary'>('form');
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -51,7 +50,6 @@ function IntentionPageContent() {
     ]).then(([intRes, sceneRes, actRes]) => {
       setIntentions(intRes.data || []);
       setScenes(sceneRes.data || []);
-      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);

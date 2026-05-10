@@ -51,8 +51,7 @@ function RegisterContent() {
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   const [autoRegistered, setAutoRegistered] = useState(false);
-  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-
+  
   const userId = getUserId();
   const isCreator = isOrganizer(activityId);
 
@@ -77,7 +76,6 @@ function RegisterContent() {
         setPlan({ content: planRes.data.content || '' });
       }
       setIntentions(intRes.data || []);
-      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);

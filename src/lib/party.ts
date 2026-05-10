@@ -57,7 +57,7 @@ export function clearPassphrase(activityId: string): void {
 }
 
 /** 判断当前用户是否为某活动的组织者（localStorage中存有管理口令即为组织者） */
-export function isOrganizer(activityId: string, _activityPassphrase?: string | null): boolean {
+export function isOrganizer(activityId: string): boolean {
   if (typeof window === 'undefined') return false;
   return !!getPassphrase(activityId);
 }
@@ -73,7 +73,6 @@ export function generatePassphrase(): string {
 }
 
 // ===== 活动口令（access_code） =====
-const ACCESS_PREFIX = 'party_access_';
 
 /** 记住已通过验证的活动（用户输入了正确的活动口令） */
 export function markActivityAccessed(activityId: string): void {

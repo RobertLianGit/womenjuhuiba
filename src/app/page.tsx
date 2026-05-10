@@ -299,6 +299,11 @@ export default function HomePage() {
             </div>
           )}
         </section>
+
+        {/* Privacy */}
+        <div className="mt-8 text-center text-xs text-muted-foreground">
+          <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
+        </div>
       </main>
 
       {/* Create Modal */}

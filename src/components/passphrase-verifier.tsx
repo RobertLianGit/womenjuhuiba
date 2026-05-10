@@ -16,7 +16,7 @@ export function PassphraseVerifier({ activityId, onVerified, compact }: Passphra
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const isOrganizerNow = isOrganizer(activityId, null);
+  const isOrganizerNow = isOrganizer(activityId);
 
   if (isOrganizerNow) {
     return compact ? (

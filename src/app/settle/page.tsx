@@ -41,8 +41,7 @@ interface Transfer {
 function SettleContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId);
+    const isCreator = isOrganizer(activityId);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -63,7 +62,6 @@ function SettleContent() {
     ]).then(([sceneRes, partRes, billRes, actRes]) => {
       setScenes(sceneRes.data || []);
       setParticipants(partRes.data || []);
-      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setBills(billRes.data || []);
       setLoading(false);
     }).catch(() => setLoading(false));

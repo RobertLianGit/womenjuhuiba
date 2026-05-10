@@ -97,7 +97,7 @@ function ActivityPage() {
         setLoading(false);
         // Check if user is organizer or has previously accessed
         if (data) {
-          const isOrg = isOrganizer(data.id, data.passphrase);
+          const isOrg = isOrganizer(data.id);
           const isAccessed = isActivityAccessed(data.id);
           if (isOrg || isAccessed) {
             setAccessGranted(true);

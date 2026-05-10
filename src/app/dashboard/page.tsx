@@ -32,8 +32,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId);
+    const isCreator = isOrganizer(activityId);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeScene, setActiveScene] = useState<string>('');
@@ -56,7 +55,6 @@ function DashboardContent() {
       const sceneData = sceneRes.data || [];
       setScenes(sceneData);
       setParticipants(partRes.data || []);
-      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       if (sceneData.length > 0) setActiveScene(sceneData[0].id);
       setLoading(false);
     }).catch(() => setLoading(false));

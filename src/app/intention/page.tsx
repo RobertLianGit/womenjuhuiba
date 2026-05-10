@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, isOrganizer } from '@/lib/party';
-import { Send, BarChart3, Clock, Users, MapPin } from 'lucide-react';
+import { getUserId, getUserName, isOrganizer, getPassphrase } from '@/lib/party';
+import { Send, BarChart3, Clock, Users, MapPin, CheckCircle2 } from 'lucide-react';
 
 interface Intention {
   id: string;
@@ -34,6 +34,7 @@ function IntentionPageContent() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [form, setForm] = useState({ user_name: '', wants: '', estimated_people: 1, selected_scenes: [] as string[] });
   const [submitted, setSubmitted] = useState(false);
+  const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -84,6 +85,8 @@ function IntentionPageContent() {
     const result = await res.json();
     if (result.data) {
       setSubmitted(true);
+      setShowSubmitSuccess(true);
+      setTimeout(() => setShowSubmitSuccess(false), 3000);
       setIntentions(prev => {
         const idx = prev.findIndex(i => i.user_id === userId);
         if (idx >= 0) { const arr = [...prev]; arr[idx] = result.data; return arr; }
@@ -114,7 +117,7 @@ function IntentionPageContent() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex gap-2 mb-8">
+        <div className="flex gap-2 mb-6">
           <button
             onClick={() => setTab('form')}
             className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'form' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
@@ -125,8 +128,35 @@ function IntentionPageContent() {
             onClick={() => setTab('summary')}
             className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'summary' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
           >
-            <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />汇总看板{isCreator ? '' : '（只读）'}</span>
+            <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />汇总看板</span>
           </button>
+        </div>
+
+        {/* Submit Success Toast */}
+        {showSubmitSuccess && (
+          <div className="mb-6 bg-success text-white border-2 border-outline p-4 flex items-center gap-3 animate-pulse" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <CheckCircle2 className="w-6 h-6 shrink-0" />
+            <div>
+              <p className="font-bold">提交成功！</p>
+              <p className="text-sm opacity-90">你的意愿已记录，可随时更新</p>
+            </div>
+          </div>
+        )}
+
+        {/* Progress Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-2xl font-bold text-primary">{intentions.length}</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">已表态人数</div>
+          </div>
+          <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-2xl font-bold text-accent-blue">{totalPeople}</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">预计总人数</div>
+          </div>
+          <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-2xl font-bold text-success">{wantsList.length}</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">想去的地方</div>
+          </div>
         </div>
 
         {/* Form Tab */}
@@ -306,12 +336,18 @@ function IntentionPageContent() {
                 <button
                   onClick={async () => {
                     if (!confirm('确定提前结束意愿收集？结束后将进入投票阶段。')) return;
+                    const passphrase = getPassphrase(activityId);
                     const res = await fetch(`/api/activities/${activityId}`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ status: 'voting' }),
+                      body: JSON.stringify({ status: 'voting', passphrase }),
                     });
-                    if (res.ok) window.location.href = `/vote?activity_id=${activityId}`;
+                    if (res.ok) {
+                      window.location.href = `/vote?activity_id=${activityId}`;
+                    } else {
+                      const result = await res.json();
+                      alert(result.error || '操作失败，请重试');
+                    }
                   }}
                   className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '4px 4px 0 #0A0A0A' }}

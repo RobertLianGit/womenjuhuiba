@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, isOrganizer } from '@/lib/party';
+import { getUserId, getUserName, isOrganizer, getPassphrase } from '@/lib/party';
 import { Plus, Vote, BarChart3, Trophy, CheckCircle2 } from 'lucide-react';
 
 interface Proposal {
@@ -301,12 +301,18 @@ function VotePageContent() {
                   onClick={async () => {
                     if (sortedProposals.length === 0) return;
                     if (!confirm(`确定以「${sortedProposals[0].location}」为最终方案？`)) return;
+                    const passphrase = getPassphrase(activityId);
                     const res = await fetch(`/api/activities/${activityId}`, {
                       method: 'PATCH',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ status: 'plan' }),
+                      body: JSON.stringify({ status: 'plan', passphrase }),
                     });
-                    if (res.ok) window.location.href = `/plan?activity_id=${activityId}`;
+                    if (res.ok) {
+                      window.location.href = `/plan?activity_id=${activityId}`;
+                    } else {
+                      const result = await res.json();
+                      alert(result.error || '操作失败，请重试');
+                    }
                   }}
                   className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '4px 4px 0 #0A0A0A' }}

@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer } from '@/lib/party';
+import { isOrganizer, getPassphrase } from '@/lib/party';
 import { Receipt, ArrowRight, Check } from 'lucide-react';
 
 interface Scene {
@@ -73,6 +73,7 @@ function SettleContent() {
   const handleSaveBill = async (sceneId: string) => {
     const bill = bills.find(b => b.scene_id === sceneId);
     if (!bill) return;
+    const passphrase = getPassphrase(activityId);
     await fetch('/api/bills', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -80,6 +81,7 @@ function SettleContent() {
         activity_id: activityId,
         scene_id: sceneId,
         total_amount: bill.total_amount,
+        passphrase,
       }),
     });
   };

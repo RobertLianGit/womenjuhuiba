@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer } from '@/lib/party';
+import { isOrganizer, getPassphrase } from '@/lib/party';
 import { Plus, Trash2, Copy, Check, FileText, Sparkles } from 'lucide-react';
 
 interface Scene {
@@ -54,6 +54,7 @@ function PlanPageContent() {
 
   const handleAddScene = async () => {
     if (!addForm.name) return;
+    const passphrase = getPassphrase(activityId);
     const res = await fetch('/api/scenes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -63,6 +64,7 @@ function PlanPageContent() {
         time_range: addForm.time_range || null,
         location: addForm.location || null,
         sort_order: scenes.length,
+        passphrase,
       }),
     });
     const result = await res.json();
@@ -118,6 +120,7 @@ ${sceneList || '暂无分段'}
   };
 
   const handleSavePlan = async () => {
+    const passphrase = getPassphrase(activityId);
     const res = await fetch('/api/plans', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -125,6 +128,7 @@ ${sceneList || '暂无分段'}
         activity_id: activityId,
         content: plan.content,
         prompt_generated: plan.prompt_generated,
+        passphrase,
       }),
     });
     const result = await res.json();

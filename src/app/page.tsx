@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, setUserName, isOrganizer } from '@/lib/party';
-import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check } from 'lucide-react';
+import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase } from '@/lib/party';
+import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, User } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -35,7 +35,7 @@ export default function HomePage() {
   const [createdPassphrase, setCreatedPassphrase] = useState('');
   const [createdActivityId, setCreatedActivityId] = useState('');
   const [copied, setCopied] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', rough_time: '' });
+  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '' });
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'mine' | 'joined'>('mine');
 
@@ -57,19 +57,24 @@ export default function HomePage() {
   const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
 
   const handleCreate = async () => {
-    if (!form.title || !form.description || !form.rough_time) return;
+    if (!form.title || !form.description || !form.rough_time || !form.creator_name) return;
     const uid = getUserId();
-    const userName = getUserName() || '我';
+    // Save creator name
+    setUserName(form.creator_name);
     const res = await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, creator_id: uid, creator_name: userName }),
+      body: JSON.stringify({ ...form, creator_id: uid, creator_name: form.creator_name }),
     });
     const result = await res.json();
     if (result.data) {
+      // Save passphrase to localStorage so isOrganizer works immediately
+      if (result.data.passphrase) {
+        setPassphrase(result.data.id, result.data.passphrase);
+      }
       setActivities(prev => [result.data, ...prev]);
       setShowCreateModal(false);
-      setForm({ title: '', description: '', rough_time: '' });
+      setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name });
       // Show passphrase modal
       const passphrase = result.data.passphrase;
       setCreatedPassphrase(passphrase);
@@ -182,6 +187,15 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold mb-6">创建新活动</h2>
             <div className="space-y-4">
               <div>
+                <label className="block text-sm font-bold mb-1">你的昵称 <span className="text-error">*</span></label>
+                <input
+                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={form.creator_name}
+                  onChange={e => setForm(f => ({ ...f, creator_name: e.target.value }))}
+                  placeholder="输入你的昵称，方便大家识别"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-bold mb-1">活动名称 <span className="text-error">*</span></label>
                 <input
                   className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -220,14 +234,14 @@ export default function HomePage() {
             <div className="flex gap-3 mt-8">
               <button
                 onClick={handleCreate}
-                disabled={!form.title || !form.description || !form.rough_time}
+                disabled={!form.title || !form.description || !form.rough_time || !form.creator_name}
                 className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
               >
                 创建活动
               </button>
               <button
-                onClick={() => { setShowCreateModal(false); setForm({ title: '', description: '', rough_time: '' }); }}
+                onClick={() => { setShowCreateModal(false); setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name }); }}
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
               >
                 取消

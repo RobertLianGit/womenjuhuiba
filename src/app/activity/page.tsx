@@ -4,11 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, setPassphrase } from '@/lib/party';
+import { isOrganizer, setPassphrase, getPassphrase } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
   Share2, Copy, Check, ArrowRight, Crown, Calendar, ChevronRight,
-  Send, CheckCircle2, UserCheck, KeyRound, Lock
+  Send, CheckCircle2, UserCheck, KeyRound, Lock, Users
 } from 'lucide-react';
 
 interface Activity {
@@ -79,6 +79,7 @@ function ActivityPage() {
   const [showPassphraseModal, setShowPassphraseModal] = useState(false);
   const [passphraseInput, setPassphraseInput] = useState('');
   const [passphraseError, setPassphraseError] = useState('');
+  const [stats, setStats] = useState({ intentionCount: 0, voteCount: 0, registrationCount: 0 });
 
   useEffect(() => {
     if (!id) return;
@@ -91,6 +92,22 @@ function ActivityPage() {
       .catch(() => setLoading(false));
   }, [id]);
 
+  // Fetch progress stats
+  useEffect(() => {
+    if (!id) return;
+    Promise.all([
+      fetch(`/api/intentions?activity_id=${id}`).then(r => r.json()),
+      fetch(`/api/vote-records?activity_id=${id}`).then(r => r.json()),
+      fetch(`/api/registrations?activity_id=${id}`).then(r => r.json()),
+    ]).then(([intRes, voteRes, regRes]) => {
+      setStats({
+        intentionCount: (intRes.data || []).length,
+        voteCount: (voteRes.data || []).length,
+        registrationCount: (regRes.data || []).length,
+      });
+    }).catch(() => {});
+  }, [id]);
+
   const isCreator = activity ? isOrganizer(activity.id, activity.passphrase) : false;
   const currentIdx = activity ? STATUS_ORDER.indexOf(activity.status) : -1;
 
@@ -98,10 +115,11 @@ function ActivityPage() {
     if (!activity) return;
     const action = ACTION_MAP[activity.status];
     if (!action) return;
+    const passphrase = getPassphrase(activity.id);
     const res = await fetch(`/api/activities/${activity.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: action.next }),
+      body: JSON.stringify({ status: action.next, passphrase }),
     });
     const result = await res.json();
     if (result.data) setActivity(result.data);
@@ -190,7 +208,7 @@ function ActivityPage() {
         {!isCreator && (
           <>
             {/* Current Phase Action Card */}
-            <section className="mb-8">
+            <section className="mb-6">
               <div className="bg-card border-2 border-outline p-6 relative" style={{ boxShadow: '6px 6px 0 #0A0A0A' }}>
                 <div className="mb-4">
                   <p className="text-sm font-bold text-muted-foreground mb-1">当前阶段</p>
@@ -208,6 +226,24 @@ function ActivityPage() {
                     <ChevronRight className="w-5 h-5" />
                   </Link>
                 )}
+              </div>
+            </section>
+
+            {/* Progress Stats */}
+            <section className="mb-6">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                  <div className="text-2xl font-bold text-primary">{stats.intentionCount}</div>
+                  <div className="text-xs font-medium text-muted-foreground mt-1">已表态</div>
+                </div>
+                <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                  <div className="text-2xl font-bold text-accent-blue">{stats.voteCount}</div>
+                  <div className="text-xs font-medium text-muted-foreground mt-1">已投票</div>
+                </div>
+                <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                  <div className="text-2xl font-bold text-success">{stats.registrationCount}</div>
+                  <div className="text-xs font-medium text-muted-foreground mt-1">已报名</div>
+                </div>
               </div>
             </section>
 
@@ -244,7 +280,7 @@ function ActivityPage() {
         {/* ===== ORGANIZER VIEW ===== */}
         {isCreator && (
           <>
-            {/* Phase Progress Bar */}
+            {/* Phase Progress Bar + Stats */}
             <section className="mb-6">
               <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <div className="flex items-center justify-between mb-3">
@@ -266,6 +302,21 @@ function ActivityPage() {
                 </div>
                 <div className="flex items-center justify-between mt-1.5 text-[10px] font-medium text-muted-foreground">
                   <span>意愿</span><span>投票</span><span>方案</span><span>报名</span><span>进行</span><span>结算</span>
+                </div>
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t-2 border-outline/15">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-primary">{stats.intentionCount}</div>
+                    <div className="text-[11px] font-medium text-muted-foreground">已表态</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-accent-blue">{stats.voteCount}</div>
+                    <div className="text-[11px] font-medium text-muted-foreground">已投票</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-success">{stats.registrationCount}</div>
+                    <div className="text-[11px] font-medium text-muted-foreground">已报名</div>
+                  </div>
                 </div>
               </div>
             </section>

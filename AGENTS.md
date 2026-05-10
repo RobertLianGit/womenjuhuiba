@@ -1,65 +1,90 @@
-# 项目上下文
+# 开始聚会吧 - 项目文档
+
+## 项目概览
+
+朋友聚会组织 Web 工具，支持创建活动、意愿收集、投票去哪、方案确认、分段报名、记账结算的全流程。无需登录，输入昵称即可参与。
 
 ### 版本技术栈
 
-- **Framework**: Next.js 16 (App Router)
-- **Core**: React 19
-- **Language**: TypeScript 5
-- **UI 组件**: shadcn/ui (基于 Radix UI)
-- **Styling**: Tailwind CSS 4
+| 维度 | 选择 |
+|------|------|
+| Framework | Next.js 16 (App Router) |
+| Core | React 19 |
+| Language | TypeScript 5 |
+| UI 组件 | shadcn/ui (基于 Radix UI) |
+| Styling | Tailwind CSS 4 (粗野风 Neo-Brutalism 主题) |
+| Database | Supabase (PostgreSQL) |
+| 包管理器 | pnpm |
 
 ## 目录结构
 
 ```
-├── public/                 # 静态资源
-├── scripts/                # 构建与启动脚本
-│   ├── build.sh            # 构建脚本
-│   ├── dev.sh              # 开发环境启动脚本
-│   ├── prepare.sh          # 预处理脚本
-│   └── start.sh            # 生产环境启动脚本
-├── src/
-│   ├── app/                # 页面路由与布局
-│   ├── components/ui/      # Shadcn UI 组件库
-│   ├── hooks/              # 自定义 Hooks
-│   ├── lib/                # 工具库
-│   │   └── utils.ts        # 通用工具函数 (cn)
-│   └── server.ts           # 自定义服务端入口
-├── next.config.ts          # Next.js 配置
-├── package.json            # 项目依赖管理
-└── tsconfig.json           # TypeScript 配置
+src/
+├── app/
+│   ├── page.tsx              # 首页 - 活动列表 + 创建
+│   ├── layout.tsx            # 全局布局
+│   ├── globals.css           # 全局样式 + @theme 设计变量
+│   ├── activity/page.tsx     # 活动详情 - 状态流转 + 功能入口
+│   ├── intention/page.tsx    # 意愿收集 - 填写/汇总双Tab
+│   ├── vote/page.tsx         # 投票去哪 - 提方案/投票/结果三Tab
+│   ├── plan/page.tsx         # 方案确认 - 分段设置 + Prompt生成
+│   ├── register/page.tsx     # 分段报名 - 按段报名 + 已报名列表
+│   ├── dashboard/page.tsx    # 组织者看板 - 参与人管理
+│   ├── settle/page.tsx       # 记账结算 - 账单/分摊/转账指引
+│   └── api/                  # API 路由
+│       ├── activities/       # 活动 CRUD + 状态流转
+│       ├── scenes/           # 分段管理
+│       ├── intentions/       # 意愿提交与查询
+│       ├── vote-proposals/   # 投票方案
+│       ├── vote-records/     # 投票记录
+│       ├── registrations/    # 报名
+│       ├── participants/     # 参与人（看板用）
+│       ├── bills/            # 账单
+│       └── plans/            # 方案内容
+├── components/
+│   ├── navbar.tsx            # 顶部导航
+│   └── ui/                   # shadcn/ui 组件
+├── lib/
+│   ├── party.ts              # 用户身份工具 (localStorage userId/name)
+│   └── utils.ts              # 通用工具 (cn)
+└── storage/database/
+    ├── supabase-client.ts    # Supabase 客户端 (service_role_key)
+    └── shared/schema.ts      # Drizzle ORM Schema 定义
 ```
 
-- 项目文件（如 app 目录、pages 目录、components 等）默认初始化到 `src/` 目录下。
+## 构建与测试命令
 
-## 包管理规范
+```bash
+pnpm dev          # 开发环境 (端口 5000)
+pnpm build        # 生产构建
+pnpm start        # 生产启动
+pnpm ts-check     # TypeScript 类型检查
+pnpm lint         # ESLint 检查
+```
 
-**仅允许使用 pnpm** 作为包管理器，**严禁使用 npm 或 yarn**。
-**常用命令**：
-- 安装依赖：`pnpm add <package>`
-- 安装开发依赖：`pnpm add -D <package>`
-- 安装所有依赖：`pnpm install`
-- 移除依赖：`pnpm remove <package>`
+## 数据库
 
-## 开发规范
+9 张表：activities, scenes, intentions, vote_proposals, vote_records, registrations, participants, bills, plans
 
-### 编码规范
+使用 Supabase service_role_key 绕过 RLS，公开读写。
 
-- 默认按 TypeScript `strict` 心智写代码；优先复用当前作用域已声明的变量、函数、类型和导入，禁止引用未声明标识符或拼错变量名。
-- 禁止隐式 `any` 和 `as any`；函数参数、返回值、解构项、事件对象、`catch` 错误在使用前应有明确类型或先完成类型收窄，并清理未使用的变量和导入。
+### 活动状态流转
 
-### next.config 配置规范
+`collecting` → `voting` → `plan` → `registering` → `started` → `settling` → `settled`
 
-- 配置的路径不要写死绝对路径，必须使用 path.resolve(__dirname, ...)、import.meta.dirname 或 process.cwd() 动态拼接。
+## 设计风格
 
-### Hydration 问题防范
+粗野风 (Neo-Brutalism)：粗黑边框、错位阴影、大字号、零圆角
+- 主色：粉色 #FF4DB8
+- 背景：暖白 #FAFAF5
+- 强调：蓝色 #3B82F6
+- 成功：绿色 #22C55E
+- 警告：黄色 #FFF34D
 
-1. 严禁在 JSX 渲染逻辑中直接使用 typeof window、Date.now()、Math.random() 等动态数据。**必须使用 'use client' 并配合 useEffect + useState 确保动态内容仅在客户端挂载后渲染**；同时严禁非法 HTML 嵌套（如 <p> 嵌套 <div>）。
-2. **禁止使用 head 标签**，优先使用 metadata，详见文档：https://nextjs.org/docs/app/api-reference/functions/generate-metadata
-   1. 三方 CSS、字体等资源可在 `globals.css` 中顶部通过 `@import` 引入或使用 next/font
-   2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
-   3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
+## 开发注意事项
 
-## UI 设计与组件规范 (UI & Styling Standards)
-
-- 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
-- Next.js 项目**必须默认**采用 shadcn/ui 组件、风格和规范，**除非用户指定用其他的组件和规范。**
+- 用户身份通过 localStorage 存储的 UUID 和昵称标识，无需登录
+- API 路由统一使用 `getSupabaseClient()` 获取客户端
+- 前端页面均为 'use client' 组件，使用 fetch 调用 API
+- 活动创建后默认状态为 `collecting`（意愿收集中）
+- 意愿/投票有 upsert 逻辑，同用户重复提交会覆盖

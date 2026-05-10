@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
+import { hashSecret } from '@/lib/hash';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -17,8 +18,9 @@ export async function POST(request: NextRequest) {
   const intentionDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
   // 生成6位管理口令（如果前端没传）
-  const finalPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+  const rawPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
+  // 哈希存储口令，数据库只存哈希值
   const { data, error } = await client
     .from('activities')
     .insert({
@@ -27,8 +29,8 @@ export async function POST(request: NextRequest) {
       rough_time,
       creator_id,
       creator_name,
-      access_code,
-      passphrase: finalPassphrase,
+      access_code: hashSecret(access_code),
+      passphrase: hashSecret(rawPassphrase),
       status: 'collecting',
       intention_deadline: intentionDeadline,
     })
@@ -39,13 +41,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ data });
+  // 创建时返回原始明文口令（仅此一次），之后API永不返回
+  return NextResponse.json({
+    data: {
+      ...data,
+      passphrase: rawPassphrase,
+      access_code,
+    },
+  });
 }
 
-/** 脱敏函数：移除 passphrase */
+/** 脱敏函数：移除 passphrase 和 access_code 哈希值 */
 function sanitize(activity: Record<string, unknown>) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passphrase: _, ...safe } = activity;
+  const { passphrase: _p, access_code: _a, ...safe } = activity;
   return safe;
 }
 
@@ -99,12 +108,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: safe });
   }
 
-  // 通过活动口令查询（加入活动时使用）
+  // 通过活动口令查询（加入活动时使用）—— 对输入口令哈希后比对
   if (access_code) {
     const { data, error } = await client
       .from('activities')
       .select('*')
-      .eq('access_code', access_code)
+      .eq('access_code', hashSecret(access_code))
       .maybeSingle();
 
     if (error) {
@@ -118,6 +127,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: sanitize(data) });
   }
 
-  // 无参数时拒绝列出所有活动，保护隐私
-  return NextResponse.json({ error: '请提供 id、ids 或 access_code 参数' }, { status: 400 });
+  return NextResponse.json({ error: '请提供 access_code、id 或 ids 参数' }, { status: 400 });
 }

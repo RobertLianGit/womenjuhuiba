@@ -1,3 +1,4 @@
+import { hashSecret } from '@/lib/hash';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
@@ -8,7 +9,7 @@ async function verifyPassphrase(client: ReturnType<typeof getSupabaseClient>, ac
     .select('passphrase')
     .eq('id', activityId)
     .single();
-  return activity && activity.passphrase === passphrase;
+  return activity && activity.passphrase === hashSecret(passphrase);
 }
 
 export async function POST(request: NextRequest) {

@@ -207,8 +207,15 @@ export default function HomePage() {
                         <span className="flex items-center gap-1 text-primary font-semibold"><Crown className="w-3.5 h-3.5" />组织者</span>
                       )}
                     </div>
-                    <div className="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-muted-foreground">
-                      由 {act.creator_name} 创建于 {new Date(act.created_at).toLocaleDateString('zh-CN')}
+                    <div className="mt-3 pt-3 border-t-2 border-outline/15 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">由 {act.creator_name} 创建于 {new Date(act.created_at).toLocaleDateString('zh-CN')}</span>
+                      <Link
+                        href={`/dashboard?activity_id=${act.id}`}
+                        onClick={e => e.stopPropagation()}
+                        className="text-xs font-bold text-accent-blue border-2 border-outline px-2 py-1 hover:bg-accent-blue hover:text-white transition-colors"
+                      >
+                        看板
+                      </Link>
                     </div>
                   </Link>
                 );

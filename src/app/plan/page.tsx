@@ -515,13 +515,26 @@ ${sceneList || '暂无分段，请根据投票结果建议合理的分段安排'
                     {saved ? '已保存 ✓' : '保存方案'}
                   </button>
                   {saved && (
-                    <Link
-                      href={`/register?activity_id=${activityId}`}
+                    <button
+                      onClick={async () => {
+                        const passphrase = getPassphrase(activityId);
+                        const res = await fetch(`/api/activities/${activityId}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: 'registering', passphrase }),
+                        });
+                        const result = await res.json();
+                        if (result.error) {
+                          alert(result.error || '状态更新失败');
+                        } else {
+                          window.location.href = `/register?activity_id=${activityId}`;
+                        }
+                      }}
                       className="bg-success text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
                       style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
                     >
                       开放报名 <ArrowRight className="w-4 h-4" />
-                    </Link>
+                    </button>
                   )}
                 </div>
               </>

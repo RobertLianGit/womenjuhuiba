@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { getUserId, getUserName, setUserName } from '@/lib/party';
-import { Plus, Calendar, PartyPopper } from 'lucide-react';
+import { Plus, Calendar, PartyPopper, Crown, Users } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -12,6 +12,7 @@ interface Activity {
   description: string;
   rough_time: string;
   creator_name: string;
+  creator_id: string;
   status: string;
   created_at: string;
 }
@@ -31,6 +32,9 @@ export default function HomePage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', rough_time: '' });
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'mine' | 'joined'>('mine');
+
+  const userId = getUserId();
 
   useEffect(() => {
     fetch('/api/activities')
@@ -42,14 +46,19 @@ export default function HomePage() {
       .catch(() => setLoading(false));
   }, []);
 
+  const myActivities = activities.filter(a => a.creator_id === userId);
+  const joinedActivities = activities.filter(a => a.creator_id !== userId);
+
+  const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
+
   const handleCreate = async () => {
     if (!form.title || !form.description || !form.rough_time) return;
-    const userId = getUserId();
+    const uid = getUserId();
     const userName = getUserName() || '我';
     const res = await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, creator_id: userId, creator_name: userName }),
+      body: JSON.stringify({ ...form, creator_id: uid, creator_name: userName }),
     });
     const result = await res.json();
     if (result.data) {
@@ -65,7 +74,7 @@ export default function HomePage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Hero */}
-        <section className="mb-12">
+        <section className="mb-10">
           <div className="bg-card border-2 border-outline p-10 md:p-14 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
             <div className="absolute top-4 right-6 w-16 h-16 bg-primary opacity-20 -z-0" />
             <div className="absolute bottom-3 right-20 w-10 h-10 bg-accent-blue opacity-15 -z-0" />
@@ -85,25 +94,40 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Activity List */}
+        {/* Tabs */}
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">近期活动</h2>
-            <span className="text-sm font-medium text-muted-foreground">共 {activities.length} 个活动</span>
+          <div className="flex items-center gap-1 mb-6 border-2 border-outline w-fit" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <button
+              onClick={() => setTab('mine')}
+              className={`px-6 py-3 font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer ${tab === 'mine' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+            >
+              <Crown className="w-4 h-4" />我发起的
+              {myActivities.length > 0 && <span className="ml-1 bg-black/10 px-1.5 py-0.5 text-xs">{myActivities.length}</span>}
+            </button>
+            <button
+              onClick={() => setTab('joined')}
+              className={`px-6 py-3 font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer ${tab === 'joined' ? 'bg-accent-blue text-white' : 'bg-card hover:bg-muted'}`}
+            >
+              <Users className="w-4 h-4" />我参与的
+              {joinedActivities.length > 0 && <span className="ml-1 bg-black/10 px-1.5 py-0.5 text-xs">{joinedActivities.length}</span>}
+            </button>
           </div>
 
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">加载中...</div>
-          ) : activities.length === 0 ? (
+          ) : displayedActivities.length === 0 ? (
             <div className="bg-card border-2 border-outline p-12 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
               <PartyPopper className="w-16 h-16 mx-auto mb-4 text-primary opacity-60" />
-              <p className="text-xl font-bold mb-2">还没有活动</p>
-              <p className="text-muted-foreground mb-6">点击上方按钮，创建你的第一个聚会活动吧</p>
+              <p className="text-xl font-bold mb-2">{tab === 'mine' ? '还没有发起活动' : '还没有参与活动'}</p>
+              <p className="text-muted-foreground mb-6">
+                {tab === 'mine' ? '点击上方按钮，创建你的第一个聚会活动吧' : '通过朋友分享的链接加入聚会活动'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {activities.map((act) => {
+              {displayedActivities.map((act) => {
                 const st = STATUS_MAP[act.status] || STATUS_MAP.collecting;
+                const isCreator = act.creator_id === userId;
                 return (
                   <Link
                     key={act.id}
@@ -119,6 +143,9 @@ export default function HomePage() {
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{act.rough_time}</span>
+                      {isCreator && (
+                        <span className="flex items-center gap-1 text-primary font-semibold"><Crown className="w-3.5 h-3.5" />组织者</span>
+                      )}
                     </div>
                     <div className="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-muted-foreground">
                       由 {act.creator_name} 创建于 {new Date(act.created_at).toLocaleDateString('zh-CN')}

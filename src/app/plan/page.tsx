@@ -24,6 +24,7 @@ interface Activity {
 export default function PlanPage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
+  const isCreator = searchParams.get('is_creator') === '1';
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [plan, setPlan] = useState<{ content: string; prompt_generated: string }>({ content: '', prompt_generated: '' });
@@ -139,7 +140,11 @@ ${sceneList || '暂无分段'}
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">方案确认</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">方案确认</h1>
+            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
+            {!isCreator && <span className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 border-2 border-outline">只读</span>}
+          </div>
           <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
             返回活动
           </Link>
@@ -149,13 +154,15 @@ ${sceneList || '暂无分段'}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">分段设置</h2>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="bg-success text-white border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
-              style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-            >
-              <Plus className="w-4 h-4" />添加分段
-            </button>
+            {isCreator && (
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="bg-success text-white border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
+                style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+              >
+                <Plus className="w-4 h-4" />添加分段
+              </button>
+            )}
           </div>
 
           {scenes.length === 0 ? (
@@ -170,12 +177,14 @@ ${sceneList || '暂无分段'}
                   {scene.time_range && <span className="text-sm text-muted-foreground">{scene.time_range}</span>}
                   {scene.location && <span className="text-sm font-medium">{scene.location}</span>}
                   <div className="flex-1" />
-                  <button
-                    onClick={() => handleDeleteScene(scene.id)}
-                    className="text-error hover:bg-muted border-2 border-outline p-2 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {isCreator && (
+                    <button
+                      onClick={() => handleDeleteScene(scene.id)}
+                      className="text-error hover:bg-muted border-2 border-outline p-2 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -233,56 +242,66 @@ ${sceneList || '暂无分段'}
           )}
         </section>
 
-        {/* Prompt Generation */}
-        <section className="mb-8">
-          <div className="bg-card border-2 border-outline p-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5 text-accent-blue" />Prompt 生成</h2>
-            <button
-              onClick={handleGeneratePrompt}
-              className="bg-accent-blue text-white border-2 border-outline px-5 py-2.5 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer mb-4"
-              style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-            >
-              生成 Prompt
-            </button>
-            {plan.prompt_generated && (
-              <>
-                <textarea
-                  className="w-full border-2 border-outline bg-muted p-4 text-sm font-mono resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={plan.prompt_generated}
-                  onChange={e => setPlan(p => ({ ...p, prompt_generated: e.target.value }))}
-                  rows={10}
-                />
-                <button
-                  onClick={handleCopy}
-                  className="mt-3 bg-card border-2 border-outline px-4 py-2 font-bold text-sm hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-                  {copied ? '已复制' : '一键复制'}
-                </button>
-              </>
-            )}
-          </div>
-        </section>
+        {/* Prompt Generation - Organizer only */}
+        {isCreator && (
+          <section className="mb-8">
+            <div className="bg-card border-2 border-outline p-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Sparkles className="w-5 h-5 text-accent-blue" />Prompt 生成</h2>
+              <button
+                onClick={handleGeneratePrompt}
+                className="bg-accent-blue text-white border-2 border-outline px-5 py-2.5 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer mb-4"
+                style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+              >
+                生成 Prompt
+              </button>
+              {plan.prompt_generated && (
+                <>
+                  <textarea
+                    className="w-full border-2 border-outline bg-muted p-4 text-sm font-mono resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={plan.prompt_generated}
+                    onChange={e => setPlan(p => ({ ...p, prompt_generated: e.target.value }))}
+                    rows={10}
+                  />
+                  <button
+                    onClick={handleCopy}
+                    className="mt-3 bg-card border-2 border-outline px-4 py-2 font-bold text-sm hover:bg-muted transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                    {copied ? '已复制' : '一键复制'}
+                  </button>
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Plan Content */}
         <section>
           <div className="bg-card border-2 border-outline p-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-primary" />方案内容</h2>
-            <textarea
-              className="w-full border-2 border-outline bg-muted p-4 text-base resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-primary/30"
-              value={plan.content}
-              onChange={e => setPlan(p => ({ ...p, content: e.target.value }))}
-              placeholder="粘贴 AI 生成的方案内容，或手动编写..."
-              rows={10}
-            />
-            <button
-              onClick={handleSavePlan}
-              disabled={!plan.content}
-              className="mt-3 bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
-            >
-              {saved ? '已保存' : '保存方案'}
-            </button>
+            {isCreator ? (
+              <>
+                <textarea
+                  className="w-full border-2 border-outline bg-muted p-4 text-base resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={plan.content}
+                  onChange={e => setPlan(p => ({ ...p, content: e.target.value }))}
+                  placeholder="粘贴 AI 生成的方案内容，或手动编写..."
+                  rows={10}
+                />
+                <button
+                  onClick={handleSavePlan}
+                  disabled={!plan.content}
+                  className="mt-3 bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+                >
+                  {saved ? '已保存' : '保存方案'}
+                </button>
+              </>
+            ) : (
+              <div className="bg-muted border-2 border-outline p-4 min-h-[100px] text-base whitespace-pre-wrap">
+                {plan.content || '组织者尚未填写方案内容'}
+              </div>
+            )}
           </div>
         </section>
       </main>

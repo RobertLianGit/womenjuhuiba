@@ -40,6 +40,7 @@ interface Transfer {
 export default function SettlePage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
+  const isCreator = searchParams.get('is_creator') === '1';
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -130,7 +131,10 @@ export default function SettlePage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Receipt className="w-8 h-8 text-primary" />记账结算</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold flex items-center gap-2"><Receipt className="w-8 h-8 text-primary" />记账结算</h1>
+            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
+          </div>
           <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
             返回活动
           </Link>
@@ -158,14 +162,18 @@ export default function SettlePage() {
                       <label className="block text-sm font-bold mb-1">总金额</label>
                       <div className="flex items-center gap-1">
                         <span className="text-lg font-bold">¥</span>
-                        <input
-                          type="number"
-                          className="flex-1 border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          value={amount || ''}
-                          onChange={e => handleAmountChange(scene.id, e.target.value)}
-                          onBlur={() => handleSaveBill(scene.id)}
-                          placeholder="0"
-                        />
+                        {isCreator ? (
+                          <input
+                            type="number"
+                            className="flex-1 border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={amount || ''}
+                            onChange={e => handleAmountChange(scene.id, e.target.value)}
+                            onBlur={() => handleSaveBill(scene.id)}
+                            placeholder="0"
+                          />
+                        ) : (
+                          <div className="flex-1 border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold">{amount || '-'}</div>
+                        )}
                       </div>
                     </div>
                     <div>
@@ -234,17 +242,24 @@ export default function SettlePage() {
           )}
         </section>
 
-        {/* Settle button */}
-        <section>
-          <button
-            onClick={() => { setSettled(true); }}
-            disabled={settled}
-            className="bg-success text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
-          >
-            {settled ? '已结算' : '标记已结算'}
-          </button>
-        </section>
+        {/* Settle button - Organizer only */}
+        {isCreator && (
+          <section>
+            <button
+              onClick={() => { setSettled(true); }}
+              disabled={settled}
+              className="bg-success text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+            >
+              {settled ? '已结算' : '标记已结算'}
+            </button>
+          </section>
+        )}
+        {!isCreator && settled && (
+          <section>
+            <span className="bg-success text-white border-2 border-outline px-4 py-2 font-bold">已结算</span>
+          </section>
+        )}
       </main>
     </div>
   );

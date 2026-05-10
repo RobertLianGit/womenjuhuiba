@@ -27,6 +27,7 @@ interface Participant {
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
+  const isCreator = searchParams.get('is_creator') === '1';
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeScene, setActiveScene] = useState<string>('');
@@ -93,13 +94,33 @@ export default function DashboardPage() {
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
+  if (!isCreator) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-sans">
+        <Navbar />
+        <main className="max-w-6xl mx-auto px-6 py-8">
+          <div className="bg-card border-2 border-outline p-8 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <h2 className="text-2xl font-bold mb-3">仅组织者可访问</h2>
+            <p className="text-muted-foreground mb-4">组织者看板只有活动创建者才能管理参与人。</p>
+            <Link href={`/activity?id=${activityId}`} className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
+              返回活动详情
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold flex items-center gap-2"><LayoutDashboard className="w-8 h-8 text-primary" />组织者看板</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold flex items-center gap-2"><LayoutDashboard className="w-8 h-8 text-primary" />组织者看板</h1>
+            <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>
+          </div>
           <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
             返回活动
           </Link>

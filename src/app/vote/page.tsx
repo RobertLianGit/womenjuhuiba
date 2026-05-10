@@ -29,6 +29,7 @@ const COLORS = ['bg-primary', 'bg-accent-blue', 'bg-success', 'bg-warning', 'bg-
 export default function VotePage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
+  const isCreator = searchParams.get('is_creator') === '1';
   const [tab, setTab] = useState<'submit' | 'vote' | 'result'>('submit');
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
@@ -116,7 +117,10 @@ export default function VotePage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">投票去哪</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">投票去哪</h1>
+            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
+          </div>
           <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
             返回活动
           </Link>
@@ -282,6 +286,30 @@ export default function VotePage() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Organizer: Confirm and advance */}
+            {isCreator && (
+              <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                <h3 className="text-lg font-bold mb-3">组织者操作</h3>
+                <p className="text-sm text-muted-foreground mb-4">确认最终方案后进入方案设置阶段，参与者将无法继续投票。</p>
+                <button
+                  onClick={async () => {
+                    if (sortedProposals.length === 0) return;
+                    if (!confirm(`确定以「${sortedProposals[0].location}」为最终方案？`)) return;
+                    const res = await fetch(`/api/activities/${activityId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: 'plan' }),
+                    });
+                    if (res.ok) window.location.href = `/plan?activity_id=${activityId}&is_creator=1`;
+                  }}
+                  className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                  style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+                >
+                  确认方案，进入方案设置
+                </button>
               </div>
             )}
           </div>

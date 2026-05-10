@@ -27,6 +27,7 @@ interface Scene {
 export default function IntentionPage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
+  const isCreator = searchParams.get('is_creator') === '1';
   const [tab, setTab] = useState<'form' | 'summary'>('form');
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -100,7 +101,10 @@ export default function IntentionPage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">意愿收集</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">意愿收集</h1>
+            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
+          </div>
           <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
             返回活动
           </Link>
@@ -118,7 +122,7 @@ export default function IntentionPage() {
             onClick={() => setTab('summary')}
             className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'summary' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
           >
-            <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />汇总看板</span>
+            <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />汇总看板{isCreator ? '' : '（只读）'}</span>
           </button>
         </div>
 
@@ -289,6 +293,28 @@ export default function IntentionPage() {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            )}
+
+            {/* Organizer Actions */}
+            {isCreator && (
+              <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                <h3 className="text-lg font-bold mb-3">组织者操作</h3>
+                <button
+                  onClick={async () => {
+                    if (!confirm('确定提前结束意愿收集？结束后将进入投票阶段。')) return;
+                    const res = await fetch(`/api/activities/${activityId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: 'voting' }),
+                    });
+                    if (res.ok) window.location.href = `/vote?activity_id=${activityId}&is_creator=1`;
+                  }}
+                  className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                  style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+                >
+                  提前结束收集，进入投票
+                </button>
               </div>
             )}
           </div>

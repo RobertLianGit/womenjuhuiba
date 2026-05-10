@@ -7,7 +7,7 @@ export function Navbar({ activePage }: { activePage?: string }) {
       <div className="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2.5 group">
           <PartyPopper className="text-primary w-6 h-6" />
-          <span className="font-bold text-xl tracking-tight text-foreground">开始聚会吧</span>
+          <span className="font-bold text-xl tracking-tight text-foreground">我们聚会吧<span className="text-xs font-normal align-super ml-0.5 text-secondary">Beta</span></span>
         </Link>
         <nav className="flex items-center gap-1">
           <Link

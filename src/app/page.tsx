@@ -70,7 +70,7 @@ export default function HomePage() {
             <div className="absolute top-4 right-6 w-16 h-16 bg-primary opacity-20 -z-0" />
             <div className="absolute bottom-3 right-20 w-10 h-10 bg-accent-blue opacity-15 -z-0" />
             <div className="relative z-10">
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-3">开始聚会吧</h1>
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-3">我们聚会吧<span className="text-base font-normal align-super ml-1 text-secondary">Beta</span></h1>
               <p className="text-xl md:text-2xl font-medium text-muted-foreground mb-8">从创建到结算，一站式聚会工具</p>
               <button
                 onClick={() => setShowCreateModal(true)}

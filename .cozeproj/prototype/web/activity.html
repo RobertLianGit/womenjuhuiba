@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段 -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- @main-content:start -->
+
+    <!-- ====== 活动标题区 ====== -->
+    <section class="mb-10">
+      <div class="flex flex-wrap items-center gap-4">
+        <h1 id="activity-title" class="text-4xl font-bold tracking-tight">周末爬山团建</h1>
+        <!-- 状态徽章 - 粗野风贴纸标签 -->
+        <span id="status-badge" class="inline-flex items-center px-4 py-1.5 bg-primary text-on-primary border-2 border-outline text-sm font-bold uppercase tracking-wider shadow-[3px_3px_0px_#0A0A0A] -rotate-1">
+          意愿收集中
+        </span>
+      </div>
+    </section>
+
+    <!-- ====== 基础信息区 ====== -->
+    <section class="bg-surface border-2 border-outline p-6 shadow-card mb-10">
+      <p id="activity-desc" class="text-lg font-medium text-on-surface leading-relaxed mb-6">
+        一起出去放松一下！大家看看想去哪里，周末或者下周都行。爬完山可以吃个饭聊聊天，期待大家参与~
+      </p>
+      <div class="flex flex-wrap gap-8">
+        <!-- 时间信息 -->
+        <div class="flex items-center gap-2">
+          <i data-lucide="calendar" class="w-5 h-5 text-accent-blue"></i>
+          <span id="activity-time" class="text-base font-semibold text-on-surface">周末</span>
+        </div>
+        <!-- 组织者信息 -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-xs text-white">初</div>
+          <span id="activity-organizer" class="text-base font-semibold text-on-surface">小初</span>
+          <span class="text-sm text-on-surface-variant">（组织者）</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 状态流转操作区（仅组织者可见） ====== -->
+    <section id="status-actions" class="mb-12">
+      <h2 class="text-2xl font-bold mb-5">操作</h2>
+      <div class="flex flex-wrap gap-4">
+        <!-- 按钮1 - 开始收集意愿 -->
+        <button id="btn-start-intention" class="hidden px-6 py-3 bg-primary text-on-primary border-2 border-outline font-bold text-base shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <span class="flex items-center gap-2">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+            开始收集意愿
+          </span>
+        </button>
+        <!-- 按钮2 - 开始投票 -->
+        <button id="btn-start-vote" class="px-6 py-3 bg-primary text-on-primary border-2 border-outline font-bold text-base shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <span class="flex items-center gap-2">
+            <i data-lucide="vote" class="w-5 h-5"></i>
+            开始投票
+          </span>
+        </button>
+        <!-- 按钮3 - 确认方案 -->
+        <button id="btn-confirm-plan" class="hidden px-6 py-3 bg-primary text-on-primary border-2 border-outline font-bold text-base shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <span class="flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            确认方案
+          </span>
+        </button>
+        <!-- 按钮4 - 开启报名 -->
+        <button id="btn-start-register" class="hidden px-6 py-3 bg-primary text-on-primary border-2 border-outline font-bold text-base shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <span class="flex items-center gap-2">
+            <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+            开启报名
+          </span>
+        </button>
+        <!-- 按钮5 - 活动开始 -->
+        <button id="btn-start-activity" class="hidden px-6 py-3 bg-primary text-on-primary border-2 border-outline font-bold text-base shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <span class="flex items-center gap-2">
+            <i data-lucide="play" class="w-5 h-5"></i>
+            活动开始
+          </span>
+        </button>
+        <!-- 按钮6 - 结算 -->
+        <button id="btn-settle" class="hidden px-6 py-3 bg-primary text-on-primary border-2 border-outline font-bold text-base shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <span class="flex items-center gap-2">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+            结算
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ====== 快捷入口卡片网格 ====== -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-5">快捷入口</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-5">
+
+        <!-- 卡片1 - 意愿收集（已开放） -->
+        <a href="intention.html?id=act_001" id="card-intention" class="block bg-surface border-2 border-outline p-5 shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-primary/20 border-2 border-outline flex items-center justify-center">
+              <i data-lucide="message-circle" class="w-5 h-5 text-primary"></i>
+            </div>
+            <span class="text-lg font-bold text-on-surface">意愿收集</span>
+          </div>
+          <p class="text-sm text-on-surface-variant">表达你想去哪里，预计参与人数</p>
+        </a>
+
+        <!-- 卡片2 - 投票去哪（已开放） -->
+        <a href="vote.html?id=act_001" id="card-vote" class="block bg-surface border-2 border-outline p-5 shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all group">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-primary/20 border-2 border-outline flex items-center justify-center">
+              <i data-lucide="vote" class="w-5 h-5 text-primary"></i>
+            </div>
+            <span class="text-lg font-bold text-on-surface">投票去哪</span>
+          </div>
+          <p class="text-sm text-on-surface-variant">提交方案、投票选出目的地</p>
+        </a>
+
+        <!-- 卡片3 - 方案确认（未开放） -->
+        <a href="plan.html?id=act_001" id="card-plan" class="block bg-surface border-2 border-outline p-5 shadow-[4px_4px_0px_#0A0A0A] opacity-40 pointer-events-none cursor-not-allowed select-none">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-surface-container border-2 border-outline flex items-center justify-center">
+              <i data-lucide="file-check" class="w-5 h-5 text-on-surface-variant"></i>
+            </div>
+            <span class="text-lg font-bold text-on-surface">方案确认</span>
+          </div>
+          <p class="text-sm text-on-surface-variant">设置活动分段，生成方案</p>
+        </a>
+
+        <!-- 卡片4 - 报名（未开放） -->
+        <a href="register.html?id=act_001" id="card-register" class="block bg-surface border-2 border-outline p-5 shadow-[4px_4px_0px_#0A0A0A] opacity-40 pointer-events-none cursor-not-allowed select-none">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-surface-container border-2 border-outline flex items-center justify-center">
+              <i data-lucide="clipboard-list" class="w-5 h-5 text-on-surface-variant"></i>
+            </div>
+            <span class="text-lg font-bold text-on-surface">报名</span>
+          </div>
+          <p class="text-sm text-on-surface-variant">选择参与段落，提交报名</p>
+        </a>
+
+        <!-- 卡片5 - 看板（未开放） -->
+        <a href="dashboard.html?id=act_001" id="card-dashboard" class="block bg-surface border-2 border-outline p-5 shadow-[4px_4px_0px_#0A0A0A] opacity-40 pointer-events-none cursor-not-allowed select-none">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-surface-container border-2 border-outline flex items-center justify-center">
+              <i data-lucide="layout-dashboard" class="w-5 h-5 text-on-surface-variant"></i>
+            </div>
+            <span class="text-lg font-bold text-on-surface">看板</span>
+          </div>
+          <p class="text-sm text-on-surface-variant">查看各段参与人列表</p>
+        </a>
+
+        <!-- 卡片6 - 结算（未开放） -->
+        <a href="settle.html?id=act_001" id="card-settle" class="block bg-surface border-2 border-outline p-5 shadow-[4px_4px_0px_#0A0A0A] opacity-40 pointer-events-none cursor-not-allowed select-none">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-surface-container border-2 border-outline flex items-center justify-center">
+              <i data-lucide="calculator" class="w-5 h-5 text-on-surface-variant"></i>
+            </div>
+            <span class="text-lg font-bold text-on-surface">结算</span>
+          </div>
+          <p class="text-sm text-on-surface-variant">录入账单，自动分摊计算</p>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ====== 分享区域 ====== -->
+    <section class="mb-8">
+      <h2 class="text-2xl font-bold mb-5">分享活动</h2>
+      <div class="bg-surface border-2 border-outline p-5 shadow-card">
+        <div class="flex items-center gap-4">
+          <div class="flex-1 bg-surface-container border-2 border-outline px-4 py-3 font-mono text-sm text-on-surface break-all">
+            https://party.app/activity?id=act_001
+          </div>
+          <button id="btn-copy-link" class="shrink-0 px-5 py-3 bg-accent-blue text-white border-2 border-outline font-bold text-sm shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all flex items-center gap-2">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            复制链接
+          </button>
+        </div>
+        <p class="text-sm text-on-surface-variant mt-3">复制活动链接发给朋友，输入昵称即可参与</p>
+      </div>
+    </section>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <!-- Toast 通知 -->
+  <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-on-surface text-surface px-6 py-3 font-bold text-sm border-2 border-outline shadow-[4px_4px_0px_rgba(0,0,0,0.3)] opacity-0 pointer-events-none transition-opacity duration-200 z-50">
+    <span id="toast-text">链接已复制</span>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirm-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface border-2 border-outline p-6 shadow-dialog max-w-md w-full">
+      <h3 id="confirm-modal-title" class="text-xl font-bold mb-3">确认操作</h3>
+      <p id="confirm-modal-desc" class="text-base text-on-surface-variant mb-6">确定要执行此操作吗？</p>
+      <div class="flex gap-3 justify-end">
+        <button id="btn-confirm-cancel" class="px-5 py-2.5 bg-surface-container text-on-surface border-2 border-outline font-bold text-sm shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[1px_1px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all">
+          取消
+        </button>
+        <button id="btn-confirm-ok" class="px-5 py-2.5 bg-primary text-on-primary border-2 border-outline font-bold text-sm shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[1px_1px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all">
+          确认
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>lucide.createIcons();</script>
+
+  <script>
+    $(function() {
+      // === 工具函数 ===
+
+      // 显示 Toast 通知
+      function showToast(msg) {
+        $('#toast-text').text(msg);
+        $('#toast').css('opacity', '1');
+        setTimeout(function() {
+          $('#toast').css('opacity', '0');
+        }, 2000);
+      }
+
+      // 显示确认弹窗
+      function showConfirm(title, desc, onConfirm) {
+        $('#confirm-modal-title').text(title);
+        $('#confirm-modal-desc').text(desc);
+        $('#confirm-modal').removeClass('hidden');
+        // 解绑旧事件，绑定新确认回调
+        $('#btn-confirm-ok').off('click').on('click', function() {
+          $('#confirm-modal').addClass('hidden');
+          if (onConfirm) onConfirm();
+        });
+      }
+
+      // 关闭确认弹窗
+      $('#btn-confirm-cancel').on('click', function() {
+        $('#confirm-modal').addClass('hidden');
+      });
+
+      // 点击弹窗背景关闭
+      $('#confirm-modal').on('click', function(e) {
+        if ($(e.target).is('#confirm-modal')) {
+          $('#confirm-modal').addClass('hidden');
+        }
+      });
+
+      // === 复制链接 ===
+      $('#btn-copy-link').on('click', function() {
+        // 复制活动链接到剪贴板
+        // 1. 获取链接文本
+        // 2. 使用 navigator.clipboard.writeText 写入剪贴板
+        // 3. 显示成功 Toast
+        var linkText = 'https://party.app/activity?id=act_001';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(linkText).then(function() {
+            showToast('链接已复制到剪贴板');
+          });
+        } else {
+          // 降级方案：创建临时 input 复制
+          var $temp = $('<input>').val(linkText).appendTo('body').select();
+          document.execCommand('copy');
+          $temp.remove();
+          showToast('链接已复制到剪贴板');
+        }
+      });
+
+      // === 状态流转按钮交互 ===
+
+      // 开始收集意愿 - 点击后：
+      // 1. 弹出确认弹窗"确定开始收集意愿？"
+      // 2. 确认后更新状态徽章为"意愿收集中"（粉色背景）
+      // 3. 显示"意愿收集"和"投票"入口卡片为可点击状态
+      // 4. 隐藏此按钮，显示"开始投票"按钮
+      $('#btn-start-intention').on('click', function() {
+        showConfirm('开始收集意愿', '确定要开始收集大家的意愿吗？', function() {
+          showToast('已开始收集意愿');
+        });
+      });
+
+      // 开始投票 - 点击后：
+      // 1. 弹出确认弹窗"确定开始投票？意愿收集将关闭"
+      // 2. 确认后更新状态徽章为"投票中"（蓝色背景）
+      // 3. 高亮"投票"卡片为可点击
+      // 4. 隐藏此按钮，显示"确认方案"按钮
+      $('#btn-start-vote').on('click', function() {
+        showConfirm('开始投票', '确定开始投票？意愿收集将关闭，无法再提交意愿。', function() {
+          showToast('已开始投票');
+        });
+      });
+
+      // 确认方案 - 点击后：
+      // 1. 弹出确认弹窗"确定确认方案？"
+      // 2. 确认后更新状态徽章为"方案确认"（黄色背景）
+      // 3. 高亮"方案确认"卡片为可点击
+      // 4. 隐藏此按钮，显示"开启报名"按钮
+      $('#btn-confirm-plan').on('click', function() {
+        showConfirm('确认方案', '确定确认方案？投票将关闭。', function() {
+          showToast('方案已确认');
+        });
+      });
+
+      // 开启报名 - 点击后：
+      // 1. 弹出确认弹窗"确定开启报名？"
+      // 2. 确认后更新状态徽章为"报名中"（绿色背景）
+      // 3. 高亮"报名"和"看板"卡片为可点击
+      // 4. 隐藏此按钮，显示"活动开始"按钮
+      $('#btn-start-register').on('click', function() {
+        showConfirm('开启报名', '确定开启报名？', function() {
+          showToast('报名已开启');
+        });
+      });
+
+      // 活动开始 - 点击后：
+      // 1. 弹出确认弹窗"确定标记活动开始？"
+      // 2. 确认后更新状态徽章为"进行中"（蓝色背景）
+      // 3. 高亮"结算"卡片为可点击
+      // 4. 隐藏此按钮，显示"结算"按钮
+      $('#btn-start-activity').on('click', function() {
+        showConfirm('活动开始', '确定标记活动开始？', function() {
+          showToast('活动已开始');
+        });
+      });
+
+      // 结算 - 点击后：
+      // 1. 弹出确认弹窗"确定进入结算？"
+      // 2. 确认后更新状态徽章为"已结算"（灰色背景）
+      // 3. 隐藏此按钮，操作区清空
+      $('#btn-settle').on('click', function() {
+        showConfirm('结算', '确定进入结算？活动将标记为已结算。', function() {
+          showToast('已进入结算');
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

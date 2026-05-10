@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件 -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-outline bg-surface-container rounded-md transition-colors" aria-current="page">首页</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end 导航组件 -->
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- @main-content:start -->
+
+    <!-- 英雄区 -->
+    <section id="hero-section" class="mb-12">
+      <div class="bg-surface border-2 border-outline p-10 md:p-14 relative" style="box-shadow: 8px 8px 0 #0A0A0A;">
+        <!-- 装饰色块 -->
+        <div class="absolute top-4 right-6 w-16 h-16 bg-primary opacity-20 -z-0"></div>
+        <div class="absolute bottom-3 right-20 w-10 h-10 bg-accent-blue opacity-15 -z-0"></div>
+
+        <div class="relative z-10">
+          <h1 class="text-5xl md:text-6xl font-bold tracking-tight text-on-surface mb-3" style="text-shadow: 3px 3px 0 #FFF34D;">开始聚会吧</h1>
+          <p class="text-xl md:text-2xl font-medium text-on-surface-variant mb-8">从创建到结算，一站式聚会工具</p>
+          <button id="btn-create-activity" class="bg-primary text-on-primary border-2 border-outline px-8 py-4 text-xl font-bold tracking-wide hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-[4px_4px_0_#0A0A0A] transition-all cursor-pointer" style="box-shadow: 8px 8px 0 #0A0A0A;">
+            <span class="flex items-center gap-3">
+              <i data-lucide="plus" class="w-6 h-6"></i>
+              创建活动
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 近期活动列表 -->
+    <section id="activities-section">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-on-surface">近期活动</h2>
+        <span class="text-sm font-medium text-on-surface-variant">共 5 个活动</span>
+      </div>
+
+      <div id="activity-list" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <!-- 列表-活动1 -->
+        <a href="activity.html?id=1" id="activity-card-1" class="activity-card bg-surface border-2 border-outline p-5 block hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group" style="box-shadow: 6px 6px 0 #0A0A0A;">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-lg font-bold text-on-surface group-hover:text-primary transition-colors">周末烧烤派对</h3>
+            <span class="inline-block bg-primary text-on-primary border-2 border-outline px-2.5 py-1 text-xs font-bold -rotate-2 shrink-0 ml-3">意愿收集中</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-on-surface-variant">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>周末
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>12 人
+            </span>
+          </div>
+          <div class="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-on-surface-variant">
+            创建于 2025-01-15
+          </div>
+        </a>
+
+        <!-- 列表-活动2 -->
+        <a href="activity.html?id=2" id="activity-card-2" class="activity-card bg-surface border-2 border-outline p-5 block hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group" style="box-shadow: 6px 6px 0 #0A0A0A;">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-lg font-bold text-on-surface group-hover:text-primary transition-colors">年末聚餐</h3>
+            <span class="inline-block bg-accent-blue text-white border-2 border-outline px-2.5 py-1 text-xs font-bold rotate-1 shrink-0 ml-3">投票中</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-on-surface-variant">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>12月底
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>8 人
+            </span>
+          </div>
+          <div class="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-on-surface-variant">
+            创建于 2025-01-12
+          </div>
+        </a>
+
+        <!-- 列表-活动3 -->
+        <a href="activity.html?id=3" id="activity-card-3" class="activity-card bg-surface border-2 border-outline p-5 block hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group" style="box-shadow: 6px 6px 0 #0A0A0A;">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-lg font-bold text-on-surface group-hover:text-primary transition-colors">密室逃脱团建</h3>
+            <span class="inline-block bg-success text-white border-2 border-outline px-2.5 py-1 text-xs font-bold -rotate-1 shrink-0 ml-3">报名中</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-on-surface-variant">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>下周六
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>6 人
+            </span>
+          </div>
+          <div class="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-on-surface-variant">
+            创建于 2025-01-10
+          </div>
+        </a>
+
+        <!-- 列表-活动4 -->
+        <a href="activity.html?id=4" id="activity-card-4" class="activity-card bg-surface border-2 border-outline p-5 block hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group" style="box-shadow: 6px 6px 0 #0A0A0A;">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-lg font-bold text-on-surface group-hover:text-primary transition-colors">春游踏青</h3>
+            <span class="inline-block bg-warning text-on-primary border-2 border-outline px-2.5 py-1 text-xs font-bold rotate-2 shrink-0 ml-3">方案确认中</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-on-surface-variant">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>3月初
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>15 人
+            </span>
+          </div>
+          <div class="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-on-surface-variant">
+            创建于 2025-01-08
+          </div>
+        </a>
+
+        <!-- 列表-活动5 -->
+        <a href="activity.html?id=5" id="activity-card-5" class="activity-card bg-surface border-2 border-outline p-5 block hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all group" style="box-shadow: 6px 6px 0 #0A0A0A;">
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-lg font-bold text-on-surface group-hover:text-primary transition-colors">桌游之夜</h3>
+            <span class="inline-block bg-surface-container-highest text-on-surface border-2 border-outline px-2.5 py-1 text-xs font-bold -rotate-3 shrink-0 ml-3">已结算</span>
+          </div>
+          <div class="flex items-center gap-4 text-sm text-on-surface-variant">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>上周五
+            </span>
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>9 人
+            </span>
+          </div>
+          <div class="mt-3 pt-3 border-t-2 border-outline/15 text-xs text-on-surface-variant">
+            创建于 2025-01-03
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 空状态（默认隐藏，有活动时不显示） -->
+    <section id="empty-state" class="hidden">
+      <div class="bg-surface border-2 border-outline p-12 text-center" style="box-shadow: 6px 6px 0 #0A0A0A;">
+        <div class="w-20 h-20 bg-surface-container-high border-2 border-outline mx-auto mb-6 flex items-center justify-center" style="box-shadow: 4px 4px 0 #0A0A0A;">
+          <i data-lucide="party-popper" class="w-10 h-10 text-primary"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-on-surface mb-3">还没有活动</h3>
+        <p class="text-base text-on-surface-variant mb-6">快来创建第一个活动，召唤朋友们一起聚会吧！</p>
+        <button id="btn-create-activity-empty" class="bg-primary text-on-primary border-2 border-outline px-6 py-3 text-lg font-bold hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all cursor-pointer" style="box-shadow: 6px 6px 0 #0A0A0A;">
+          <span class="flex items-center gap-2">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            创建活动
+          </span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 创建活动弹窗 -->
+    <div id="modal-create-activity" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface border-2 border-outline w-full max-w-md overflow-y-auto" style="box-shadow: 8px 8px 0 #0A0A0A;">
+        <div class="p-6">
+          <!-- 弹窗标题 -->
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-on-surface">创建新活动</h2>
+            <button id="btn-modal-close" class="w-8 h-8 border-2 border-outline bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer" style="box-shadow: 2px 2px 0 #0A0A0A;">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- 表单 -->
+          <form id="form-create-activity" class="space-y-5">
+            <!-- 活动名称 -->
+            <div>
+              <label for="input-activity-name" class="block text-sm font-bold text-on-surface mb-1.5">活动名称 <span class="text-error">*</span></label>
+              <input id="input-activity-name" type="text" placeholder="例如：周末烧烤派对" class="w-full bg-surface-container border-2 border-outline px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <p id="error-activity-name" class="text-xs text-error mt-1 hidden">请输入活动名称</p>
+            </div>
+
+            <!-- 活动描述 -->
+            <div>
+              <label for="input-activity-desc" class="block text-sm font-bold text-on-surface mb-1.5">活动描述 <span class="text-error">*</span></label>
+              <textarea id="input-activity-desc" rows="3" placeholder="简单描述一下这次聚会" class="w-full bg-surface-container border-2 border-outline px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"></textarea>
+              <p id="error-activity-desc" class="text-xs text-error mt-1 hidden">请输入活动描述</p>
+            </div>
+
+            <!-- 大致时间 -->
+            <div>
+              <label for="input-activity-time" class="block text-sm font-bold text-on-surface mb-1.5">大致时间 <span class="text-error">*</span></label>
+              <input id="input-activity-time" type="text" placeholder="例如：周末、下周五、春节前" class="w-full bg-surface-container border-2 border-outline px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              <p id="error-activity-time" class="text-xs text-error mt-1 hidden">请输入大致时间</p>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="flex items-center gap-3 pt-2">
+              <button type="submit" id="btn-create-submit" class="flex-1 bg-primary text-on-primary border-2 border-outline px-6 py-3 text-base font-bold hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all cursor-pointer" style="box-shadow: 6px 6px 0 #0A0A0A;">
+                创建
+              </button>
+              <button type="button" id="btn-create-cancel" class="flex-1 bg-surface-container text-on-surface border-2 border-outline px-6 py-3 text-base font-bold hover:bg-surface-container-high active:translate-x-[2px] active:translate-y-[2px] transition-all cursor-pointer" style="box-shadow: 6px 6px 0 #0A0A0A;">
+                取消
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <script>
+    $(function () {
+      // 打开创建活动弹窗
+      $('#btn-create-activity').on('click', function () {
+        $('#modal-create-activity').removeClass('hidden');
+      });
+
+      // 空状态的创建按钮也打开弹窗
+      $('#btn-create-activity-empty').on('click', function () {
+        $('#modal-create-activity').removeClass('hidden');
+      });
+
+      // 关闭弹窗 - 点击关闭按钮
+      $('#btn-modal-close').on('click', function () {
+        $('#modal-create-activity').addClass('hidden');
+        // 清除错误提示
+        $('[id^="error-"]').addClass('hidden');
+      });
+
+      // 关闭弹窗 - 点击取消按钮
+      $('#btn-create-cancel').on('click', function () {
+        $('#modal-create-activity').addClass('hidden');
+        // 清除表单和错误提示
+        $('#form-create-activity')[0].reset();
+        $('[id^="error-"]').addClass('hidden');
+      });
+
+      // 关闭弹窗 - 点击遮罩层
+      $('#modal-create-activity').on('click', function (e) {
+        if ($(e.target).is('#modal-create-activity')) {
+          $('#modal-create-activity').addClass('hidden');
+          $('[id^="error-"]').addClass('hidden');
+        }
+      });
+
+      // 提交创建活动表单
+      $('#form-create-activity').on('submit', function (e) {
+        e.preventDefault();
+
+        var isValid = true;
+        var name = $('#input-activity-name').val().trim();
+        var desc = $('#input-activity-desc').val().trim();
+        var time = $('#input-activity-time').val().trim();
+
+        // 验证活动名称
+        if (!name) {
+          $('#error-activity-name').removeClass('hidden');
+          isValid = false;
+        } else {
+          $('#error-activity-name').addClass('hidden');
+        }
+
+        // 验证活动描述
+        if (!desc) {
+          $('#error-activity-desc').removeClass('hidden');
+          isValid = false;
+        } else {
+          $('#error-activity-desc').addClass('hidden');
+        }
+
+        // 验证大致时间
+        if (!time) {
+          $('#error-activity-time').removeClass('hidden');
+          isValid = false;
+        } else {
+          $('#error-activity-time').addClass('hidden');
+        }
+
+        if (isValid) {
+          // 创建成功，跳转到活动详情页
+          // 实际项目中应先调用API创建活动，获取id后跳转
+          window.location.href = 'activity.html?id=new';
+        }
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

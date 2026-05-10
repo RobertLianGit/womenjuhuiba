@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段 -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+        <a href="intention.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-primary bg-primary/10 rounded-md transition-colors" aria-current="page">意愿收集</a>
+        <a href="vote.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">投票去哪</a>
+        <a href="plan.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">方案确认</a>
+        <a href="register.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">报名</a>
+        <a href="settle.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">记账结算</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- @main-content:start -->
+
+    <!-- 活动名称 -->
+    <div class="mb-6">
+      <div class="flex items-center gap-3 mb-1">
+        <a href="activity.html" class="text-on-surface-variant hover:text-on-surface transition-colors">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </a>
+        <h1 class="text-3xl font-bold tracking-tight">周末去哪玩</h1>
+        <span class="inline-flex items-center px-3 py-1 bg-primary text-on-primary border-2 border-outline text-xs font-bold uppercase">意愿收集中</span>
+      </div>
+      <p class="text-on-surface-variant text-sm ml-8">由 <strong class="text-on-surface">小初</strong> 发起 · 截止时间 <strong class="text-on-surface">2025-01-20 18:00</strong></p>
+    </div>
+
+    <!-- 双 Tab 切换 -->
+    <div class="flex gap-0 mb-8">
+      <button id="tab-fill" class="px-8 py-3 text-lg font-bold border-2 border-outline bg-surface shadow-card transition-all" aria-current="page">
+        <i data-lucide="pen-line" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i>
+        填写意愿
+      </button>
+      <button id="tab-summary" class="px-8 py-3 text-lg font-bold border-2 border-l-0 border-outline bg-surface-container text-on-surface-variant transition-all">
+        <i data-lucide="bar-chart-3" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i>
+        汇总看板
+      </button>
+    </div>
+
+    <!-- ============ 填写意愿 Tab ============ -->
+    <div id="panel-fill">
+      <div class="bg-surface border-2 border-outline shadow-card p-8 max-w-2xl">
+        <h2 class="text-2xl font-bold mb-6">表达你的意愿</h2>
+
+        <!-- 昵称输入框（必填，粗边框+浅色背景） -->
+        <div class="mb-5">
+          <label for="input-nickname" class="block text-sm font-bold mb-2 uppercase tracking-wide">
+            昵称 <span class="text-error">*</span>
+          </label>
+          <input id="input-nickname" type="text" placeholder="输入你的昵称"
+            class="w-full bg-surface-container border-2 border-outline rounded-md px-4 py-3 text-base font-medium
+                   text-on-surface placeholder:text-on-surface-variant/50
+                   focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors" required />
+        </div>
+
+        <!-- 想去哪 文本输入框 -->
+        <div class="mb-5">
+          <label for="input-wants" class="block text-sm font-bold mb-2 uppercase tracking-wide">
+            想去哪 <span class="text-on-surface-variant font-normal">(选填)</span>
+          </label>
+          <input id="input-wants" type="text" placeholder="如：三里屯、798艺术区…"
+            class="w-full bg-surface-container border-2 border-outline rounded-md px-4 py-3 text-base font-medium
+                   text-on-surface placeholder:text-on-surface-variant/50
+                   focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors" />
+        </div>
+
+        <!-- 预计人数 数字输入 -->
+        <div class="mb-5">
+          <label for="input-people" class="block text-sm font-bold mb-2 uppercase tracking-wide">
+            预计人数 <span class="text-on-surface-variant font-normal">(默认1，选填)</span>
+          </label>
+          <div class="flex items-center gap-3">
+            <button id="btn-people-minus" class="w-10 h-10 bg-surface-container border-2 border-outline flex items-center justify-center font-bold text-xl hover:bg-surface-container-high active:translate-y-0.5 transition-all">−</button>
+            <input id="input-people" type="number" value="1" min="1" max="20"
+              class="w-20 text-center bg-surface-container border-2 border-outline rounded-md px-3 py-3 text-base font-bold
+                     text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors" />
+            <button id="btn-people-plus" class="w-10 h-10 bg-surface-container border-2 border-outline flex items-center justify-center font-bold text-xl hover:bg-surface-container-high active:translate-y-0.5 transition-all">+</button>
+          </div>
+        </div>
+
+        <!-- 参与时间段多选 -->
+        <div class="mb-8">
+          <label class="block text-sm font-bold mb-3 uppercase tracking-wide">
+            参与时间段 <span class="text-on-surface-variant font-normal">(多选)</span>
+          </label>
+          <div class="space-y-3">
+            <!-- 时间段-午餐 -->
+            <label class="flex items-center gap-3 bg-surface-container border-2 border-outline rounded-md px-4 py-3 cursor-pointer hover:bg-surface-container-high transition-colors">
+              <input id="cb-lunch" type="checkbox" class="w-5 h-5 accent-primary" checked />
+              <div>
+                <span class="font-bold">午餐</span>
+                <span class="text-on-surface-variant text-sm ml-2">12:00 - 14:00</span>
+              </div>
+            </label>
+            <!-- 时间段-下午茶 -->
+            <label class="flex items-center gap-3 bg-surface-container border-2 border-outline rounded-md px-4 py-3 cursor-pointer hover:bg-surface-container-high transition-colors">
+              <input id="cb-afternoon" type="checkbox" class="w-5 h-5 accent-primary" checked />
+              <div>
+                <span class="font-bold">下午茶</span>
+                <span class="text-on-surface-variant text-sm ml-2">14:30 - 17:00</span>
+              </div>
+            </label>
+            <!-- 时间段-晚餐 -->
+            <label class="flex items-center gap-3 bg-surface-container border-2 border-outline rounded-md px-4 py-3 cursor-pointer hover:bg-surface-container-high transition-colors">
+              <input id="cb-dinner" type="checkbox" class="w-5 h-5 accent-primary" />
+              <div>
+                <span class="font-bold">晚餐</span>
+                <span class="text-on-surface-variant text-sm ml-2">18:00 - 20:00</span>
+              </div>
+            </label>
+            <!-- 时间段-夜场 -->
+            <label class="flex items-center gap-3 bg-surface-container border-2 border-outline rounded-md px-4 py-3 cursor-pointer hover:bg-surface-container-high transition-colors">
+              <input id="cb-night" type="checkbox" class="w-5 h-5 accent-primary" />
+              <div>
+                <span class="font-bold">夜场</span>
+                <span class="text-on-surface-variant text-sm ml-2">20:30 - 23:00</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 提交按钮（粗野风大按钮） -->
+        <button id="btn-submit-intention"
+          class="w-full bg-primary text-on-primary border-2 border-outline px-6 py-4 text-xl font-bold
+                 shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px]
+                 active:shadow-none active:translate-x-[4px] active:translate-y-[4px]
+                 transition-all inline-flex items-center justify-center gap-2">
+          <i data-lucide="send" class="w-5 h-5"></i>
+          提交意愿
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ 汇总看板 Tab ============ -->
+    <div id="panel-summary" class="hidden">
+
+      <!-- 总人数统计卡片（大号数字+粗边框+错位阴影） -->
+      <div class="bg-primary-container border-2 border-outline p-8 mb-8 relative" style="box-shadow: 6px 6px 0px #0A0A0A;">
+        <div class="absolute top-2 left-2 bg-primary text-on-primary border-2 border-outline px-2 py-0.5 text-xs font-bold">LIVE</div>
+        <p class="text-sm font-bold uppercase tracking-widest text-on-surface-variant mb-1">总人数</p>
+        <div class="flex items-baseline gap-2">
+          <span id="stat-total" class="text-7xl font-bold leading-none">15</span>
+          <span class="text-xl font-bold text-on-surface-variant">人</span>
+        </div>
+        <p class="text-sm text-on-surface-variant mt-2">来自 <strong class="text-on-surface">6</strong> 人提交的意愿</p>
+      </div>
+
+      <!-- 三栏布局：地点汇总 + 时间段分布 + 未表态 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+        <!-- 想去的地方汇总列表 -->
+        <div class="bg-surface border-2 border-outline shadow-card p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-5 h-5 text-primary"></i>
+            想去的地方
+          </h3>
+          <div class="space-y-3">
+            <!-- 地点-三里屯 -->
+            <div class="flex items-center justify-between bg-surface-container border-2 border-outline px-4 py-3">
+              <span class="font-bold">三里屯</span>
+              <span class="bg-accent-blue text-white px-3 py-0.5 text-sm font-bold border-2 border-outline">3人提及</span>
+            </div>
+            <!-- 地点-798艺术区 -->
+            <div class="flex items-center justify-between bg-surface-container border-2 border-outline px-4 py-3">
+              <span class="font-bold">798艺术区</span>
+              <span class="bg-accent-blue text-white px-3 py-0.5 text-sm font-bold border-2 border-outline">2人提及</span>
+            </div>
+            <!-- 地点-国贸 -->
+            <div class="flex items-center justify-between bg-surface-container border-2 border-outline px-4 py-3">
+              <span class="font-bold">国贸</span>
+              <span class="bg-accent-blue text-white px-3 py-0.5 text-sm font-bold border-2 border-outline">1人提及</span>
+            </div>
+            <!-- 地点-后海 -->
+            <div class="flex items-center justify-between bg-surface-container border-2 border-outline px-4 py-3">
+              <span class="font-bold">后海</span>
+              <span class="bg-accent-blue text-white px-3 py-0.5 text-sm font-bold border-2 border-outline">1人提及</span>
+            </div>
+            <!-- 地点-南锣鼓巷 -->
+            <div class="flex items-center justify-between bg-surface-container border-2 border-outline px-4 py-3">
+              <span class="font-bold">南锣鼓巷</span>
+              <span class="bg-accent-blue text-white px-3 py-0.5 text-sm font-bold border-2 border-outline">1人提及</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 时间段分布图（简单条形统计） -->
+        <div class="bg-surface border-2 border-outline shadow-card p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="clock" class="w-5 h-5 text-primary"></i>
+            时间段分布
+          </h3>
+          <div class="space-y-4">
+            <!-- 时间段-午餐 -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-sm">午餐</span>
+                <span class="text-sm font-bold text-on-surface-variant">5人</span>
+              </div>
+              <div class="w-full bg-surface-container border-2 border-outline h-8 relative">
+                <div id="bar-lunch" class="bg-primary h-full border-r-2 border-outline transition-all" style="width: 83%;"></div>
+              </div>
+            </div>
+            <!-- 时间段-下午茶 -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-sm">下午茶</span>
+                <span class="text-sm font-bold text-on-surface-variant">6人</span>
+              </div>
+              <div class="w-full bg-surface-container border-2 border-outline h-8 relative">
+                <div id="bar-afternoon" class="bg-primary h-full border-r-2 border-outline transition-all" style="width: 100%;"></div>
+              </div>
+            </div>
+            <!-- 时间段-晚餐 -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-sm">晚餐</span>
+                <span class="text-sm font-bold text-on-surface-variant">3人</span>
+              </div>
+              <div class="w-full bg-surface-container border-2 border-outline h-8 relative">
+                <div id="bar-dinner" class="bg-accent-blue h-full border-r-2 border-outline transition-all" style="width: 50%;"></div>
+              </div>
+            </div>
+            <!-- 时间段-夜场 -->
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="font-bold text-sm">夜场</span>
+                <span class="text-sm font-bold text-on-surface-variant">2人</span>
+              </div>
+              <div class="w-full bg-surface-container border-2 border-outline h-8 relative">
+                <div id="bar-night" class="bg-accent-blue h-full border-r-2 border-outline transition-all" style="width: 33%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 意愿明细列表 -->
+      <div class="bg-surface border-2 border-outline shadow-card p-6 mb-8">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="list" class="w-5 h-5 text-primary"></i>
+          意愿明细
+        </h3>
+        <div class="divide-y-2 divide-outline">
+          <!-- 意愿-阿强 -->
+          <div class="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-container/50 transition-colors">
+            <span class="col-span-2 text-sm font-bold text-on-surface">阿强</span>
+            <span class="col-span-3 text-sm text-on-surface-variant">三里屯</span>
+            <span class="col-span-2 text-sm font-bold text-accent-blue">3人</span>
+            <span class="col-span-5 text-sm text-on-surface-variant">午餐 · 下午茶</span>
+          </div>
+          <!-- 意愿-小美 -->
+          <div class="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-container/50 transition-colors">
+            <span class="col-span-2 text-sm font-bold text-on-surface">小美</span>
+            <span class="col-span-3 text-sm text-on-surface-variant">798艺术区</span>
+            <span class="col-span-2 text-sm font-bold text-accent-blue">2人</span>
+            <span class="col-span-5 text-sm text-on-surface-variant">下午茶 · 晚餐</span>
+          </div>
+          <!-- 意愿-大壮 -->
+          <div class="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-container/50 transition-colors">
+            <span class="col-span-2 text-sm font-bold text-on-surface">大壮</span>
+            <span class="col-span-3 text-sm text-on-surface-variant">国贸</span>
+            <span class="col-span-2 text-sm font-bold text-accent-blue">4人</span>
+            <span class="col-span-5 text-sm text-on-surface-variant">午餐 · 下午茶 · 晚餐</span>
+          </div>
+          <!-- 意愿-甜甜 -->
+          <div class="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-container/50 transition-colors">
+            <span class="col-span-2 text-sm font-bold text-on-surface">甜甜</span>
+            <span class="col-span-3 text-sm text-on-surface-variant">后海</span>
+            <span class="col-span-2 text-sm font-bold text-accent-blue">1人</span>
+            <span class="col-span-5 text-sm text-on-surface-variant">下午茶</span>
+          </div>
+          <!-- 意愿-老王 -->
+          <div class="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-container/50 transition-colors">
+            <span class="col-span-2 text-sm font-bold text-on-surface">老王</span>
+            <span class="col-span-3 text-sm text-on-surface-variant">三里屯</span>
+            <span class="col-span-2 text-sm font-bold text-accent-blue">2人</span>
+            <span class="col-span-5 text-sm text-on-surface-variant">下午茶 · 夜场</span>
+          </div>
+          <!-- 意愿-小初 -->
+          <div class="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-container/50 transition-colors">
+            <span class="col-span-2 text-sm font-bold text-on-surface">小初</span>
+            <span class="col-span-3 text-sm text-on-surface-variant">南锣鼓巷 + 三里屯</span>
+            <span class="col-span-2 text-sm font-bold text-accent-blue">3人</span>
+            <span class="col-span-5 text-sm text-on-surface-variant">午餐 · 下午茶</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 未表态人员列表 -->
+      <div class="bg-surface border-2 border-outline shadow-card p-6 mb-8">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="user-x" class="w-5 h-5 text-warning"></i>
+          未表态人员
+        </h3>
+        <div class="flex flex-wrap gap-3">
+          <!-- 未表态-阿杰 -->
+          <div class="bg-warning/15 border-2 border-outline px-4 py-2 flex items-center gap-2">
+            <i data-lucide="user" class="w-4 h-4 text-warning"></i>
+            <span class="font-bold text-sm">阿杰</span>
+          </div>
+          <!-- 未表态-小丽 -->
+          <div class="bg-warning/15 border-2 border-outline px-4 py-2 flex items-center gap-2">
+            <i data-lucide="user" class="w-4 h-4 text-warning"></i>
+            <span class="font-bold text-sm">小丽</span>
+          </div>
+          <!-- 未表态-铁柱 -->
+          <div class="bg-warning/15 border-2 border-outline px-4 py-2 flex items-center gap-2">
+            <i data-lucide="user" class="w-4 h-4 text-warning"></i>
+            <span class="font-bold text-sm">铁柱</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 截止时间显示+调整按钮 -->
+      <div class="bg-surface-container border-2 border-outline shadow-card p-6 mb-8">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-widest text-on-surface-variant mb-1">截止时间</h3>
+            <p id="deadline-display" class="text-2xl font-bold">2025-01-20 18:00</p>
+          </div>
+          <button id="btn-adjust-deadline"
+            class="bg-accent-blue text-white border-2 border-outline px-6 py-3 text-sm font-bold
+                   shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px]
+                   active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all
+                   inline-flex items-center gap-2">
+            <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+            调整截止时间
+          </button>
+        </div>
+      </div>
+
+      <!-- 提前结束意愿收集按钮 -->
+      <button id="btn-end-intention"
+        class="w-full max-w-2xl bg-error text-white border-2 border-outline px-6 py-4 text-lg font-bold
+               shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px]
+               active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all
+               inline-flex items-center justify-center gap-2">
+        <i data-lucide="square" class="w-5 h-5"></i>
+        提前结束意愿收集
+      </button>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <!-- 截止时间调整弹窗 -->
+  <div id="modal-deadline" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface border-2 border-outline shadow-dialog max-w-md w-full p-6">
+      <h3 class="text-xl font-bold mb-4">调整截止时间</h3>
+      <div class="mb-4">
+        <label for="input-deadline-date" class="block text-sm font-bold mb-2 uppercase tracking-wide">日期</label>
+        <input id="input-deadline-date" type="date" value="2025-01-20"
+          class="w-full bg-surface-container border-2 border-outline rounded-md px-4 py-3 text-base font-medium
+                 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors" />
+      </div>
+      <div class="mb-6">
+        <label for="input-deadline-time" class="block text-sm font-bold mb-2 uppercase tracking-wide">时间</label>
+        <input id="input-deadline-time" type="time" value="18:00"
+          class="w-full bg-surface-container border-2 border-outline rounded-md px-4 py-3 text-base font-medium
+                 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors" />
+      </div>
+      <div class="flex gap-3">
+        <button id="btn-save-deadline"
+          class="flex-1 bg-primary text-on-primary border-2 border-outline px-4 py-3 text-sm font-bold
+                 shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px]
+                 active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">保存</button>
+        <button id="btn-cancel-deadline"
+          class="flex-1 bg-surface-container text-on-surface border-2 border-outline px-4 py-3 text-sm font-bold
+                 hover:bg-surface-container-high transition-colors">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提前结束确认弹窗 -->
+  <div id="modal-confirm-end" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface border-2 border-outline shadow-dialog max-w-md w-full p-6">
+      <h3 class="text-xl font-bold mb-3">确认提前结束？</h3>
+      <p class="text-on-surface-variant mb-6">结束后参与者将无法再提交意愿，当前已有数据将保留并进入投票阶段。</p>
+      <div class="flex gap-3">
+        <button id="btn-confirm-end"
+          class="flex-1 bg-error text-white border-2 border-outline px-4 py-3 text-sm font-bold
+                 shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px]
+                 active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">确认结束</button>
+        <button id="btn-cancel-end"
+          class="flex-1 bg-surface-container text-on-surface border-2 border-outline px-4 py-3 text-sm font-bold
+                 hover:bg-surface-container-high transition-colors">再想想</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提交成功 Toast -->
+  <div id="toast-success" class="fixed top-20 left-1/2 -translate-x-1/2 bg-success text-white border-2 border-outline px-8 py-4 text-lg font-bold shadow-float z-50 hidden transition-all">
+    <i data-lucide="check-circle" class="w-5 h-5 inline-block mr-2 align-text-bottom"></i>
+    意愿提交成功！
+  </div>
+
+  <script>
+    $(function () {
+
+      // === Tab 切换 ===
+      $('#tab-fill').on('click', function () {
+        $('#tab-fill').addClass('bg-surface shadow-card').removeClass('bg-surface-container text-on-surface-variant border-l-0').attr('aria-current', 'page');
+        $('#tab-summary').removeClass('bg-surface shadow-card').addClass('bg-surface-container text-on-surface-variant border-l-0').removeAttr('aria-current');
+        $('#panel-fill').removeClass('hidden');
+        $('#panel-summary').addClass('hidden');
+      });
+
+      $('#tab-summary').on('click', function () {
+        $('#tab-summary').addClass('bg-surface shadow-card').removeClass('bg-surface-container text-on-surface-variant border-l-0').attr('aria-current', 'page');
+        $('#tab-fill').removeClass('bg-surface shadow-card').addClass('bg-surface-container text-on-surface-variant border-l-0').removeAttr('aria-current');
+        $('#panel-summary').removeClass('hidden');
+        $('#panel-fill').addClass('hidden');
+      });
+
+      // === 预计人数加减 ===
+      $('#btn-people-plus').on('click', function () {
+        var val = parseInt($('#input-people').val()) || 1;
+        if (val < 20) {
+          $('#input-people').val(val + 1);
+        }
+      });
+
+      $('#btn-people-minus').on('click', function () {
+        var val = parseInt($('#input-people').val()) || 1;
+        if (val > 1) {
+          $('#input-people').val(val - 1);
+        }
+      });
+
+      // === 提交意愿 ===
+      $('#btn-submit-intention').on('click', function () {
+        var nickname = $('#input-nickname').val().trim();
+        if (!nickname) {
+          $('#input-nickname').addClass('ring-2 ring-error/50');
+          $('#input-nickname').focus();
+          return;
+        }
+        $('#input-nickname').removeClass('ring-2 ring-error/50');
+
+        // 显示成功 Toast
+        $('#toast-success').removeClass('hidden');
+        setTimeout(function () {
+          $('#toast-success').addClass('hidden');
+        }, 2500);
+
+        // 清空表单
+        $('#input-nickname').val('');
+        $('#input-wants').val('');
+        $('#input-people').val(1);
+        $('#cb-lunch, #cb-afternoon, #cb-dinner, #cb-night').prop('checked', false);
+      });
+
+      // === 截止时间调整弹窗 ===
+      $('#btn-adjust-deadline').on('click', function () {
+        $('#modal-deadline').removeClass('hidden');
+      });
+
+      $('#btn-cancel-deadline').on('click', function () {
+        $('#modal-deadline').addClass('hidden');
+      });
+
+      $('#btn-save-deadline').on('click', function () {
+        var date = $('#input-deadline-date').val();
+        var time = $('#input-deadline-time').val();
+        if (date && time) {
+          $('#deadline-display').text(date + ' ' + time);
+        }
+        $('#modal-deadline').addClass('hidden');
+      });
+
+      // 点击弹窗外部关闭
+      $('#modal-deadline').on('click', function (e) {
+        if ($(e.target).is('#modal-deadline')) {
+          $('#modal-deadline').addClass('hidden');
+        }
+      });
+
+      // === 提前结束意愿收集确认弹窗 ===
+      $('#btn-end-intention').on('click', function () {
+        $('#modal-confirm-end').removeClass('hidden');
+      });
+
+      $('#btn-cancel-end').on('click', function () {
+        $('#modal-confirm-end').addClass('hidden');
+      });
+
+      $('#btn-confirm-end').on('click', function () {
+        // 确认结束后应实现：
+        // 1. 调用后端 API 将活动状态从 intention 流转为 voting
+        // 2. 将已收集的意愿数据汇总生成投票选项
+        // 3. 跳转到活动详情页或投票页面
+        $('#modal-confirm-end').addClass('hidden');
+        window.location.href = 'vote.html?id=act_001';
+      });
+
+      $('#modal-confirm-end').on('click', function (e) {
+        if ($(e.target).is('#modal-confirm-end')) {
+          $('#modal-confirm-end').addClass('hidden');
+        }
+      });
+
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

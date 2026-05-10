@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+        <a href="activity.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">活动详情</a>
+        <a href="intention.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">意愿收集</a>
+        <a href="vote.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">投票去哪</a>
+        <a href="plan.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">方案确认</a>
+        <a href="register.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">报名</a>
+        <a href="dashboard.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">看板</a>
+        <a href="settle.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-outline bg-primary/10 text-primary rounded-md transition-colors" aria-current="page">记账结算</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!-- @main-content:start -->
+  <main class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- 页面标题 -->
+    <div class="flex items-center gap-4 mb-10">
+      <div class="w-3 h-10 bg-primary border-2 border-outline"></div>
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight">记账结算</h1>
+        <p class="text-on-surface-variant text-base font-medium mt-1">周末大聚 · 录入账单，自动分摊，一目了然谁欠谁</p>
+      </div>
+    </div>
+
+    <!-- ========== 第一区：分段账单卡片列表 ========== -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
+        <i data-lucide="receipt" class="w-5 h-5 text-primary"></i>
+        分段账单
+      </h2>
+
+      <div class="grid gap-6">
+
+        <!-- 列表-午餐账单 -->
+        <div id="bill-lunch" class="bg-surface border-3 border-outline p-6 relative" style="border-width:3px; box-shadow: 5px 5px 0px #0A0A0A;">
+          <div class="flex items-start justify-between mb-5">
+            <div>
+              <span class="text-2xl font-bold">午餐</span>
+              <span class="inline-block ml-3 px-3 py-1 bg-accent-blue text-white text-xs font-bold border-2 border-outline">12:00-14:00</span>
+            </div>
+            <span class="text-xs font-semibold text-on-surface-variant bg-surface-container px-3 py-1 border-2 border-outline">川味馆</span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">总额 (¥)</label>
+              <input id="input-lunch-total" type="number" value="680" class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-2xl font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40" placeholder="0" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">参与人数</label>
+              <div class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-2xl font-bold text-accent-blue opacity-80">8</div>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">人均 (¥)</label>
+              <div id="lunch-per-capita" class="w-full bg-primary/15 border-2 border-primary px-4 py-3 text-2xl font-bold text-primary">85.0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 列表-下午茶账单 -->
+        <div id="bill-tea" class="bg-surface border-3 border-outline p-6 relative" style="border-width:3px; box-shadow: 6px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between mb-5">
+            <div>
+              <span class="text-2xl font-bold">下午茶</span>
+              <span class="inline-block ml-3 px-3 py-1 bg-accent-blue text-white text-xs font-bold border-2 border-outline">15:00-17:00</span>
+            </div>
+            <span class="text-xs font-semibold text-on-surface-variant bg-surface-container px-3 py-1 border-2 border-outline">星巴克臻选</span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">总额 (¥)</label>
+              <input id="input-tea-total" type="number" value="320" class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-2xl font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40" placeholder="0" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">参与人数</label>
+              <div class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-2xl font-bold text-accent-blue opacity-80">6</div>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">人均 (¥)</label>
+              <div id="tea-per-capita" class="w-full bg-primary/15 border-2 border-primary px-4 py-3 text-2xl font-bold text-primary">53.3</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 列表-晚餐账单 -->
+        <div id="bill-dinner" class="bg-surface border-3 border-outline p-6 relative" style="border-width:3px; box-shadow: 4px 6px 0px #0A0A0A;">
+          <div class="flex items-start justify-between mb-5">
+            <div>
+              <span class="text-2xl font-bold">晚餐</span>
+              <span class="inline-block ml-3 px-3 py-1 bg-accent-blue text-white text-xs font-bold border-2 border-outline">18:00-21:00</span>
+            </div>
+            <span class="text-xs font-semibold text-on-surface-variant bg-surface-container px-3 py-1 border-2 border-outline">海底捞</span>
+          </div>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">总额 (¥)</label>
+              <input id="input-dinner-total" type="number" value="1200" class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-2xl font-bold text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/40" placeholder="0" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">参与人数</label>
+              <div class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-2xl font-bold text-accent-blue opacity-80">7</div>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2 block">人均 (¥)</label>
+              <div id="dinner-per-capita" class="w-full bg-primary/15 border-2 border-primary px-4 py-3 text-2xl font-bold text-primary">171.4</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== 第二区：个人应付汇总表 ========== -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
+        <i data-lucide="calculator" class="w-5 h-5 text-primary"></i>
+        个人应付汇总
+      </h2>
+
+      <div class="bg-surface border-3 border-outline overflow-hidden" style="border-width:3px; box-shadow: 5px 5px 0px #0A0A0A;">
+        <!-- 表头 -->
+        <div class="grid grid-cols-3 bg-surface-container border-b-3 border-outline" style="border-bottom-width:3px;">
+          <div class="px-6 py-4 text-sm font-bold uppercase tracking-widest text-on-surface">姓名</div>
+          <div class="px-6 py-4 text-sm font-bold uppercase tracking-widest text-on-surface">参与段次</div>
+          <div class="px-6 py-4 text-sm font-bold uppercase tracking-widest text-on-surface text-right">应付总额</div>
+        </div>
+
+        <!-- 列表-张伟 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface">
+          <div class="px-6 py-4 text-base font-bold">张伟</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">下午茶</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">晚餐</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥309.7</div>
+        </div>
+
+        <!-- 列表-李娜 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface-container-lowest">
+          <div class="px-6 py-4 text-base font-bold">李娜</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">下午茶</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥138.3</div>
+        </div>
+
+        <!-- 列表-王磊 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface">
+          <div class="px-6 py-4 text-base font-bold">王磊</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">晚餐</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥256.4</div>
+        </div>
+
+        <!-- 列表-赵敏 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface-container-lowest">
+          <div class="px-6 py-4 text-base font-bold">赵敏</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥85.0</div>
+        </div>
+
+        <!-- 列表-陈晓 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface">
+          <div class="px-6 py-4 text-base font-bold">陈晓</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">下午茶</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">晚餐</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥224.7</div>
+        </div>
+
+        <!-- 列表-刘洋 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface-container-lowest">
+          <div class="px-6 py-4 text-base font-bold">刘洋</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">下午茶</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">晚餐</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥309.7</div>
+        </div>
+
+        <!-- 列表-周芳 -->
+        <div class="grid grid-cols-3 border-b-2 border-outline/30 bg-surface">
+          <div class="px-6 py-4 text-base font-bold">周芳</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">晚餐</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥256.4</div>
+        </div>
+
+        <!-- 列表-孙鹏 -->
+        <div class="grid grid-cols-3 bg-surface-container-lowest">
+          <div class="px-6 py-4 text-base font-bold">孙鹏</div>
+          <div class="px-6 py-4 flex flex-wrap gap-2">
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">午餐</span>
+            <span class="px-2 py-0.5 bg-accent-blue/15 text-accent-blue text-xs font-bold border border-accent-blue/30">下午茶</span>
+          </div>
+          <div class="px-6 py-4 text-right text-xl font-bold text-primary">¥138.3</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== 第三区："谁欠谁"转账指引 ========== -->
+    <section class="mb-12">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-3">
+        <i data-lucide="arrow-left-right" class="w-5 h-5 text-primary"></i>
+        转账指引
+        <span class="text-sm font-semibold text-on-surface-variant ml-2">谁欠谁，一目了然</span>
+      </h2>
+
+      <div class="grid gap-5">
+
+        <!-- 列表-转账1: 赵敏 → 张伟 -->
+        <div id="transfer-1" class="bg-surface border-3 border-outline p-5 flex items-center justify-between" style="border-width:3px; box-shadow: 4px 4px 0px #0A0A0A;">
+          <div class="flex items-center gap-4 flex-1">
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">赵敏</div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="arrow-right" class="w-6 h-6 text-primary"></i>
+            </div>
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">张伟</div>
+          </div>
+          <div class="text-2xl font-bold text-primary">¥224.7</div>
+        </div>
+
+        <!-- 列表-转账2: 李娜 → 王磊 -->
+        <div id="transfer-2" class="bg-surface border-3 border-outline p-5 flex items-center justify-between" style="border-width:3px; box-shadow: 5px 3px 0px #0A0A0A;">
+          <div class="flex items-center gap-4 flex-1">
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">李娜</div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="arrow-right" class="w-6 h-6 text-primary"></i>
+            </div>
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">王磊</div>
+          </div>
+          <div class="text-2xl font-bold text-primary">¥118.1</div>
+        </div>
+
+        <!-- 列表-转账3: 孙鹏 → 刘洋 -->
+        <div id="transfer-3" class="bg-surface border-3 border-outline p-5 flex items-center justify-between" style="border-width:3px; box-shadow: 3px 5px 0px #0A0A0A;">
+          <div class="flex items-center gap-4 flex-1">
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">孙鹏</div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="arrow-right" class="w-6 h-6 text-primary"></i>
+            </div>
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">刘洋</div>
+          </div>
+          <div class="text-2xl font-bold text-primary">¥171.4</div>
+        </div>
+
+        <!-- 列表-转账4: 李娜 → 周芳 -->
+        <div id="transfer-4" class="bg-surface border-3 border-outline p-5 flex items-center justify-between" style="border-width:3px; box-shadow: 4px 5px 0px #0A0A0A;">
+          <div class="flex items-center gap-4 flex-1">
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">李娜</div>
+            <div class="flex items-center gap-1">
+              <i data-lucide="arrow-right" class="w-6 h-6 text-primary"></i>
+            </div>
+            <div class="px-4 py-2 bg-accent-blue/15 border-2 border-accent-blue/40 text-base font-bold text-accent-blue">周芳</div>
+          </div>
+          <div class="text-2xl font-bold text-primary">¥85.0</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========== 第四区：标记已结算 ========== -->
+    <section class="mb-8">
+      <div class="bg-surface border-3 border-outline p-6 flex items-center justify-between" style="border-width:3px; box-shadow: 5px 5px 0px #0A0A0A;">
+        <div class="flex items-center gap-4">
+          <i data-lucide="badge-check" class="w-6 h-6 text-success"></i>
+          <div>
+            <p class="text-lg font-bold">全部结清了？</p>
+            <p class="text-sm text-on-surface-variant">标记为已结算后，活动状态将更新为"已结算"</p>
+          </div>
+        </div>
+        <button id="btn-settle" class="bg-primary text-on-primary border-2 border-outline px-8 py-3 text-lg font-bold shadow-card hover:shadow-float active:shadow-none active:translate-x-1 active:translate-y-1 transition-all">
+          标记已结算
+        </button>
+      </div>
+    </section>
+
+  </main>
+  <!-- @main-content:end -->
+
+  <!-- 结算成功 Toast -->
+  <div id="toast-settled" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-success text-white border-2 border-outline px-8 py-4 text-lg font-bold shadow-float hidden">
+    <i data-lucide="check-circle" class="w-5 h-5 inline mr-2"></i>已标记为已结算！
+  </div>
+
+  <script>
+    $(function() {
+
+      // 金额输入 - 实时计算人均
+      $('#input-lunch-total').on('input', function() {
+        var total = parseFloat($(this).val()) || 0;
+        var perCapita = (total / 8).toFixed(1);
+        $('#lunch-per-capita').text(perCapita);
+      });
+
+      $('#input-tea-total').on('input', function() {
+        var total = parseFloat($(this).val()) || 0;
+        var perCapita = (total / 6).toFixed(1);
+        $('#tea-per-capita').text(perCapita);
+      });
+
+      $('#input-dinner-total').on('input', function() {
+        var total = parseFloat($(this).val()) || 0;
+        var perCapita = (total / 7).toFixed(1);
+        $('#dinner-per-capita').text(perCapita);
+      });
+
+      // 标记已结算按钮
+      $('#btn-settle').on('click', function() {
+        // 后续应实现：调用后端 API 更新活动状态为 settled
+        // 1. 发送 PUT /api/activities/:id 请求，将 status 更新为 'settled'
+        // 2. 成功后更新按钮状态为禁用（已结算），显示 Toast 提示
+        // 3. 失败时显示错误提示
+        $(this).prop('disabled', true)
+          .text('已结算')
+          .removeClass('bg-primary text-on-primary')
+          .addClass('bg-surface-container text-on-surface-variant cursor-not-allowed');
+
+        $('#toast-settled').removeClass('hidden');
+        setTimeout(function() {
+          $('#toast-settled').addClass('hidden');
+        }, 3000);
+      });
+
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

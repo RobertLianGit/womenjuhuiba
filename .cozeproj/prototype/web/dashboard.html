@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+        <a href="activity.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">活动详情</a>
+        <a href="intention.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">意愿收集</a>
+        <a href="vote.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">投票去哪</a>
+        <a href="plan.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">方案确认</a>
+        <a href="register.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">报名</a>
+        <a href="dashboard.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-outline bg-primary text-on-primary rounded-md transition-colors" aria-current="page">组织者看板</a>
+        <a href="settle.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">记账结算</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题区 -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold tracking-tight">组织者看板</h1>
+      <p class="text-on-surface-variant text-sm mt-1 font-medium">周末大聚会 · 实时查看和管理各段参与人</p>
+    </div>
+
+    <!-- 统计摘要区 -->
+    <div id="stats-summary" class="grid grid-cols-3 gap-4 mb-8">
+      <!-- 统计-当前段总人数 -->
+      <div class="bg-surface border-2 border-outline p-5 shadow-card">
+        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">当前段总人数</p>
+        <p id="stat-total-people" class="text-4xl font-bold">9</p>
+      </div>
+      <!-- 统计-报名来源 -->
+      <div class="bg-surface border-2 border-outline p-5 shadow-card" style="box-shadow: 5px 5px 0px #0A0A0A;">
+        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">报名来源</p>
+        <div class="flex items-end gap-3 mt-2">
+          <div>
+            <span class="text-3xl font-bold text-success">6</span>
+            <span class="text-sm font-bold text-success ml-1">报名</span>
+          </div>
+          <div>
+            <span class="text-3xl font-bold text-accent-blue">1</span>
+            <span class="text-sm font-bold text-accent-blue ml-1">手动</span>
+          </div>
+          <div>
+            <span class="text-3xl font-bold text-orange-500">1</span>
+            <span class="text-sm font-bold text-orange-500 ml-1">临时</span>
+          </div>
+        </div>
+      </div>
+      <!-- 统计-来源比例 -->
+      <div class="bg-surface border-2 border-outline p-5 shadow-card" style="box-shadow: 3px 3px 0px #0A0A0A;">
+        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1">报名 vs 手动/临时</p>
+        <div class="mt-2">
+          <div class="w-full h-6 border-2 border-outline bg-surface-container flex overflow-hidden">
+            <div id="stat-bar-register" class="bg-success h-full" style="width: 75%;"></div>
+            <div id="stat-bar-manual" class="bg-accent-blue h-full" style="width: 12.5%;"></div>
+            <div id="stat-bar-temp" class="bg-orange-500 h-full" style="width: 12.5%;"></div>
+          </div>
+          <div class="flex justify-between mt-1.5">
+            <span id="stat-pct-register" class="text-xs font-bold text-success">75%</span>
+            <span id="stat-pct-manual" class="text-xs font-bold text-accent-blue">12.5%</span>
+            <span id="stat-pct-temp" class="text-xs font-bold text-orange-500">12.5%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分段Tab切换 -->
+    <div id="segment-tabs" class="flex gap-3 mb-6">
+      <button id="tab-lunch" class="segment-tab px-6 py-3 text-sm font-bold border-2 border-outline bg-primary text-on-primary shadow-card transition-all active-tab" data-segment="lunch">
+        <i data-lucide="utensils" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i>午餐
+      </button>
+      <button id="tab-tea" class="segment-tab px-6 py-3 text-sm font-bold border-2 border-outline bg-surface text-on-surface shadow-card transition-all" data-segment="tea">
+        <i data-lucide="coffee" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i>下午茶
+      </button>
+      <button id="tab-dinner" class="segment-tab px-6 py-3 text-sm font-bold border-2 border-outline bg-surface text-on-surface shadow-card transition-all" data-segment="dinner">
+        <i data-lucide="wine" class="w-4 h-4 inline-block mr-1 align-text-bottom"></i>晚餐
+      </button>
+    </div>
+
+    <!-- ===== 午餐参与人列表 ===== -->
+    <div id="panel-lunch" class="segment-panel">
+      <div id="card-list-lunch" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <!-- 列表-午餐-参与人1 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">王小明</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="王小明" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人2 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 3px 5px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">李大壮</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">2</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="李大壮" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人3 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 5px 3px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">张美丽</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="张美丽" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人4 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 6px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">赵六六</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="赵六六" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人5 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 6px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">孙小兰</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="孙小兰" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人6 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 3px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">周胖子</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="周胖子" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人7 (手动添加) -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 5px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">吴大强</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-accent-blue/20 text-accent-blue border-2 border-accent-blue">手动添加</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="吴大强" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-午餐-参与人8 (临时，有角标) -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 5px 6px 0px #0A0A0A;">
+          <!-- 临时参与人角标 -->
+          <div class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 border-2 border-outline z-10" style="transform: rotate(3deg);">临时</div>
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">钱来来</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-orange-500/20 text-orange-500 border-2 border-orange-500">临时</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="钱来来" data-segment="lunch">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 下午茶参与人列表 ===== -->
+    <div id="panel-tea" class="segment-panel hidden">
+      <div id="card-list-tea" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <!-- 列表-下午茶-参与人1 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">王小明</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="王小明" data-segment="tea">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-下午茶-参与人2 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 3px 5px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">张美丽</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="张美丽" data-segment="tea">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-下午茶-参与人3 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 5px 3px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">赵六六</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="赵六六" data-segment="tea">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-下午茶-参与人4 (手动添加) -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 6px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">陈小翠</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-accent-blue/20 text-accent-blue border-2 border-accent-blue">手动添加</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="陈小翠" data-segment="tea">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-下午茶-参与人5 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 6px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">周胖子</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="周胖子" data-segment="tea">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-下午茶-参与人6 (临时，有角标) -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 5px 6px 0px #0A0A0A;">
+          <!-- 临时参与人角标 -->
+          <div class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 border-2 border-outline z-10" style="transform: rotate(-2deg);">临时</div>
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">何大鹏</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-orange-500/20 text-orange-500 border-2 border-orange-500">临时</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="何大鹏" data-segment="tea">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 晚餐参与人列表 ===== -->
+    <div id="panel-dinner" class="segment-panel hidden">
+      <div id="card-list-dinner" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <!-- 列表-晚餐-参与人1 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">王小明</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="王小明" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-晚餐-参与人2 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 3px 5px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">李大壮</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">2</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="李大壮" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-晚餐-参与人3 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 5px 3px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">张美丽</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="张美丽" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-晚餐-参与人4 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 4px 6px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">孙小兰</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="孙小兰" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-晚餐-参与人5 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 6px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">周胖子</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="周胖子" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-晚餐-参与人6 (手动添加) -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 3px 4px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">刘铁柱</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-accent-blue/20 text-accent-blue border-2 border-accent-blue">手动添加</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="刘铁柱" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+        <!-- 列表-晚餐-参与人7 -->
+        <div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: 5px 5px 0px #0A0A0A;">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-lg font-bold">赵六六</h3>
+              <p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">1</span></p>
+            </div>
+            <span class="source-tag inline-block px-3 py-1 text-xs font-bold bg-success/20 text-success border-2 border-success">报名</span>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="赵六六" data-segment="dinner">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部操作栏 -->
+    <div id="action-bar" class="sticky bottom-0 bg-surface border-t-2 border-outline p-4 -mx-6 px-6 flex items-center gap-4 z-30">
+      <button id="btn-add-participant" class="bg-primary text-on-primary border-2 border-outline px-6 py-3 text-sm font-bold shadow-card hover:opacity-90 active:scale-[0.97] transition-all inline-flex items-center gap-2">
+        <i data-lucide="user-plus" class="w-4 h-4"></i>手动添加参与人
+      </button>
+      <button id="btn-copy-list" class="bg-accent-blue text-white border-2 border-outline px-6 py-3 text-sm font-bold shadow-card hover:opacity-90 active:scale-[0.97] transition-all inline-flex items-center gap-2" style="box-shadow: 4px 4px 0px #0A0A0A;">
+        <i data-lucide="copy" class="w-4 h-4"></i>复制名单
+      </button>
+      <a href="activity.html" class="ml-auto bg-surface-container text-on-surface border-2 border-outline px-6 py-3 text-sm font-bold shadow-card hover:bg-surface-container-high active:scale-[0.97] transition-all inline-flex items-center gap-2" style="box-shadow: 3px 3px 0px #0A0A0A;">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>返回活动
+      </a>
+    </div>
+
+    <!-- 模态框：添加参与人 -->
+    <div id="modal-add-participant" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface border-2 border-outline shadow-dialog max-w-md w-full p-6" style="box-shadow: 8px 8px 0px #0A0A0A;">
+        <h2 class="text-2xl font-bold mb-6">添加参与人</h2>
+        <div class="space-y-5">
+          <!-- 姓名 -->
+          <div>
+            <label for="input-name" class="block text-sm font-bold mb-1.5">姓名 <span class="text-error">*</span></label>
+            <input id="input-name" type="text" placeholder="输入参与人姓名" class="w-full bg-surface-container border-2 border-outline px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+          </div>
+          <!-- 参与人数 -->
+          <div>
+            <label for="input-people-count" class="block text-sm font-bold mb-1.5">参与人数</label>
+            <input id="input-people-count" type="number" min="1" value="1" class="w-full bg-surface-container border-2 border-outline px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+          </div>
+          <!-- 是否临时参与人 -->
+          <div class="flex items-center justify-between border-2 border-outline p-3 bg-surface-container">
+            <span class="text-sm font-bold">是否临时参与人</span>
+            <button id="toggle-temp" class="relative w-12 h-7 border-2 border-outline bg-surface-container transition-colors" role="switch" aria-checked="false">
+              <span class="toggle-dot absolute top-0.5 left-0.5 w-5 h-5 bg-on-surface-variant transition-transform"></span>
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-8">
+          <button id="btn-confirm-add" class="flex-1 bg-primary text-on-primary border-2 border-outline py-3 text-sm font-bold shadow-card hover:opacity-90 active:scale-[0.97] transition-all">添加</button>
+          <button id="btn-cancel-add" class="flex-1 bg-surface-container text-on-surface border-2 border-outline py-3 text-sm font-bold hover:bg-surface-container-high active:scale-[0.97] transition-all">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-surface px-6 py-3 text-sm font-bold border-2 border-outline shadow-float z-50 hidden transition-all" style="box-shadow: 6px 6px 0px rgba(255,77,184,0.5);">
+      <span id="toast-text"></span>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <script>
+    $(function() {
+      // === Tab 切换 ===
+      $('#segment-tabs').on('click', '.segment-tab', function() {
+        var segment = $(this).data('segment');
+        // 切换 Tab 激活态
+        $('.segment-tab').removeClass('bg-primary text-on-primary').addClass('bg-surface text-on-surface');
+        $(this).removeClass('bg-surface text-on-surface').addClass('bg-primary text-on-primary');
+        // 切换面板显示
+        $('.segment-panel').addClass('hidden');
+        $('#panel-' + segment).removeClass('hidden');
+      });
+
+      // === 删除参与人 ===
+      // 点击删除按钮后：
+      // 1. 弹出确认提示（使用 confirm）
+      // 2. 确认后移除该卡片 DOM 节点
+      // 3. 显示删除成功 Toast
+      $('#panel-lunch, #panel-tea, #panel-dinner').on('click', '.btn-delete', function() {
+        var name = $(this).data('name');
+        if (confirm('确认删除参与人「' + name + '」？')) {
+          $(this).closest('.participant-card').fadeOut(200, function() {
+            $(this).remove();
+          });
+          showToast('已删除「' + name + '」');
+        }
+      });
+
+      // === 模态框：手动添加参与人 ===
+      $('#btn-add-participant').on('click', function() {
+        // 重置表单
+        $('#input-name').val('');
+        $('#input-people-count').val(1);
+        // 重置临时开关
+        $('#toggle-temp').attr('aria-checked', 'false').removeClass('bg-primary').addClass('bg-surface-container');
+        $('#toggle-temp .toggle-dot').css('transform', 'translateX(0)').removeClass('bg-white').addClass('bg-on-surface-variant');
+        // 显示模态框
+        $('#modal-add-participant').removeClass('hidden');
+        $('#input-name').focus();
+      });
+
+      // 临时参与人开关
+      $('#toggle-temp').on('click', function() {
+        var isChecked = $(this).attr('aria-checked') === 'true';
+        if (isChecked) {
+          $(this).attr('aria-checked', 'false').removeClass('bg-primary').addClass('bg-surface-container');
+          $(this).find('.toggle-dot').css('transform', 'translateX(0)').removeClass('bg-white').addClass('bg-on-surface-variant');
+        } else {
+          $(this).attr('aria-checked', 'true').removeClass('bg-surface-container').addClass('bg-primary');
+          $(this).find('.toggle-dot').css('transform', 'translateX(1.25rem)').removeClass('bg-on-surface-variant').addClass('bg-white');
+        }
+      });
+
+      // 确认添加
+      // 点击添加后：
+      // 1. 校验姓名必填
+      // 2. 获取当前激活的 Tab 对应段
+      // 3. 根据是否临时创建不同样式的卡片 DOM
+      // 4. 插入到对应段的卡片列表中
+      // 5. 关闭模态框，显示成功 Toast
+      $('#btn-confirm-add').on('click', function() {
+        var name = $('#input-name').val().trim();
+        var count = parseInt($('#input-people-count').val()) || 1;
+        var isTemp = $('#toggle-temp').attr('aria-checked') === 'true';
+
+        if (!name) {
+          $('#input-name').focus().css('border-color', '#ef4444');
+          setTimeout(function() { $('#input-name').css('border-color', ''); }, 1500);
+          return;
+        }
+
+        // 获取当前激活段
+        var activeSegment = $('.segment-tab.bg-primary').data('segment') || 'lunch';
+        var targetList = $('#card-list-' + activeSegment);
+
+        // 根据来源构建不同标签
+        var sourceLabel, sourceClass, sourceBorder;
+        if (isTemp) {
+          sourceLabel = '临时';
+          sourceClass = 'bg-orange-500/20 text-orange-500';
+          sourceBorder = 'border-orange-500';
+        } else {
+          sourceLabel = '手动添加';
+          sourceClass = 'bg-accent-blue/20 text-accent-blue';
+          sourceBorder = 'border-accent-blue';
+        }
+
+        // 构建角标 HTML（仅临时参与人）
+        var badgeHtml = '';
+        if (isTemp) {
+          var rotation = (Math.random() * 6 - 3).toFixed(1);
+          badgeHtml = '<div class="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 border-2 border-outline z-10" style="transform: rotate(' + rotation + 'deg);">临时</div>';
+        }
+
+        // 随机错位阴影
+        var shadowX = Math.floor(Math.random() * 4) + 3;
+        var shadowY = Math.floor(Math.random() * 4) + 3;
+
+        var cardHtml = '<div class="participant-card bg-surface border-2 border-outline p-4 shadow-card relative" style="box-shadow: ' + shadowX + 'px ' + shadowY + 'px 0px #0A0A0A;">' +
+          badgeHtml +
+          '<div class="flex items-start justify-between">' +
+            '<div>' +
+              '<h3 class="text-lg font-bold">' + name + '</h3>' +
+              '<p class="text-sm text-on-surface-variant font-medium mt-0.5">参与人数：<span class="font-bold text-on-surface">' + count + '</span></p>' +
+            '</div>' +
+            '<span class="source-tag inline-block px-3 py-1 text-xs font-bold ' + sourceClass + ' border-2 ' + sourceBorder + '">' + sourceLabel + '</span>' +
+          '</div>' +
+          '<div class="flex justify-end mt-3">' +
+            '<button class="btn-delete w-8 h-8 border-2 border-outline bg-surface-container hover:bg-error/10 flex items-center justify-center transition-colors" data-name="' + name + '" data-segment="' + activeSegment + '">' +
+              '<i data-lucide="trash-2" class="w-4 h-4 text-error"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+
+        targetList.append(cardHtml);
+        lucide.createIcons();
+
+        // 关闭模态框
+        $('#modal-add-participant').addClass('hidden');
+        showToast('已添加参与人「' + name + '」');
+      });
+
+      // 取消添加
+      $('#btn-cancel-add').on('click', function() {
+        $('#modal-add-participant').addClass('hidden');
+      });
+
+      // 点击遮罩关闭
+      $('#modal-add-participant').on('click', function(e) {
+        if ($(e.target).is('#modal-add-participant')) {
+          $('#modal-add-participant').addClass('hidden');
+        }
+      });
+
+      // === 复制名单 ===
+      // 点击复制后：
+      // 1. 获取当前激活 Tab 对应段的全部参与人信息
+      // 2. 拼接为文本格式："姓名 (x人) [来源]"
+      // 3. 使用 navigator.clipboard.writeText 复制到剪贴板
+      // 4. 显示复制成功 Toast
+      $('#btn-copy-list').on('click', function() {
+        var activeSegment = $('.segment-tab.bg-primary').data('segment') || 'lunch';
+        var segmentLabel = { lunch: '午餐', tea: '下午茶', dinner: '晚餐' };
+        var lines = [segmentLabel[activeSegment] + ' 参与人名单：'];
+        lines.push('─'.repeat(20));
+
+        var cards = $('#card-list-' + activeSegment + ' .participant-card');
+        cards.each(function() {
+          var name = $(this).find('h3').text();
+          var count = $(this).find('.font-bold.text-on-surface').text();
+          var source = $(this).find('.source-tag').text();
+          lines.push(name + ' (' + count + '人) [' + source + ']');
+        });
+
+        var totalPeople = 0;
+        cards.each(function() {
+          totalPeople += parseInt($(this).find('.font-bold.text-on-surface').text()) || 0;
+        });
+        lines.push('─'.repeat(20));
+        lines.push('总人数：' + totalPeople + '人');
+
+        var text = lines.join('\n');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+        }
+        showToast('名单已复制到剪贴板');
+      });
+
+      // === Toast 提示 ===
+      function showToast(msg) {
+        var $toast = $('#toast');
+        $('#toast-text').text(msg);
+        $toast.removeClass('hidden');
+        setTimeout(function() {
+          $toast.addClass('hidden');
+        }, 2000);
+      }
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

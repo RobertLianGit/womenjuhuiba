@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+        <a href="activity.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">活动详情</a>
+        <a href="intention.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">意愿收集</a>
+        <a href="vote.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">投票去哪</a>
+        <a href="plan.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-outline bg-primary text-on-primary rounded-md" aria-current="page">方案确认</a>
+        <a href="register.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">报名</a>
+        <a href="dashboard.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">看板</a>
+        <a href="settle.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">记账</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!-- @main-content:start -->
+  <main class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- 页面标题区 -->
+    <div class="mb-10">
+      <h1 class="text-3xl font-bold tracking-tight">方案确认</h1>
+      <p class="text-base text-on-surface-variant mt-2">设置活动分段、生成 Prompt 模板、编辑方案内容</p>
+    </div>
+
+    <!-- ====== 分段设置区 ====== -->
+    <section class="mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <i data-lucide="layers" class="w-6 h-6 text-primary"></i>
+        <h2 class="text-2xl font-bold">分段设置</h2>
+      </div>
+
+      <!-- 分段列表 -->
+      <div id="segment-list" class="space-y-4 mb-6">
+
+        <!-- 列表-分段1: 午餐 -->
+        <div class="segment-item bg-surface border-2 border-outline p-5 shadow-card relative" data-segment-id="seg-1">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="inline-block bg-primary text-on-primary font-bold text-lg px-3 py-0.5 border-2 border-outline shadow-[2px_2px_0px_#0A0A0A]">午餐</span>
+                <span class="text-sm font-semibold text-on-surface-variant">第 1 段</span>
+              </div>
+              <div class="flex items-center gap-6 mt-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="clock" class="w-4 h-4 text-accent-blue"></i>
+                  <span class="text-base font-semibold">12:00 - 14:00</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-base font-semibold">望京小腰</span>
+                </div>
+              </div>
+            </div>
+            <button id="btn-delete-seg-1" class="btn-delete-segment w-9 h-9 bg-error/10 border-2 border-outline flex items-center justify-center hover:bg-error/20 transition-colors shadow-[2px_2px_0px_#0A0A0A] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all" title="删除此段">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-分段2: 下午茶 -->
+        <div class="segment-item bg-surface border-2 border-outline p-5 shadow-card relative" data-segment-id="seg-2">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="inline-block bg-primary text-on-primary font-bold text-lg px-3 py-0.5 border-2 border-outline shadow-[2px_2px_0px_#0A0A0A]">下午茶</span>
+                <span class="text-sm font-semibold text-on-surface-variant">第 2 段</span>
+              </div>
+              <div class="flex items-center gap-6 mt-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="clock" class="w-4 h-4 text-accent-blue"></i>
+                  <span class="text-base font-semibold">15:00 - 17:00</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-base font-semibold">星巴克</span>
+                </div>
+              </div>
+            </div>
+            <button id="btn-delete-seg-2" class="btn-delete-segment w-9 h-9 bg-error/10 border-2 border-outline flex items-center justify-center hover:bg-error/20 transition-colors shadow-[2px_2px_0px_#0A0A0A] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all" title="删除此段">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-分段3: 晚餐 -->
+        <div class="segment-item bg-surface border-2 border-outline p-5 shadow-card relative" data-segment-id="seg-3">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="inline-block bg-primary text-on-primary font-bold text-lg px-3 py-0.5 border-2 border-outline shadow-[2px_2px_0px_#0A0A0A]">晚餐</span>
+                <span class="text-sm font-semibold text-on-surface-variant">第 3 段</span>
+              </div>
+              <div class="flex items-center gap-6 mt-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="clock" class="w-4 h-4 text-accent-blue"></i>
+                  <span class="text-base font-semibold">18:00 - 20:30</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-base font-semibold">海底捞合生汇店</span>
+                </div>
+              </div>
+            </div>
+            <button id="btn-delete-seg-3" class="btn-delete-segment w-9 h-9 bg-error/10 border-2 border-outline flex items-center justify-center hover:bg-error/20 transition-colors shadow-[2px_2px_0px_#0A0A0A] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all" title="删除此段">
+              <i data-lucide="trash-2" class="w-4 h-4 text-error"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 添加分段按钮（粗野风样式） -->
+      <button id="btn-add-segment" class="bg-primary text-on-primary font-bold text-lg px-6 py-3 border-2 border-outline shadow-card hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all inline-flex items-center gap-2">
+        <i data-lucide="plus" class="w-5 h-5"></i>
+        添加分段
+      </button>
+    </section>
+
+    <!-- ====== Prompt 生成区 ====== -->
+    <section class="mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <i data-lucide="sparkles" class="w-6 h-6 text-primary"></i>
+        <h2 class="text-2xl font-bold">Prompt 生成</h2>
+      </div>
+
+      <div class="bg-surface border-2 border-outline p-6 shadow-card">
+        <p class="text-sm text-on-surface-variant mb-4">一键生成填充了意愿汇总数据的 Prompt 模板，复制到 AI 工具使用。</p>
+
+        <!-- 生成 Prompt 按钮 -->
+        <button id="btn-generate-prompt" class="bg-accent-blue text-white font-bold text-base px-6 py-3 border-2 border-outline shadow-card hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all inline-flex items-center gap-2 mb-4">
+          <i data-lucide="wand-2" class="w-5 h-5"></i>
+          生成 Prompt
+        </button>
+
+        <!-- Prompt 文本框 -->
+        <div class="relative">
+          <textarea id="prompt-output" class="w-full h-64 bg-surface-container border-2 border-outline px-4 py-3 text-sm font-mono text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y" readonly placeholder="点击上方「生成 Prompt」按钮，Prompt 模板将在此处显示..."></textarea>
+        </div>
+
+        <!-- 一键复制按钮 -->
+        <div class="flex items-center gap-3 mt-4">
+          <button id="btn-copy-prompt" class="bg-surface-container-high text-on-surface font-bold text-base px-5 py-2.5 border-2 border-outline shadow-[3px_3px_0px_#0A0A0A] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all inline-flex items-center gap-2">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            一键复制
+          </button>
+          <span id="copy-toast" class="text-sm font-semibold text-success opacity-0 transition-opacity duration-300">已复制到剪贴板!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== 方案内容编辑区 ====== -->
+    <section class="mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <i data-lucide="file-text" class="w-6 h-6 text-primary"></i>
+        <h2 class="text-2xl font-bold">方案内容</h2>
+      </div>
+
+      <div class="bg-surface border-2 border-outline p-6 shadow-card">
+        <p class="text-sm text-on-surface-variant mb-4">粘贴 AI 工具生成的方案内容，或手动编写活动方案。</p>
+
+        <!-- 方案编辑文本框 -->
+        <textarea id="plan-content" class="w-full h-72 bg-surface-container border-2 border-outline px-4 py-3 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-y" placeholder="在此粘贴 AI 生成的方案内容，或手动编写方案..."></textarea>
+
+        <!-- 保存方案按钮 -->
+        <div class="flex items-center gap-4 mt-5">
+          <button id="btn-save-plan" class="bg-primary text-on-primary font-bold text-lg px-8 py-3 border-2 border-outline shadow-card hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all inline-flex items-center gap-2">
+            <i data-lucide="save" class="w-5 h-5"></i>
+            保存方案
+          </button>
+          <span id="save-toast" class="text-sm font-semibold text-success opacity-0 transition-opacity duration-300">方案已保存!</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <!-- @main-content:end -->
+
+  <script>
+    $(function () {
+
+      // ====== 删除分段 ======
+      $('#segment-list').on('click', '.btn-delete-segment', function () {
+        var $item = $(this).closest('.segment-item');
+        // 删除分段 - 应实现：
+        // 1. 弹出确认提示确认是否删除该分段
+        // 2. 确认后从列表中移除该分段 DOM 节点
+        // 3. 重新计算剩余分段的序号显示
+        // 4. 调用后端 API 删除对应分段数据
+        $item.fadeOut(200, function () {
+          $(this).remove();
+        });
+      });
+
+      // ====== 添加分段 ======
+      $('#btn-add-segment').on('click', function () {
+        // 添加分段 - 应实现：
+        // 1. 弹出弹窗，表单包含：分段名称（必填）、时间范围起止（必填）、地点（必填）
+        // 2. 验证必填字段
+        // 3. 点击确认后在分段列表末尾新增一段卡片，自动分配序号
+        // 4. 调用后端 API 创建新分段记录
+        // 当前原型：直接在列表中追加一段空白分段示例
+        var count = $('#segment-list .segment-item').length + 1;
+        var html = '<div class="segment-item bg-surface border-2 border-outline p-5 shadow-card relative" data-segment-id="seg-new-' + count + '">' +
+          '<div class="flex items-start justify-between">' +
+            '<div class="flex-1">' +
+              '<div class="flex items-center gap-3 mb-2">' +
+                '<span class="inline-block bg-primary text-on-primary font-bold text-lg px-3 py-0.5 border-2 border-outline shadow-[2px_2px_0px_#0A0A0A]">新分段</span>' +
+                '<span class="text-sm font-semibold text-on-surface-variant">第 ' + count + ' 段</span>' +
+              '</div>' +
+              '<div class="flex items-center gap-6 mt-3">' +
+                '<div class="flex items-center gap-2">' +
+                  '<i data-lucide="clock" class="w-4 h-4 text-accent-blue"></i>' +
+                  '<span class="text-base font-semibold">待设置</span>' +
+                '</div>' +
+                '<div class="flex items-center gap-2">' +
+                  '<i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>' +
+                  '<span class="text-base font-semibold">待设置</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<button class="btn-delete-segment w-9 h-9 bg-error/10 border-2 border-outline flex items-center justify-center hover:bg-error/20 transition-colors shadow-[2px_2px_0px_#0A0A0A] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all" title="删除此段">' +
+              '<i data-lucide="trash-2" class="w-4 h-4 text-error"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+        $('#segment-list').append(html);
+        // 重新初始化新增项中的 lucide 图标
+        lucide.createIcons();
+      });
+
+      // ====== 生成 Prompt ======
+      $('#btn-generate-prompt').on('click', function () {
+        // 生成 Prompt - 应实现：
+        // 1. 从后端获取意愿汇总数据（参与人数、地点汇总、时间段分布等）
+        // 2. 将数据填入 Prompt 模板
+        // 3. 将生成的 Prompt 显示在文本框中
+        // 当前原型：直接硬编码一个模拟的 Prompt 模板
+        var prompt = '你是一位活动策划专家。请根据以下信息，为一次朋友聚会生成详细的活动方案：\n\n' +
+          '【活动名称】周末好友聚会\n' +
+          '【活动描述】好久不见的朋友们约个周末一起聚聚，吃吃喝喝聊聊天\n' +
+          '【大致时间】本周六\n\n' +
+          '【意愿汇总】\n' +
+          '- 参与人数：8 人\n' +
+          '- 想去的地方：望京小腰(3人提)、星巴克(2人提)、海底捞(4人提)、KTV(1人提)\n' +
+          '- 时间段偏好：中午到晚上(6人)、下午到晚上(2人)\n\n' +
+          '【已确认分段】\n' +
+          '1. 午餐 | 12:00-14:00 | 望京小腰\n' +
+          '2. 下午茶 | 15:00-17:00 | 星巴克\n' +
+          '3. 晚餐 | 18:00-20:30 | 海底捞合生汇店\n\n' +
+          '请为每个分段生成：\n' +
+          '- 具体活动安排和推荐菜品/饮品\n' +
+          '- 预估人均消费\n' +
+          '- 注意事项（如需预约、停车信息等）\n' +
+          '- 段间交通指引\n\n' +
+          '请用轻松活泼的语气，方案要让朋友们期待满满！';
+        $('#prompt-output').val(prompt);
+      });
+
+      // ====== 复制 Prompt ======
+      $('#btn-copy-prompt').on('click', function () {
+        var text = $('#prompt-output').val();
+        if (!text) {
+          return;
+        }
+        // 复制到剪贴板 - 应实现：
+        // 1. 使用 navigator.clipboard.writeText() 将 Prompt 文本复制到剪贴板
+        // 2. 显示成功 Toast 提示
+        // 3. 2秒后自动隐藏 Toast
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            $('#copy-toast').css('opacity', '1');
+            setTimeout(function () {
+              $('#copy-toast').css('opacity', '0');
+            }, 2000);
+          });
+        } else {
+          // fallback
+          var $tmp = $('<textarea>');
+          $('body').append($tmp);
+          $tmp.val(text).select();
+          document.execCommand('copy');
+          $tmp.remove();
+          $('#copy-toast').css('opacity', '1');
+          setTimeout(function () {
+            $('#copy-toast').css('opacity', '0');
+          }, 2000);
+        }
+      });
+
+      // ====== 保存方案 ======
+      $('#btn-save-plan').on('click', function () {
+        // 保存方案 - 应实现：
+        // 1. 获取方案内容文本
+        // 2. 调用后端 API 保存方案内容
+        // 3. 保存成功后流转活动状态到"报名"阶段
+        // 4. 显示成功 Toast
+        var content = $('#plan-content').val();
+        if (!content.trim()) {
+          // 方案内容为空时提示
+          alert('请先填写方案内容');
+          return;
+        }
+        $('#save-toast').css('opacity', '1');
+        setTimeout(function () {
+          $('#save-toast').css('opacity', '0');
+        }, 2000);
+      });
+
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

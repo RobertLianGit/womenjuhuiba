@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end -->
+
+  <!-- @main-content:start -->
+  <main class="max-w-6xl mx-auto px-6 py-8">
+
+    <!-- 页面标题 + 截止时间 -->
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight">投票去哪</h1>
+        <p class="text-base text-on-surface-variant mt-1 font-medium">周末聚餐 · 大家来决定!</p>
+      </div>
+      <!-- 截止时间 + 组织者操作 -->
+      <div class="bg-surface border-2 border-outline shadow-card p-4 flex flex-col gap-2" id="deadline-area">
+        <div class="flex items-center gap-2">
+          <i data-lucide="clock" class="w-5 h-5 text-on-surface-variant"></i>
+          <span class="text-sm font-semibold">投票截止</span>
+          <span class="text-lg font-bold" id="deadline-display">2024-06-15 20:00</span>
+        </div>
+        <!-- 组织者专属操作 -->
+        <div class="flex items-center gap-2" id="organizer-controls">
+          <button id="btn-adjust-deadline" class="text-sm font-bold px-3 py-1.5 bg-surface-container border-2 border-outline hover:bg-surface-container-high transition-colors">
+            <i data-lucide="settings-2" class="w-3.5 h-3.5 inline-block mr-1"></i>调整时间
+          </button>
+          <button id="btn-end-vote-early" class="text-sm font-bold px-3 py-1.5 bg-error text-white border-2 border-outline hover:opacity-90 transition-colors">
+            <i data-lucide="square" class="w-3.5 h-3.5 inline-block mr-1"></i>提前结束
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 导航 -->
+    <div class="flex gap-0 border-2 border-outline bg-surface mb-8" id="tab-nav">
+      <button class="tab-btn flex-1 px-6 py-3 text-lg font-bold border-r-2 border-outline transition-colors bg-primary text-on-primary" data-tab="submit" id="tab-submit" aria-current="page">
+        提交方案
+      </button>
+      <button class="tab-btn flex-1 px-6 py-3 text-lg font-bold border-r-2 border-outline transition-colors text-on-surface-variant hover:bg-surface-container" data-tab="vote" id="tab-vote">
+        投票
+      </button>
+      <button class="tab-btn flex-1 px-6 py-3 text-lg font-bold transition-colors text-on-surface-variant hover:bg-surface-container" data-tab="result" id="tab-result">
+        结果
+      </button>
+    </div>
+
+    <!-- ========== Tab 1: 提交方案 ========== -->
+    <div id="panel-submit" class="tab-panel">
+      <!-- 提交方案表单 -->
+      <div class="bg-surface border-2 border-outline shadow-card p-6 mb-8">
+        <h2 class="text-xl font-bold mb-5">提一个方案</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold mb-1.5" for="input-location">地点 <span class="text-error">*</span></label>
+            <input id="input-location" type="text" placeholder="比如：望京小腰烧烤店" class="w-full bg-surface-container border-2 border-outline rounded-md px-4 py-3 text-base font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold mb-1.5" for="input-activity-type">活动形式 <span class="text-on-surface-variant font-normal">（可选）</span></label>
+            <input id="input-activity-type" type="text" placeholder="比如：烧烤+KTV" class="w-full bg-surface-container border-2 border-outline rounded-md px-4 py-3 text-base font-medium text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" />
+          </div>
+          <button id="btn-submit-proposal" class="bg-primary text-on-primary border-2 border-outline px-6 py-3 text-base font-bold shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[1px_1px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all">
+            <i data-lucide="plus" class="w-4 h-4 inline-block mr-1"></i>提交方案
+          </button>
+        </div>
+      </div>
+
+      <!-- 已有方案列表 -->
+      <div>
+        <h2 class="text-xl font-bold mb-4">已有方案</h2>
+        <div class="space-y-4" id="proposal-list">
+
+          <!-- 列表-方案1 -->
+          <div class="proposal-card bg-surface border-2 border-outline shadow-card p-5 hover:shadow-float transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-lg font-bold">望京小腰烧烤店</span>
+                </div>
+                <p class="text-sm text-on-surface-variant font-medium">烧烤 + 啤酒</p>
+              </div>
+              <span class="text-xs font-bold bg-primary-container text-primary px-3 py-1 border border-primary/30">阿杰</span>
+            </div>
+          </div>
+
+          <!-- 列表-方案2 -->
+          <div class="proposal-card bg-surface border-2 border-outline shadow-card p-5 hover:shadow-float transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-lg font-bold">三里屯火锅局</span>
+                </div>
+                <p class="text-sm text-on-surface-variant font-medium">火锅 + 桌游</p>
+              </div>
+              <span class="text-xs font-bold bg-primary-container text-primary px-3 py-1 border border-primary/30">小美</span>
+            </div>
+          </div>
+
+          <!-- 列表-方案3 -->
+          <div class="proposal-card bg-surface border-2 border-outline shadow-card p-5 hover:shadow-float transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-lg font-bold">朝阳公园野餐</span>
+                </div>
+                <p class="text-sm text-on-surface-variant font-medium">野餐 + 飞盘</p>
+              </div>
+              <span class="text-xs font-bold bg-primary-container text-primary px-3 py-1 border border-primary/30">大鹏</span>
+            </div>
+          </div>
+
+          <!-- 列表-方案4 -->
+          <div class="proposal-card bg-surface border-2 border-outline shadow-card p-5 hover:shadow-float transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-lg font-bold">国贸密室逃脱</span>
+                </div>
+                <p class="text-sm text-on-surface-variant font-medium">密室 + 聚餐</p>
+              </div>
+              <span class="text-xs font-bold bg-primary-container text-primary px-3 py-1 border border-primary/30">丽丽</span>
+            </div>
+          </div>
+
+          <!-- 列表-方案5 -->
+          <div class="proposal-card bg-surface border-2 border-outline shadow-card p-5 hover:shadow-float transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>
+                  <span class="text-lg font-bold">798艺术区下午茶</span>
+                </div>
+                <p class="text-sm text-on-surface-variant font-medium">看展 + 下午茶</p>
+              </div>
+              <span class="text-xs font-bold bg-primary-container text-primary px-3 py-1 border border-primary/30">阿豪</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Tab 2: 投票 ========== -->
+    <div id="panel-vote" class="tab-panel hidden">
+      <h2 class="text-xl font-bold mb-4">选择你支持的方案 <span class="text-base font-normal text-on-surface-variant">（可多选）</span></h2>
+      <div class="space-y-4 mb-6" id="vote-list">
+
+        <!-- 列表-投票方案1 -->
+        <div class="vote-card bg-surface border-2 border-outline shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow" data-proposal-id="1">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" id="vote-check-1" class="vote-checkbox w-6 h-6 accent-primary border-2 border-outline cursor-pointer" />
+            <label for="vote-check-1" class="flex-1 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-bold">望京小腰烧烤店</span>
+                  <span class="text-sm text-on-surface-variant font-medium ml-2">烧烤 + 啤酒</span>
+                </div>
+                <span class="text-sm font-bold bg-surface-container px-3 py-1 border-2 border-outline" id="vote-count-1">5票</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 列表-投票方案2 -->
+        <div class="vote-card bg-surface border-2 border-outline shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow" data-proposal-id="2">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" id="vote-check-2" class="vote-checkbox w-6 h-6 accent-primary border-2 border-outline cursor-pointer" />
+            <label for="vote-check-2" class="flex-1 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-bold">三里屯火锅局</span>
+                  <span class="text-sm text-on-surface-variant font-medium ml-2">火锅 + 桌游</span>
+                </div>
+                <span class="text-sm font-bold bg-surface-container px-3 py-1 border-2 border-outline" id="vote-count-2">6票</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 列表-投票方案3 -->
+        <div class="vote-card bg-surface border-2 border-outline shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow" data-proposal-id="3">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" id="vote-check-3" class="vote-checkbox w-6 h-6 accent-primary border-2 border-outline cursor-pointer" />
+            <label for="vote-check-3" class="flex-1 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-bold">朝阳公园野餐</span>
+                  <span class="text-sm text-on-surface-variant font-medium ml-2">野餐 + 飞盘</span>
+                </div>
+                <span class="text-sm font-bold bg-surface-container px-3 py-1 border-2 border-outline" id="vote-count-3">4票</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 列表-投票方案4 -->
+        <div class="vote-card bg-surface border-2 border-outline shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow" data-proposal-id="4">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" id="vote-check-4" class="vote-checkbox w-6 h-6 accent-primary border-2 border-outline cursor-pointer" />
+            <label for="vote-check-4" class="flex-1 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-bold">国贸密室逃脱</span>
+                  <span class="text-sm text-on-surface-variant font-medium ml-2">密室 + 聚餐</span>
+                </div>
+                <span class="text-sm font-bold bg-surface-container px-3 py-1 border-2 border-outline" id="vote-count-4">3票</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 列表-投票方案5 -->
+        <div class="vote-card bg-surface border-2 border-outline shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow" data-proposal-id="5">
+          <div class="flex items-center gap-4">
+            <input type="checkbox" id="vote-check-5" class="vote-checkbox w-6 h-6 accent-primary border-2 border-outline cursor-pointer" />
+            <label for="vote-check-5" class="flex-1 cursor-pointer">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-lg font-bold">798艺术区下午茶</span>
+                  <span class="text-sm text-on-surface-variant font-medium ml-2">看展 + 下午茶</span>
+                </div>
+                <span class="text-sm font-bold bg-surface-container px-3 py-1 border-2 border-outline" id="vote-count-5">4票</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 提交投票按钮 -->
+      <div class="flex items-center gap-4">
+        <button id="btn-submit-vote" class="bg-primary text-on-primary border-2 border-outline px-8 py-3 text-lg font-bold shadow-[4px_4px_0px_#0A0A0A] hover:shadow-[2px_2px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all">
+          <i data-lucide="check-circle" class="w-5 h-5 inline-block mr-1"></i>提交投票
+        </button>
+        <span class="text-sm font-medium text-on-surface-variant" id="vote-selection-hint">已选择 0 个方案</span>
+      </div>
+    </div>
+
+    <!-- ========== Tab 3: 结果 ========== -->
+    <div id="panel-result" class="tab-panel hidden">
+      <h2 class="text-xl font-bold mb-6">投票结果</h2>
+
+      <!-- 柱状图区域 -->
+      <div class="bg-surface border-2 border-outline shadow-card p-6 mb-6">
+        <div class="space-y-5" id="result-chart">
+
+          <!-- 结果-方案2：三里屯火锅局 6票 第1名 -->
+          <div class="result-bar-item">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-primary text-on-primary text-sm font-bold border-2 border-outline">1</span>
+                <span class="text-lg font-bold">三里屯火锅局</span>
+                <span class="text-sm text-on-surface-variant font-medium">火锅 + 桌游</span>
+              </div>
+              <span class="text-xl font-bold">6票</span>
+            </div>
+            <div class="h-10 bg-surface-container border-2 border-outline overflow-hidden">
+              <div class="h-full bg-primary border-r-2 border-outline" style="width: 85.7%"></div>
+            </div>
+          </div>
+
+          <!-- 结果-方案1：望京小腰烧烤店 5票 第2名 -->
+          <div class="result-bar-item">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-accent-blue text-white text-sm font-bold border-2 border-outline">2</span>
+                <span class="text-lg font-bold">望京小腰烧烤店</span>
+                <span class="text-sm text-on-surface-variant font-medium">烧烤 + 啤酒</span>
+              </div>
+              <span class="text-xl font-bold">5票</span>
+            </div>
+            <div class="h-10 bg-surface-container border-2 border-outline overflow-hidden">
+              <div class="h-full bg-accent-blue border-r-2 border-outline" style="width: 71.4%"></div>
+            </div>
+          </div>
+
+          <!-- 结果-方案3：朝阳公园野餐 4票 第3名 -->
+          <div class="result-bar-item">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-success text-white text-sm font-bold border-2 border-outline">3</span>
+                <span class="text-lg font-bold">朝阳公园野餐</span>
+                <span class="text-sm text-on-surface-variant font-medium">野餐 + 飞盘</span>
+              </div>
+              <span class="text-xl font-bold">4票</span>
+            </div>
+            <div class="h-10 bg-surface-container border-2 border-outline overflow-hidden">
+              <div class="h-full bg-success border-r-2 border-outline" style="width: 57.1%"></div>
+            </div>
+          </div>
+
+          <!-- 结果-方案5：798艺术区下午茶 4票 第3名 -->
+          <div class="result-bar-item">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-success text-white text-sm font-bold border-2 border-outline">3</span>
+                <span class="text-lg font-bold">798艺术区下午茶</span>
+                <span class="text-sm text-on-surface-variant font-medium">看展 + 下午茶</span>
+              </div>
+              <span class="text-xl font-bold">4票</span>
+            </div>
+            <div class="h-10 bg-surface-container border-2 border-outline overflow-hidden">
+              <div class="h-full bg-success border-r-2 border-outline" style="width: 57.1%"></div>
+            </div>
+          </div>
+
+          <!-- 结果-方案4：国贸密室逃脱 3票 第5名 -->
+          <div class="result-bar-item">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-warning text-white text-sm font-bold border-2 border-outline">5</span>
+                <span class="text-lg font-bold">国贸密室逃脱</span>
+                <span class="text-sm text-on-surface-variant font-medium">密室 + 聚餐</span>
+              </div>
+              <span class="text-xl font-bold">3票</span>
+            </div>
+            <div class="h-10 bg-surface-container border-2 border-outline overflow-hidden">
+              <div class="h-full bg-warning border-r-2 border-outline" style="width: 42.9%"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 投票详情 -->
+      <div class="bg-surface border-2 border-outline shadow-card p-6 mb-6">
+        <h3 class="text-lg font-bold mb-4">投票明细</h3>
+        <div class="space-y-2" id="vote-detail-list">
+
+          <!-- 列表-投票人1 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">阿杰</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">望京烧烤</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">朝阳野餐</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人2 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">小美</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">798下午茶</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人3 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">大鹏</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">望京烧烤</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">朝阳野餐</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">798下午茶</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人4 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">丽丽</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">国贸密室</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">798下午茶</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人5 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">阿豪</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">望京烧烤</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人6 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">晓晓</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">望京烧烤</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">朝阳野餐</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人7 -->
+          <div class="flex items-center justify-between py-2 border-b-2 border-outline/10">
+            <span class="text-sm font-bold">强子</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">国贸密室</span>
+            </div>
+          </div>
+
+          <!-- 列表-投票人8 -->
+          <div class="flex items-center justify-between py-2">
+            <span class="text-sm font-bold">小雪</span>
+            <div class="flex gap-2">
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">三里屯火锅</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">朝阳野餐</span>
+              <span class="text-xs font-bold bg-primary/20 text-primary px-2 py-0.5 border border-primary/30">798下午茶</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 组织者确认方案区域 -->
+      <div class="bg-primary-container border-2 border-outline shadow-card p-6" id="confirm-area">
+        <div class="flex items-center gap-2 mb-4">
+          <i data-lucide="crown" class="w-5 h-5 text-primary"></i>
+          <h3 class="text-lg font-bold">组织者操作</h3>
+        </div>
+        <p class="text-sm font-medium text-on-surface-variant mb-4">选择最终方案后，将流转到方案确认阶段，所有参与者将收到通知。</p>
+        <div class="flex items-center gap-4">
+          <select id="select-confirm-proposal" class="bg-surface border-2 border-outline px-4 py-2.5 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary/30">
+            <option value="">-- 选择最终方案 --</option>
+            <option value="1">望京小腰烧烤店</option>
+            <option value="2">三里屯火锅局</option>
+            <option value="3">朝阳公园野餐</option>
+            <option value="4">国贸密室逃脱</option>
+            <option value="5">798艺术区下午茶</option>
+          </select>
+          <button id="btn-confirm-proposal" class="bg-primary text-on-primary border-2 border-outline px-6 py-3 text-base font-bold shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[1px_1px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all">
+            <i data-lucide="check" class="w-4 h-4 inline-block mr-1"></i>确认方案
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-surface border-2 border-outline shadow-float px-6 py-3 text-base font-bold hidden transition-all">
+      <span id="toast-text"></span>
+    </div>
+
+    <!-- 调整截止时间弹窗 -->
+    <div id="modal-deadline" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface border-2 border-outline shadow-dialog max-w-md w-full p-6">
+        <h3 class="text-xl font-bold mb-5">调整截止时间</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold mb-1.5" for="input-new-deadline">新的截止时间</label>
+            <input id="input-new-deadline" type="datetime-local" class="w-full bg-surface-container border-2 border-outline px-4 py-3 text-base font-medium text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          </div>
+          <div class="flex gap-3">
+            <button id="btn-save-deadline" class="bg-primary text-on-primary border-2 border-outline px-5 py-2.5 text-base font-bold shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[1px_1px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all">保存</button>
+            <button id="btn-cancel-deadline" class="bg-surface-container text-on-surface border-2 border-outline px-5 py-2.5 text-base font-bold hover:bg-surface-container-high transition-colors">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提前结束确认弹窗 -->
+    <div id="modal-end-early" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface border-2 border-outline shadow-dialog max-w-md w-full p-6">
+        <h3 class="text-xl font-bold mb-3">确认提前结束投票？</h3>
+        <p class="text-sm text-on-surface-variant font-medium mb-5">结束后参与者将无法继续投票和提交方案，当前投票结果将作为最终结果。</p>
+        <div class="flex gap-3">
+          <button id="btn-confirm-end" class="bg-error text-white border-2 border-outline px-5 py-2.5 text-base font-bold shadow-[3px_3px_0px_#0A0A0A] hover:shadow-[1px_1px_0px_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all">确认结束</button>
+          <button id="btn-cancel-end" class="bg-surface-container text-on-surface border-2 border-outline px-5 py-2.5 text-base font-bold hover:bg-surface-container-high transition-colors">取消</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <!-- @main-content:end -->
+
+  <script>
+  $(function() {
+
+    // === Tab 切换 ===
+    $('#tab-nav').on('click', '.tab-btn', function() {
+      var tab = $(this).data('tab');
+      // 切换按钮样式
+      $('.tab-btn').removeClass('bg-primary text-on-primary').addClass('text-on-surface-variant');
+      $(this).removeClass('text-on-surface-variant').addClass('bg-primary text-on-primary');
+      // 切换面板
+      $('.tab-panel').addClass('hidden');
+      $('#panel-' + tab).removeClass('hidden');
+    });
+
+    // === 提交方案 ===
+    $('#btn-submit-proposal').on('click', function() {
+      var location = $('#input-location').val().trim();
+      var activityType = $('#input-activity-type').val().trim();
+      if (!location) {
+        showToast('请输入地点！');
+        return;
+      }
+      // 添加新方案卡片到列表
+      var cardHtml = '<div class="proposal-card bg-surface border-2 border-outline shadow-card p-5 hover:shadow-float transition-shadow">'
+        + '<div class="flex items-start justify-between gap-4">'
+        + '<div class="flex-1">'
+        + '<div class="flex items-center gap-2 mb-1">'
+        + '<i data-lucide="map-pin" class="w-4 h-4 text-primary"></i>'
+        + '<span class="text-lg font-bold">' + escapeHtml(location) + '</span>'
+        + '</div>'
+        + (activityType ? '<p class="text-sm text-on-surface-variant font-medium">' + escapeHtml(activityType) + '</p>' : '')
+        + '</div>'
+        + '<span class="text-xs font-bold bg-primary-container text-primary px-3 py-1 border border-primary/30">小初</span>'
+        + '</div></div>';
+      $('#proposal-list').prepend(cardHtml);
+      // 清空输入
+      $('#input-location').val('');
+      $('#input-activity-type').val('');
+      showToast('方案提交成功！');
+      lucide.createIcons();
+    });
+
+    // === 投票多选更新计数 ===
+    $('#vote-list').on('change', '.vote-checkbox', function() {
+      var checkedCount = $('.vote-checkbox:checked').length;
+      $('#vote-selection-hint').text('已选择 ' + checkedCount + ' 个方案');
+    });
+
+    // 点击投票卡片整行触发勾选
+    $('#vote-list').on('click', '.vote-card', function(e) {
+      // 如果点击的是 checkbox 本身，不重复触发
+      if ($(e.target).is('input[type=checkbox]')) return;
+      var checkbox = $(this).find('.vote-checkbox');
+      checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+    });
+
+    // 选中卡片高亮
+    $('#vote-list').on('change', '.vote-checkbox', function() {
+      if ($(this).is(':checked')) {
+        $(this).closest('.vote-card').addClass('border-primary').removeClass('border-outline');
+      } else {
+        $(this).closest('.vote-card').removeClass('border-primary').addClass('border-outline');
+      }
+    });
+
+    // === 提交投票 ===
+    $('#btn-submit-vote').on('click', function() {
+      var checkedCount = $('.vote-checkbox:checked').length;
+      if (checkedCount === 0) {
+        showToast('请至少选择一个方案！');
+        return;
+      }
+      showToast('投票成功！你选择了 ' + checkedCount + ' 个方案');
+      // 更新票数显示（模拟+1）
+      $('.vote-checkbox:checked').each(function() {
+        var id = $(this).attr('id').replace('vote-check-', '');
+        var countEl = $('#vote-count-' + id);
+        var currentText = countEl.text();
+        var currentNum = parseInt(currentText);
+        countEl.text((currentNum + 1) + '票');
+      });
+      // 清除选择
+      $('.vote-checkbox').prop('checked', false);
+      $('.vote-card').removeClass('border-primary').addClass('border-outline');
+      $('#vote-selection-hint').text('已选择 0 个方案');
+    });
+
+    // === 调整截止时间 ===
+    $('#btn-adjust-deadline').on('click', function() {
+      $('#modal-deadline').removeClass('hidden');
+    });
+    $('#btn-cancel-deadline').on('click', function() {
+      $('#modal-deadline').addClass('hidden');
+    });
+    $('#btn-save-deadline').on('click', function() {
+      var newDeadline = $('#input-new-deadline').val();
+      if (!newDeadline) {
+        showToast('请选择新的截止时间！');
+        return;
+      }
+      // 格式化显示
+      var formatted = newDeadline.replace('T', ' ');
+      $('#deadline-display').text(formatted);
+      $('#modal-deadline').addClass('hidden');
+      showToast('截止时间已更新！');
+    });
+
+    // === 提前结束投票 ===
+    $('#btn-end-vote-early').on('click', function() {
+      $('#modal-end-early').removeClass('hidden');
+    });
+    $('#btn-cancel-end').on('click', function() {
+      $('#modal-end-early').addClass('hidden');
+    });
+    $('#btn-confirm-end').on('click', function() {
+      $('#modal-end-early').addClass('hidden');
+      // 禁用投票和提交操作
+      $('#btn-submit-vote').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+      $('#btn-submit-proposal').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+      $('#btn-end-vote-early').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+      $('#deadline-display').text('已结束');
+      showToast('投票已提前结束！');
+    });
+
+    // === 确认方案（组织者） ===
+    $('#btn-confirm-proposal').on('click', function() {
+      var selectedVal = $('#select-confirm-proposal').val();
+      if (!selectedVal) {
+        showToast('请选择最终方案！');
+        return;
+      }
+      var selectedText = $('#select-confirm-proposal option:selected').text();
+      showToast('已确认方案：' + selectedText + '，即将跳转...');
+      // 跳转到方案确认页面
+      setTimeout(function() {
+        window.location.href = 'plan.html?id=activity_demo&proposal=' + selectedVal;
+      }, 1500);
+    });
+
+    // === Toast 提示函数 ===
+    function showToast(message) {
+      var $toast = $('#toast');
+      $('#toast-text').text(message);
+      $toast.removeClass('hidden');
+      setTimeout(function() {
+        $toast.addClass('hidden');
+      }, 2500);
+    }
+
+    // === HTML 转义 ===
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML;
+    }
+
+  });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

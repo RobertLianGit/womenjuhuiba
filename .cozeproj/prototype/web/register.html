@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #FF4DB8;
+      --color-primary-container:    #FFF0F8;
+      --color-on-primary:           #0A0A0A;
+      /* === 背景 / 表面 === */
+      --color-background:                 #FFF34D;
+      --color-surface-container-lowest:   #FFF9B2;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #F5F0D0;
+      --color-surface-container-high:     #EDE8B8;
+      --color-surface-container-highest:  #E0DAA0;
+      /* === 文字 === */
+      --color-on-surface:           #0A0A0A;
+      --color-on-surface-variant:   #5C5C3D;
+      /* === 功能色 === */
+      --color-success:  #22c55e;
+      --color-error:    #ef4444;
+      --color-warning:  #f59e0b;
+      /* === 边框 === */
+      --color-outline:          #0A0A0A;
+      --color-outline-variant:  #0A0A0A;
+      /* === 圆角 === */
+      --radius-sm:   0rem;
+      --radius-md:   0rem;
+      --radius-lg:   0.25rem;
+      --radius-xl:   0.5rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   4px 4px 0px #0A0A0A;
+      --shadow-float:  6px 6px 0px #0A0A0A;
+      --shadow-dialog: 8px 8px 0px #0A0A0A;
+      /* === 强调蓝 === */
+      --color-accent-blue: #3B82F6;
+      /* === 字体 === */
+      --font-sans: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段 -->
+  <header class="bg-surface border-b-2 border-outline sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto h-16 flex items-center justify-between px-6">
+      <a href="home.html" class="flex items-center gap-2.5 group">
+        <i data-lucide="party-popper" class="text-primary w-6 h-6"></i>
+        <span class="font-bold text-xl tracking-tight">开始聚会吧</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="home.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">首页</a>
+        <a href="activity.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">活动详情</a>
+        <a href="intention.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">意愿收集</a>
+        <a href="vote.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">投票去哪</a>
+        <a href="plan.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">方案确认</a>
+        <a href="register.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-outline rounded-md transition-colors bg-primary/10 text-primary" aria-current="page">报名</a>
+        <a href="dashboard.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">看板</a>
+        <a href="settle.html" class="px-3 py-1.5 text-sm font-semibold border-2 border-transparent hover:border-outline rounded-md transition-colors">结算</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-accent-blue border-2 border-outline flex items-center justify-center font-bold text-sm text-white">初</div>
+      </div>
+    </div>
+  </header>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题区 -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold tracking-tight">分段报名</h1>
+      <p class="text-sm text-on-surface-variant mt-1">选择你要参与的段，填写信息后提交报名</p>
+    </div>
+
+    <!-- ==================== 方案摘要卡片 ==================== -->
+    <section id="scene-summary" class="mb-10">
+      <h2 class="text-xl font-bold mb-4">活动分段</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <!-- 分段卡片1-午餐 -->
+        <div class="bg-surface border-2 border-outline shadow-card p-5">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="inline-flex items-center px-3 py-1 text-sm font-bold bg-[#FF4DB8] text-white border-2 border-outline">午餐</span>
+            <span class="text-xs text-on-surface-variant font-medium">12:00 - 14:00</span>
+          </div>
+          <p class="text-sm font-semibold text-on-surface">川味火锅 · 朝阳区望京SOHO</p>
+          <p class="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            已报名 <span class="font-bold text-on-surface">6</span> 人
+          </p>
+        </div>
+
+        <!-- 分段卡片2-下午茶 -->
+        <div class="bg-surface border-2 border-outline shadow-card p-5" style="box-shadow: 6px 6px 0px #0A0A0A;">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="inline-flex items-center px-3 py-1 text-sm font-bold bg-[#3B82F6] text-white border-2 border-outline">下午茶</span>
+            <span class="text-xs text-on-surface-variant font-medium">14:30 - 17:00</span>
+          </div>
+          <p class="text-sm font-semibold text-on-surface">桌游咖啡馆 · 望京花园东区</p>
+          <p class="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            已报名 <span class="font-bold text-on-surface">4</span> 人
+          </p>
+        </div>
+
+        <!-- 分段卡片3-晚餐 -->
+        <div class="bg-surface border-2 border-outline shadow-card p-5" style="box-shadow: 5px 5px 0px #0A0A0A;">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="inline-flex items-center px-3 py-1 text-sm font-bold bg-[#F59E0B] text-white border-2 border-outline">晚餐</span>
+            <span class="text-xs text-on-surface-variant font-medium">18:00 - 21:00</span>
+          </div>
+          <p class="text-sm font-semibold text-on-surface">韩式烤肉 · 三里屯太古里</p>
+          <p class="text-xs text-on-surface-variant mt-2 flex items-center gap-1">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            已报名 <span class="font-bold text-on-surface">5</span> 人
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 报名表单 ==================== -->
+    <section id="register-form-section" class="mb-10">
+      <h2 class="text-xl font-bold mb-4">提交报名</h2>
+      <div class="bg-surface border-2 border-outline shadow-float p-6">
+
+        <!-- 分段勾选 -->
+        <div class="mb-6">
+          <label class="text-sm font-bold text-on-surface block mb-3">选择参与段（可多选）</label>
+          <div class="space-y-3">
+
+            <!-- 勾选项-午餐 -->
+            <label id="check-label-lunch" class="flex items-center gap-3 bg-surface-container p-3 border-2 border-outline cursor-pointer hover:bg-surface-container-high transition-colors">
+              <input id="check-lunch" type="checkbox" class="w-5 h-5 accent-[#FF4DB8] cursor-pointer" checked />
+              <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold bg-[#FF4DB8] text-white">午餐</span>
+              <span class="text-sm font-semibold">12:00 - 14:00 · 川味火锅</span>
+            </label>
+
+            <!-- 勾选项-下午茶 -->
+            <label id="check-label-tea" class="flex items-center gap-3 bg-surface-container p-3 border-2 border-outline cursor-pointer hover:bg-surface-container-high transition-colors" style="margin-left: 8px;">
+              <input id="check-tea" type="checkbox" class="w-5 h-5 accent-[#3B82F6] cursor-pointer" />
+              <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold bg-[#3B82F6] text-white">下午茶</span>
+              <span class="text-sm font-semibold">14:30 - 17:00 · 桌游咖啡馆</span>
+            </label>
+
+            <!-- 勾选项-晚餐 -->
+            <label id="check-label-dinner" class="flex items-center gap-3 bg-surface-container p-3 border-2 border-outline cursor-pointer hover:bg-surface-container-high transition-colors">
+              <input id="check-dinner" type="checkbox" class="w-5 h-5 accent-[#F59E0B] cursor-pointer" checked />
+              <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold bg-[#F59E0B] text-white">晚餐</span>
+              <span class="text-sm font-semibold">18:00 - 21:00 · 韩式烤肉</span>
+            </label>
+
+          </div>
+        </div>
+
+        <!-- 姓名输入 -->
+        <div class="mb-4">
+          <label for="input-name" class="text-sm font-bold text-on-surface block mb-1.5">姓名</label>
+          <input id="input-name" type="text" placeholder="输入你的姓名"
+                 class="w-full bg-surface-container border-none rounded-md px-3 py-2.5 text-sm
+                        text-on-surface placeholder:text-on-surface-variant/50
+                        focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" />
+        </div>
+
+        <!-- 参与人数 -->
+        <div class="mb-4">
+          <label for="input-people" class="text-sm font-bold text-on-surface block mb-1.5">参与人数</label>
+          <div class="flex items-center gap-3">
+            <button id="btn-people-minus" class="w-10 h-10 bg-surface-container border-2 border-outline font-bold text-lg flex items-center justify-center hover:bg-surface-container-high active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all" style="box-shadow: 3px 3px 0px #0A0A0A;">−</button>
+            <input id="input-people" type="number" value="1" min="1" max="20"
+                   class="w-20 text-center bg-surface-container border-none rounded-md px-3 py-2.5 text-sm font-bold
+                          text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" />
+            <button id="btn-people-plus" class="w-10 h-10 bg-surface-container border-2 border-outline font-bold text-lg flex items-center justify-center hover:bg-surface-container-high active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all" style="box-shadow: 3px 3px 0px #0A0A0A;">+</button>
+          </div>
+        </div>
+
+        <!-- 备注文本框 -->
+        <div class="mb-6">
+          <label for="input-notes" class="text-sm font-bold text-on-surface block mb-1.5">备注（过敏、忌口等）</label>
+          <textarea id="input-notes" rows="3" placeholder="如有忌口或过敏请在此说明"
+                    class="w-full bg-surface-container border-none rounded-md px-3 py-2.5 text-sm
+                           text-on-surface placeholder:text-on-surface-variant/50
+                           focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none"></textarea>
+        </div>
+
+        <!-- 提交按钮 -->
+        <button id="btn-submit-register"
+                class="bg-primary text-on-primary px-6 py-3 border-2 border-outline text-sm font-bold
+                       hover:opacity-90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-card
+                       transition-all inline-flex items-center gap-2"
+                style="box-shadow: 4px 4px 0px #0A0A0A;">
+          <i data-lucide="send" class="w-4 h-4"></i>
+          提交报名
+        </button>
+
+      </div>
+    </section>
+
+    <!-- ==================== 已报名列表 ==================== -->
+    <section id="registered-list-section" class="mb-10">
+      <h2 class="text-xl font-bold mb-4">已报名列表</h2>
+
+      <!-- 午餐分组 -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="inline-flex items-center px-3 py-1 text-sm font-bold bg-[#FF4DB8] text-white border-2 border-outline">午餐</span>
+          <span class="text-sm text-on-surface-variant font-medium">12:00 - 14:00 · 川味火锅</span>
+          <span class="text-xs font-bold bg-surface-container px-2 py-0.5 border border-outline-variant/30 ml-auto">6 人</span>
+        </div>
+        <div class="space-y-2">
+
+          <!-- 列表-午餐-人员1 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 3px 3px 0px #0A0A0A;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#FF4DB8]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#FF4DB8]">王</div>
+              <div>
+                <p class="text-sm font-bold">王大明 <span class="text-xs font-normal text-on-surface-variant">×2人</span></p>
+                <p class="text-xs text-on-surface-variant">不吃辣</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-lunch-1" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-lunch-1" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-午餐-人员2 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 4px 4px 0px #0A0A0A; margin-left: 6px;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#FF4DB8]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#FF4DB8]">李</div>
+              <div>
+                <p class="text-sm font-bold">李小花 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">对花生过敏</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-lunch-2" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-lunch-2" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-午餐-人员3 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 3px 3px 0px #0A0A0A;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#FF4DB8]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#FF4DB8]">张</div>
+              <div>
+                <p class="text-sm font-bold">张伟 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">无备注</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-lunch-3" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-lunch-3" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-午餐-人员4 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 5px 5px 0px #0A0A0A; margin-left: 3px;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#FF4DB8]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#FF4DB8]">赵</div>
+              <div>
+                <p class="text-sm font-bold">赵小婷 <span class="text-xs font-normal text-on-surface-variant">×2人</span></p>
+                <p class="text-xs text-on-surface-variant">清淡口味</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-lunch-4" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-lunch-4" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 下午茶分组 -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="inline-flex items-center px-3 py-1 text-sm font-bold bg-[#3B82F6] text-white border-2 border-outline">下午茶</span>
+          <span class="text-sm text-on-surface-variant font-medium">14:30 - 17:00 · 桌游咖啡馆</span>
+          <span class="text-xs font-bold bg-surface-container px-2 py-0.5 border border-outline-variant/30 ml-auto">4 人</span>
+        </div>
+        <div class="space-y-2">
+
+          <!-- 列表-下午茶-人员1 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 3px 3px 0px #0A0A0A;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#3B82F6]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#3B82F6]">陈</div>
+              <div>
+                <p class="text-sm font-bold">陈磊 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">喜欢玩阿瓦隆</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-tea-1" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-tea-1" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-下午茶-人员2 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 5px 5px 0px #0A0A0A; margin-left: 4px;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#3B82F6]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#3B82F6]">王</div>
+              <div>
+                <p class="text-sm font-bold">王大明 <span class="text-xs font-normal text-on-surface-variant">×2人</span></p>
+                <p class="text-xs text-on-surface-variant">带了一个朋友</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-tea-2" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-tea-2" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-下午茶-人员3 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 4px 4px 0px #0A0A0A; margin-left: 2px;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#3B82F6]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#3B82F6]">刘</div>
+              <div>
+                <p class="text-sm font-bold">刘思思 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">无备注</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-tea-3" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-tea-3" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 晚餐分组 -->
+      <div class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="inline-flex items-center px-3 py-1 text-sm font-bold bg-[#F59E0B] text-white border-2 border-outline">晚餐</span>
+          <span class="text-sm text-on-surface-variant font-medium">18:00 - 21:00 · 韩式烤肉</span>
+          <span class="text-xs font-bold bg-surface-container px-2 py-0.5 border border-outline-variant/30 ml-auto">5 人</span>
+        </div>
+        <div class="space-y-2">
+
+          <!-- 列表-晚餐-人员1 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 4px 4px 0px #0A0A0A;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#F59E0B]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#F59E0B]">李</div>
+              <div>
+                <p class="text-sm font-bold">李小花 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">不吃牛</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-dinner-1" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-dinner-1" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-晚餐-人员2 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 3px 3px 0px #0A0A0A; margin-left: 5px;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#F59E0B]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#F59E0B]">陈</div>
+              <div>
+                <p class="text-sm font-bold">陈磊 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">无备注</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-dinner-2" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-dinner-2" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-晚餐-人员3 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 5px 5px 0px #0A0A0A;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#F59E0B]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#F59E0B]">张</div>
+              <div>
+                <p class="text-sm font-bold">张伟 <span class="text-xs font-normal text-on-surface-variant">×2人</span></p>
+                <p class="text-xs text-on-surface-variant">带家属</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-dinner-3" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-dinner-3" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+          <!-- 列表-晚餐-人员4 -->
+          <div class="bg-surface border-2 border-outline p-4 flex items-center justify-between" style="box-shadow: 4px 4px 0px #0A0A0A; margin-left: 3px;">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-[#F59E0B]/20 border-2 border-outline flex items-center justify-center font-bold text-xs text-[#F59E0B]">周</div>
+              <div>
+                <p class="text-sm font-bold">周海涛 <span class="text-xs font-normal text-on-surface-variant">×1人</span></p>
+                <p class="text-xs text-on-surface-variant">海鲜过敏</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btn-edit-dinner-4" class="px-3 py-1 text-xs font-bold bg-accent-blue text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">修改</button>
+              <button id="btn-cancel-dinner-4" class="px-3 py-1 text-xs font-bold bg-error text-white border-2 border-outline hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 2px 2px 0px #0A0A0A;">取消</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 取消报名确认弹窗 ==================== -->
+    <div id="modal-cancel" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface border-2 border-outline p-6 max-w-md w-full" style="box-shadow: 8px 8px 0px #0A0A0A;">
+        <h3 class="text-xl font-bold mb-3">确认取消报名</h3>
+        <p class="text-sm text-on-surface-variant mb-2">你即将取消以下报名：</p>
+        <div id="modal-cancel-info" class="bg-surface-container border-2 border-outline p-4 mb-5">
+          <p class="text-sm font-bold" id="modal-cancel-name">王大明 × 2人</p>
+          <p class="text-sm text-on-surface-variant mt-1" id="modal-cancel-scene">分段：午餐</p>
+          <p class="text-sm text-on-surface-variant" id="modal-cancel-notes">备注：不吃辣</p>
+        </div>
+        <p class="text-sm font-bold text-error mb-5">取消后需重新报名，确定要取消吗？</p>
+        <div class="flex items-center gap-3 justify-end">
+          <button id="btn-modal-back" class="bg-surface-container text-on-surface px-5 py-2.5 border-2 border-outline text-sm font-bold hover:bg-surface-container-high active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 3px 3px 0px #0A0A0A;">返回</button>
+          <button id="btn-modal-confirm-cancel" class="bg-error text-white px-5 py-2.5 border-2 border-outline text-sm font-bold hover:opacity-90 active:translate-x-[1px] active:translate-y-[1px] transition-all" style="box-shadow: 3px 3px 0px #0A0A0A;">确认取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== Toast 提示 ==================== -->
+    <div id="toast-success" class="fixed top-20 left-1/2 -translate-x-1/2 bg-success text-white px-6 py-3 border-2 border-outline font-bold text-sm z-50 hidden" style="box-shadow: 4px 4px 0px #0A0A0A;">
+      报名提交成功！
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <script>
+    $(function () {
+
+      // ========== 参与人数加减 ==========
+      $('#btn-people-minus').on('click', function () {
+        var input = $('#input-people');
+        var val = parseInt(input.val()) || 1;
+        if (val > 1) {
+          input.val(val - 1);
+        }
+      });
+
+      $('#btn-people-plus').on('click', function () {
+        var input = $('#input-people');
+        var val = parseInt(input.val()) || 1;
+        if (val < 20) {
+          input.val(val + 1);
+        }
+      });
+
+      // ========== 提交报名 ==========
+      $('#btn-submit-register').on('click', function () {
+        var name = $('#input-name').val().trim();
+        var checkedScenes = [];
+        if ($('#check-lunch').is(':checked')) checkedScenes.push('午餐');
+        if ($('#check-tea').is(':checked')) checkedScenes.push('下午茶');
+        if ($('#check-dinner').is(':checked')) checkedScenes.push('晚餐');
+
+        if (!name) {
+          // 简单高亮提示：给输入框加红框
+          $('#input-name').css('box-shadow', '0 0 0 2px #ef4444');
+          setTimeout(function () {
+            $('#input-name').css('box-shadow', '');
+          }, 1500);
+          return;
+        }
+
+        if (checkedScenes.length === 0) {
+          // 高亮分段勾选区
+          $('#check-label-lunch, #check-label-tea, #check-label-dinner').css('border-color', '#ef4444');
+          setTimeout(function () {
+            $('#check-label-lunch, #check-label-tea, #check-label-dinner').css('border-color', '');
+          }, 1500);
+          return;
+        }
+
+        // 显示成功 Toast
+        $('#toast-success').removeClass('hidden');
+        setTimeout(function () {
+          $('#toast-success').addClass('hidden');
+        }, 2500);
+
+        // 清空表单
+        $('#input-name').val('');
+        $('#input-people').val(1);
+        $('#input-notes').val('');
+      });
+
+      // ========== 修改报名 ==========
+      // 修改按钮 - 点击后应实现：
+      // 1. 将该用户已报名的信息回填到顶部报名表单中（姓名、参与段勾选、人数、备注）
+      // 2. 滚动页面到报名表单区域
+      // 3. 提交按钮文字改为"保存修改"
+      // 4. 提交后更新该条报名记录，恢复按钮为"提交报名"
+      $('[id^="btn-edit-"]').on('click', function () {
+        var btnId = $(this).attr('id');
+        console.log('修改报名:', btnId);
+        // 滚动到表单区域
+        $('html, body').animate({ scrollTop: $('#register-form-section').offset().top - 80 }, 300);
+        // 回填示例（实际应从该条报名数据中获取）
+        $('#input-name').val('王大明');
+        $('#input-people').val(2);
+        $('#input-notes').val('不吃辣');
+        $('#check-lunch').prop('checked', true);
+        $('#check-tea').prop('checked', false);
+        $('#check-dinner').prop('checked', false);
+        $('#btn-submit-register').text('保存修改');
+      });
+
+      // ========== 取消报名弹窗 ==========
+      var currentCancelRow = null;
+
+      $('[id^="btn-cancel-"]').on('click', function () {
+        currentCancelRow = $(this).closest('.bg-surface');
+        // 从当前行提取信息填入弹窗
+        var nameText = currentCancelRow.find('.text-sm.font-bold').first().text();
+        var notesText = currentCancelRow.find('.text-xs.text-on-surface-variant').last().text();
+        // 从分组标题获取分段名称
+        var sectionEl = currentCancelRow.closest('.mb-6');
+        var sceneName = sectionEl.find('.text-sm.font-bold.bg-\\[\\#FF4DB8\\]').text() ||
+                        sectionEl.find('.text-sm.font-bold.bg-\\[\\#3B82F6\\]').text() ||
+                        sectionEl.find('.text-sm.font-bold.bg-\\[\\#F59E0B\\]').text() || '未知';
+
+        $('#modal-cancel-name').text(nameText);
+        $('#modal-cancel-scene').text('分段：' + sceneName);
+        $('#modal-cancel-notes').text('备注：' + notesText);
+        $('#modal-cancel').removeClass('hidden');
+      });
+
+      // 返回按钮 - 关闭弹窗
+      $('#btn-modal-back').on('click', function () {
+        $('#modal-cancel').addClass('hidden');
+      });
+
+      // 确认取消 - 删除该行报名记录并关闭弹窗
+      $('#btn-modal-confirm-cancel').on('click', function () {
+        if (currentCancelRow) {
+          currentCancelRow.fadeOut(300, function () {
+            $(this).remove();
+          });
+        }
+        $('#modal-cancel').addClass('hidden');
+      });
+
+      // 点击遮罩关闭弹窗
+      $('#modal-cancel').on('click', function (e) {
+        if ($(e.target).is('#modal-cancel')) {
+          $('#modal-cancel').addClass('hidden');
+        }
+      });
+
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

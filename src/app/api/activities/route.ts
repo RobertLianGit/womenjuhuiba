@@ -3,7 +3,7 @@ import { getSupabaseClient } from '@/storage/database/supabase-client';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { title, description, rough_time, creator_id, creator_name } = body;
+  const { title, description, rough_time, creator_id, creator_name, passphrase } = body;
 
   if (!title || !description || !rough_time || !creator_id || !creator_name) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
@@ -11,6 +11,9 @@ export async function POST(request: NextRequest) {
 
   const client = getSupabaseClient();
   const intentionDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+  // 生成6位管理口令（如果前端没传）
+  const finalPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
   const { data, error } = await client
     .from('activities')
@@ -20,6 +23,7 @@ export async function POST(request: NextRequest) {
       rough_time,
       creator_id,
       creator_name,
+      passphrase: finalPassphrase,
       status: 'collecting',
       intention_deadline: intentionDeadline,
     })

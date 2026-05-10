@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
+import { isOrganizer } from '@/lib/party';
 import { LayoutDashboard, Plus, Trash2, Copy, Check, UserPlus } from 'lucide-react';
 
 interface Scene {
@@ -27,7 +28,8 @@ interface Participant {
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const isCreator = searchParams.get('is_creator') === '1';
+  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
+  const isCreator = isOrganizer(activityId, activityPassphrase);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeScene, setActiveScene] = useState<string>('');
@@ -41,10 +43,12 @@ export default function DashboardPage() {
     Promise.all([
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/participants?activity_id=${activityId}`).then(r => r.json()),
-    ]).then(([sceneRes, partRes]) => {
+      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
+    ]).then(([sceneRes, partRes, actRes]) => {
       const sceneData = sceneRes.data || [];
       setScenes(sceneData);
       setParticipants(partRes.data || []);
+      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       if (sceneData.length > 0) setActiveScene(sceneData[0].id);
       setLoading(false);
     }).catch(() => setLoading(false));

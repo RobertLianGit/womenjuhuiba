@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
+async function verifyPassphrase(client: ReturnType<typeof getSupabaseClient>, activityId: string, passphrase: string | undefined) {
+  if (!passphrase) return false;
+  const { data: activity } = await client
+    .from('activities')
+    .select('passphrase')
+    .eq('id', activityId)
+    .single();
+  return activity && activity.passphrase === passphrase;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { activity_id, scene_id, total_amount } = body;
+  const { activity_id, scene_id, total_amount, passphrase } = body;
 
   if (!activity_id || !scene_id || total_amount === undefined) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
+
+  // 录入账单需要管理口令
+  if (!(await verifyPassphrase(client, activity_id, passphrase))) {
+    return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
+  }
+
   const { data, error } = await client
     .from('bills')
     .upsert(

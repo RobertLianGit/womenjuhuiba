@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName } from '@/lib/party';
+import { getUserId, getUserName, isOrganizer } from '@/lib/party';
 import { Plus, Vote, BarChart3, Trophy, CheckCircle2 } from 'lucide-react';
 
 interface Proposal {
@@ -29,7 +29,8 @@ const COLORS = ['bg-primary', 'bg-accent-blue', 'bg-success', 'bg-warning', 'bg-
 export default function VotePage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const isCreator = searchParams.get('is_creator') === '1';
+  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
+  const isCreator = isOrganizer(activityId, activityPassphrase);
   const [tab, setTab] = useState<'submit' | 'vote' | 'result'>('submit');
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
@@ -42,9 +43,11 @@ export default function VotePage() {
     Promise.all([
       fetch(`/api/vote-proposals?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/vote-records?activity_id=${activityId}`).then(r => r.json()),
-    ]).then(([propRes, voteRes]) => {
+      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
+    ]).then(([propRes, voteRes, actRes]) => {
       setProposals(propRes.data || []);
       setVoteRecords(voteRes.data || []);
+      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);
@@ -303,7 +306,7 @@ export default function VotePage() {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ status: 'plan' }),
                     });
-                    if (res.ok) window.location.href = `/plan?activity_id=${activityId}&is_creator=1`;
+                    if (res.ok) window.location.href = `/plan?activity_id=${activityId}`;
                   }}
                   className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '4px 4px 0 #0A0A0A' }}

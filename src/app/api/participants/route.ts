@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
+async function verifyPassphrase(client: ReturnType<typeof getSupabaseClient>, activityId: string, passphrase: string | undefined) {
+  if (!passphrase) return false;
+  const { data: activity } = await client
+    .from('activities')
+    .select('passphrase')
+    .eq('id', activityId)
+    .single();
+  return activity && activity.passphrase === passphrase;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { activity_id, scene_id, user_id, user_name, people_count, is_manual, is_temp } = body;
+  const { activity_id, scene_id, user_id, user_name, people_count, is_manual, is_temp, passphrase } = body;
 
   if (!activity_id || !scene_id || !user_name) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
+
+  // 手动添加参与人需要管理口令
+  if (is_manual && !(await verifyPassphrase(client, activity_id, passphrase))) {
+    return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
+  }
+
   const { data, error } = await client
     .from('participants')
     .insert({
@@ -59,12 +75,20 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+  const passphrase = searchParams.get('passphrase');
+  const activity_id = searchParams.get('activity_id');
 
   if (!id) {
     return NextResponse.json({ error: '缺少 id' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
+
+  // 删除参与人需要管理口令
+  if (!(await verifyPassphrase(client, activity_id || '', passphrase || undefined))) {
+    return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
+  }
+
   const { error } = await client.from('participants').delete().eq('id', id);
 
   if (error) {

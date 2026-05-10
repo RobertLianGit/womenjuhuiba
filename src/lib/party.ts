@@ -34,3 +34,40 @@ export function useUserName(): string {
   useEffect(() => { setName(getUserName()); }, []);
   return name;
 }
+
+// ===== 管理口令 =====
+const PASSPHRASE_PREFIX = 'party_pass_';
+
+/** 获取某活动的管理口令（localStorage） */
+export function getPassphrase(activityId: string): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem(PASSPHRASE_PREFIX + activityId) || '';
+}
+
+/** 保存某活动的管理口令到 localStorage */
+export function setPassphrase(activityId: string, passphrase: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(PASSPHRASE_PREFIX + activityId, passphrase);
+}
+
+/** 清除某活动的管理口令 */
+export function clearPassphrase(activityId: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(PASSPHRASE_PREFIX + activityId);
+}
+
+/** 判断当前用户是否为某活动的组织者（通过管理口令匹配） */
+export function isOrganizer(activityId: string, activityPassphrase: string | null | undefined): boolean {
+  if (!activityPassphrase) return false;
+  return getPassphrase(activityId) === activityPassphrase;
+}
+
+/** 生成6位随机口令（大写字母+数字） */
+export function generatePassphrase(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}

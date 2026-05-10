@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, setUserName } from '@/lib/party';
-import { Plus, Calendar, PartyPopper, Crown, Users } from 'lucide-react';
+import { getUserId, getUserName, setUserName, isOrganizer } from '@/lib/party';
+import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -15,6 +15,7 @@ interface Activity {
   creator_id: string;
   status: string;
   created_at: string;
+  passphrase: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string }> = {
@@ -30,6 +31,10 @@ const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string }> 
 export default function HomePage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPassphraseModal, setShowPassphraseModal] = useState(false);
+  const [createdPassphrase, setCreatedPassphrase] = useState('');
+  const [createdActivityId, setCreatedActivityId] = useState('');
+  const [copied, setCopied] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', rough_time: '' });
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'mine' | 'joined'>('mine');
@@ -46,8 +51,8 @@ export default function HomePage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const myActivities = activities.filter(a => a.creator_id === userId);
-  const joinedActivities = activities.filter(a => a.creator_id !== userId);
+  const myActivities = activities.filter(a => isOrganizer(a.id, a.passphrase));
+  const joinedActivities = activities.filter(a => !isOrganizer(a.id, a.passphrase));
 
   const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
 
@@ -65,7 +70,19 @@ export default function HomePage() {
       setActivities(prev => [result.data, ...prev]);
       setShowCreateModal(false);
       setForm({ title: '', description: '', rough_time: '' });
+      // Show passphrase modal
+      const passphrase = result.data.passphrase;
+      setCreatedPassphrase(passphrase);
+      setCreatedActivityId(result.data.id);
+      setShowPassphraseModal(true);
     }
+  };
+
+  const handleCopyPassphrase = async () => {
+    const text = `聚会活动：${activities.find(a => a.id === createdActivityId)?.title || ''}\n管理口令：${createdPassphrase}\n\n请妥善保管此口令，用于管理活动（状态流转、添加分段、记账等）`;
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -127,7 +144,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {displayedActivities.map((act) => {
                 const st = STATUS_MAP[act.status] || STATUS_MAP.collecting;
-                const isCreator = act.creator_id === userId;
+                const isMine = isOrganizer(act.id, act.passphrase);
                 return (
                   <Link
                     key={act.id}
@@ -143,7 +160,7 @@ export default function HomePage() {
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{act.rough_time}</span>
-                      {isCreator && (
+                      {isMine && (
                         <span className="flex items-center gap-1 text-primary font-semibold"><Crown className="w-3.5 h-3.5" />组织者</span>
                       )}
                     </div>
@@ -192,6 +209,13 @@ export default function HomePage() {
                   placeholder="如：周末、下周六、12月底"
                 />
               </div>
+              <div className="bg-muted border-2 border-outline p-4 flex items-start gap-3">
+                <KeyRound className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold">管理口令自动生成</p>
+                  <p className="text-xs text-muted-foreground mt-1">创建后会自动生成管理口令，请妥善保管。凭口令可管理活动状态、添加分段、记账等。</p>
+                </div>
+              </div>
             </div>
             <div className="flex gap-3 mt-8">
               <button
@@ -207,6 +231,47 @@ export default function HomePage() {
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
               >
                 取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Passphrase Modal */}
+      {showPassphraseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-card border-2 border-outline w-full max-w-lg p-8 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-primary p-2 border-2 border-outline" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
+                <KeyRound className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <h2 className="text-2xl font-bold">活动已创建</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">请妥善保管以下管理口令，凭此口令可管理活动所有环节：</p>
+            <div className="bg-muted border-2 border-outline p-6 mb-6">
+              <p className="text-xs text-muted-foreground font-bold mb-2">管理口令</p>
+              <p className="text-3xl font-bold tracking-[0.2em] text-primary font-mono">{createdPassphrase}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyPassphrase}
+                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
+                style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copied ? '已复制' : '复制口令'}
+              </button>
+              <Link
+                href={`/activity?id=${createdActivityId}`}
+                className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
+              >
+                进入活动
+              </Link>
+              <button
+                onClick={() => setShowPassphraseModal(false)}
+                className="text-muted-foreground px-4 py-3 text-sm hover:text-foreground transition-colors cursor-pointer"
+              >
+                关闭
               </button>
             </div>
           </div>

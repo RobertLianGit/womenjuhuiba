@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
+import { isOrganizer } from '@/lib/party';
 import { Plus, Trash2, Copy, Check, FileText, Sparkles } from 'lucide-react';
 
 interface Scene {
@@ -19,14 +20,15 @@ interface Activity {
   title: string;
   description: string;
   rough_time: string;
+  passphrase: string;
 }
 
 export default function PlanPage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const isCreator = searchParams.get('is_creator') === '1';
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [activity, setActivity] = useState<Activity | null>(null);
+  const isCreator = isOrganizer(activityId, activity?.passphrase ?? null);
   const [plan, setPlan] = useState<{ content: string; prompt_generated: string }>({ content: '', prompt_generated: '' });
   const [addForm, setAddForm] = useState({ name: '', time_range: '', location: '' });
   const [showAddForm, setShowAddForm] = useState(false);

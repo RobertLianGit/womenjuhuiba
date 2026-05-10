@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
+import { isOrganizer } from '@/lib/party';
 import { Receipt, ArrowRight, Check } from 'lucide-react';
 
 interface Scene {
@@ -40,7 +41,8 @@ interface Transfer {
 export default function SettlePage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const isCreator = searchParams.get('is_creator') === '1';
+  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
+  const isCreator = isOrganizer(activityId, activityPassphrase);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -53,9 +55,11 @@ export default function SettlePage() {
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/participants?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/bills?activity_id=${activityId}`).then(r => r.json()),
-    ]).then(([sceneRes, partRes, billRes]) => {
+      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
+    ]).then(([sceneRes, partRes, billRes, actRes]) => {
       setScenes(sceneRes.data || []);
       setParticipants(partRes.data || []);
+      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setBills(billRes.data || []);
       setLoading(false);
     }).catch(() => setLoading(false));

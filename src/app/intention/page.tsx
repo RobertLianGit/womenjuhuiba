@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName } from '@/lib/party';
+import { getUserId, getUserName, isOrganizer } from '@/lib/party';
 import { Send, BarChart3, Clock, Users, MapPin } from 'lucide-react';
 
 interface Intention {
@@ -27,7 +27,8 @@ interface Scene {
 export default function IntentionPage() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-  const isCreator = searchParams.get('is_creator') === '1';
+  const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
+  const isCreator = isOrganizer(activityId, activityPassphrase);
   const [tab, setTab] = useState<'form' | 'summary'>('form');
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -40,9 +41,11 @@ export default function IntentionPage() {
     Promise.all([
       fetch(`/api/intentions?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
-    ]).then(([intRes, sceneRes]) => {
+      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
+    ]).then(([intRes, sceneRes, actRes]) => {
       setIntentions(intRes.data || []);
       setScenes(sceneRes.data || []);
+      if (actRes.data) setActivityPassphrase(actRes.data.passphrase);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);
@@ -308,7 +311,7 @@ export default function IntentionPage() {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ status: 'voting' }),
                     });
-                    if (res.ok) window.location.href = `/vote?activity_id=${activityId}&is_creator=1`;
+                    if (res.ok) window.location.href = `/vote?activity_id=${activityId}`;
                   }}
                   className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '4px 4px 0 #0A0A0A' }}

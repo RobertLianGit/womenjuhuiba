@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId } from '@/lib/party';
+import { isOrganizer, setPassphrase } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
   Share2, Copy, Check, ArrowRight, Crown, Calendar, ChevronRight,
-  Send, CheckCircle2, BarChart3, UserCheck
+  Send, CheckCircle2, UserCheck, KeyRound, Lock
 } from 'lucide-react';
 
 interface Activity {
@@ -19,6 +19,7 @@ interface Activity {
   creator_name: string;
   creator_id: string;
   status: string;
+  passphrase?: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string; desc: string }> = {
@@ -42,7 +43,6 @@ const ACTION_MAP: Record<string, { label: string; next: string }> = {
   settling:   { label: '完成结算', next: 'settled' },
 };
 
-// What a participant can do at each phase
 const PARTICIPANT_ACTION: Record<string, { label: string; href: string; icon: typeof ClipboardCheck; color: string }> = {
   collecting: { label: '填写意愿', href: '/intention', icon: Send, color: 'bg-primary text-primary-foreground' },
   voting:     { label: '去投票', href: '/vote', icon: Vote, color: 'bg-accent-blue text-white' },
@@ -53,7 +53,6 @@ const PARTICIPANT_ACTION: Record<string, { label: string; href: string; icon: ty
   settled:    { label: '查看结算', href: '/settle', icon: Receipt, color: 'bg-muted text-muted-foreground' },
 };
 
-// Organizer entries (all function entries)
 const ORGANIZER_ENTRIES = [
   { key: 'collecting', label: '意愿收集', icon: ClipboardCheck, desc: '收集大家的意愿和想法', minStatus: 0 },
   { key: 'voting', label: '投票去哪', icon: Vote, desc: '投票决定去哪里', minStatus: 1 },
@@ -69,8 +68,9 @@ export default function ActivityPage() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const userId = getUserId();
+  const [showPassphraseModal, setShowPassphraseModal] = useState(false);
+  const [passphraseInput, setPassphraseInput] = useState('');
+  const [passphraseError, setPassphraseError] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -83,7 +83,7 @@ export default function ActivityPage() {
       .catch(() => setLoading(false));
   }, [id]);
 
-  const isCreator = activity ? activity.creator_id === userId : false;
+  const isCreator = activity ? isOrganizer(activity.id, activity.passphrase) : false;
   const currentIdx = activity ? STATUS_ORDER.indexOf(activity.status) : -1;
 
   const handleNextStatus = async () => {
@@ -104,6 +104,33 @@ export default function ActivityPage() {
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVerifyPassphrase = () => {
+    if (!activity || !passphraseInput.trim()) return;
+    // Verify passphrase via API — try to PATCH with the passphrase
+    fetch(`/api/activities/${activity.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: activity.status, passphrase: passphraseInput.trim() }),
+    })
+      .then(r => r.json())
+      .then(result => {
+        if (result.error) {
+          setPassphraseError('口令验证失败，请检查后重试');
+        } else {
+          // Save passphrase locally
+          setPassphrase(activity.id, passphraseInput.trim());
+          setShowPassphraseModal(false);
+          setPassphraseInput('');
+          setPassphraseError('');
+          // Force re-render
+          setActivity({ ...activity });
+        }
+      })
+      .catch(() => {
+        setPassphraseError('验证失败，请稍后重试');
+      });
   };
 
   const pageHref = (key: string) => {
@@ -154,7 +181,7 @@ export default function ActivityPage() {
         {/* ===== PARTICIPANT VIEW ===== */}
         {!isCreator && (
           <>
-            {/* Current Phase Action Card — prominent, clear */}
+            {/* Current Phase Action Card */}
             <section className="mb-8">
               <div className="bg-card border-2 border-outline p-6 relative" style={{ boxShadow: '6px 6px 0 #0A0A0A' }}>
                 <div className="mb-4">
@@ -174,6 +201,18 @@ export default function ActivityPage() {
                   </Link>
                 )}
               </div>
+            </section>
+
+            {/* Verify Organizer Identity */}
+            <section className="mb-8">
+              <button
+                onClick={() => setShowPassphraseModal(true)}
+                className="bg-card border-2 border-outline px-5 py-3 font-bold text-sm flex items-center gap-2 hover:bg-muted transition-colors cursor-pointer"
+                style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+              >
+                <Lock className="w-4 h-4 text-muted-foreground" />
+                验证管理口令
+              </button>
             </section>
 
             {/* Share Link */}
@@ -236,7 +275,7 @@ export default function ActivityPage() {
               </section>
             )}
 
-            {/* Entry Cards — All Function Entries */}
+            {/* Entry Cards */}
             <section className="mb-8">
               <h2 className="text-xl font-bold mb-4">功能入口</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -290,6 +329,51 @@ export default function ActivityPage() {
           </>
         )}
       </main>
+
+      {/* Passphrase Verification Modal */}
+      {showPassphraseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-card border-2 border-outline w-full max-w-md p-8" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-primary p-2 border-2 border-outline" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
+                <KeyRound className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <h2 className="text-xl font-bold">验证管理口令</h2>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              输入活动管理口令以获取组织者权限（状态流转、添加分段、记账等）
+            </p>
+            <div className="mb-4">
+              <input
+                className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono tracking-wider"
+                value={passphraseInput}
+                onChange={e => { setPassphraseInput(e.target.value); setPassphraseError(''); }}
+                placeholder="请输入管理口令"
+                onKeyDown={e => { if (e.key === 'Enter') handleVerifyPassphrase(); }}
+              />
+              {passphraseError && (
+                <p className="text-sm text-error mt-2 font-medium">{passphraseError}</p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleVerifyPassphrase}
+                disabled={!passphraseInput.trim()}
+                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+              >
+                验证
+              </button>
+              <button
+                onClick={() => { setShowPassphraseModal(false); setPassphraseInput(''); setPassphraseError(''); }}
+                className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

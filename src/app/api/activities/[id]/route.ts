@@ -9,6 +9,22 @@ export async function PATCH(
   const body = await request.json();
   const client = getSupabaseClient();
 
+  // 验证管理口令
+  if (body.passphrase) {
+    const { data: activity } = await client
+      .from('activities')
+      .select('passphrase')
+      .eq('id', id)
+      .single();
+
+    if (!activity || activity.passphrase !== body.passphrase) {
+      return NextResponse.json({ error: '管理口令错误' }, { status: 403 });
+    }
+  } else if (body.status !== undefined) {
+    // 状态流转必须验证口令
+    return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
+  }
+
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (body.status !== undefined) updateData.status = body.status;

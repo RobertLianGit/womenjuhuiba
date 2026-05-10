@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
+async function verifyPassphrase(client: ReturnType<typeof getSupabaseClient>, activityId: string, passphrase: string | undefined) {
+  if (!passphrase) return false;
+  const { data: activity } = await client
+    .from('activities')
+    .select('passphrase')
+    .eq('id', activityId)
+    .single();
+  return activity && activity.passphrase === passphrase;
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { activity_id, content, prompt_generated } = body;
+  const { activity_id, content, prompt_generated, passphrase } = body;
 
   if (!activity_id) {
     return NextResponse.json({ error: '缺少 activity_id' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
+
+  // 保存方案需要管理口令
+  if (!(await verifyPassphrase(client, activity_id, passphrase))) {
+    return NextResponse.json({ error: '需要管理口令' }, { status: 403 });
+  }
+
   const { data, error } = await client
     .from('plans')
     .upsert(

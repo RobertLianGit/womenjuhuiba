@@ -99,3 +99,26 @@ export function getAccessedActivities(): string[] {
 export function isActivityAccessed(activityId: string): boolean {
   return getAccessedActivities().includes(activityId);
 }
+
+// ===== 我发起的活动 =====
+const CREATED_KEY = 'party_created_activities';
+
+/** 记录自己创建的活动ID */
+export function addCreatedActivity(activityId: string): void {
+  if (typeof window === 'undefined') return;
+  const ids = getCreatedActivities();
+  if (!ids.includes(activityId)) {
+    ids.push(activityId);
+    localStorage.setItem(CREATED_KEY, JSON.stringify(ids));
+  }
+}
+
+/** 获取自己创建的活动ID列表 */
+export function getCreatedActivities(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem(CREATED_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}

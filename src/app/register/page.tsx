@@ -54,7 +54,7 @@ function RegisterContent() {
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
 
   const userId = getUserId();
-  const isCreator = isOrganizer(activityId, activityPassphrase);
+  const isCreator = isOrganizer(activityId);
 
   useEffect(() => {
     if (!activityId) return;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase, getAccessedActivities, markActivityAccessed } from '@/lib/party';
+import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase, getAccessedActivities, getCreatedActivities, markActivityAccessed, addCreatedActivity } from '@/lib/party';
 import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, Lock } from 'lucide-react';
 
 interface Activity {
@@ -47,26 +47,25 @@ export default function HomePage() {
 
   const fetchMyActivities = async () => {
     setLoading(true);
-    const uid = getUserId();
     const all: Activity[] = [];
 
-    // 1. 获取我发起的活动
-    if (uid) {
+    // 1. 获取我发起的活动（通过localStorage中的ID列表批量查询）
+    const createdIds = getCreatedActivities();
+    if (createdIds.length > 0) {
       try {
-        const res = await fetch(`/api/activities?creator_id=${encodeURIComponent(uid)}`);
+        const res = await fetch(`/api/activities?ids=${createdIds.join(',')}`);
         const data = await res.json();
         if (data.data) all.push(...data.data);
       } catch { /* ignore */ }
     }
 
-    // 2. 获取我参与的活动（通过已验证的活动ID逐个查询）
-    const accessedIds = getAccessedActivities();
-    for (const aid of accessedIds) {
-      if (all.some(a => a.id === aid)) continue; // 已在"我发起的"中
+    // 2. 获取我参与的活动（通过已验证的活动ID批量查询）
+    const accessedIds = getAccessedActivities().filter(id => !createdIds.includes(id));
+    if (accessedIds.length > 0) {
       try {
-        const res = await fetch(`/api/activities/${aid}`);
+        const res = await fetch(`/api/activities?ids=${accessedIds.join(',')}`);
         const data = await res.json();
-        if (data.data) all.push(data.data);
+        if (data.data) all.push(...data.data);
       } catch { /* ignore */ }
     }
 
@@ -77,8 +76,8 @@ export default function HomePage() {
   useEffect(() => { fetchMyActivities(); }, []);
 
   const accessedIds = getAccessedActivities();
-  const myActivities = activities.filter(a => isOrganizer(a.id, a.passphrase));
-  const joinedActivities = activities.filter(a => !isOrganizer(a.id, a.passphrase) && accessedIds.includes(a.id));
+  const myActivities = activities.filter(a => isOrganizer(a.id));
+  const joinedActivities = activities.filter(a => !isOrganizer(a.id) && accessedIds.includes(a.id));
   const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
 
   const handleCreate = async () => {
@@ -97,6 +96,7 @@ export default function HomePage() {
       }
       // Creator auto-accesses their own activity
       markActivityAccessed(result.data.id);
+      addCreatedActivity(result.data.id);
       setActivities(prev => [result.data, ...prev]);
       setShowCreateModal(false);
       setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '' });
@@ -263,7 +263,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {displayedActivities.map((act) => {
                 const st = STATUS_MAP[act.status] || STATUS_MAP.collecting;
-                const isMine = isOrganizer(act.id, act.passphrase);
+                const isMine = isOrganizer(act.id);
                 return (
                   <Link
                     key={act.id}

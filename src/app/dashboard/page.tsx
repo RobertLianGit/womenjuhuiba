@@ -33,7 +33,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId, activityPassphrase);
+  const isCreator = isOrganizer(activityId);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeScene, setActiveScene] = useState<string>('');

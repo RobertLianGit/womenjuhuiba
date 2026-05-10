@@ -42,11 +42,17 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ data });
 }
 
+/** 脱敏函数：移除 passphrase */
+function sanitize(activity: Record<string, unknown>) {
+  const { passphrase: _, ...safe } = activity;
+  return safe;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const access_code = searchParams.get('access_code');
-  const creator_id = searchParams.get('creator_id');
+  const ids = searchParams.get('ids'); // 逗号分隔的ID列表，用于批量查询
 
   const client = getSupabaseClient();
 
@@ -66,8 +72,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '活动不存在' }, { status: 404 });
     }
 
-    // 脱敏：不返回 passphrase
-    const { passphrase: _, ...safe } = data;
+    return NextResponse.json({ data: sanitize(data) });
+  }
+
+  // 批量按 ID 查询（「我发起的」「我参与的」页面使用）
+  if (ids) {
+    const idList = ids.split(',').filter(Boolean);
+    if (idList.length === 0) {
+      return NextResponse.json({ data: [] });
+    }
+    // 限制最多50个，防止滥用
+    const limitedIds = idList.slice(0, 50);
+
+    const { data, error } = await client
+      .from('activities')
+      .select('*')
+      .in('id', limitedIds)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const safe = data.map(sanitize);
     return NextResponse.json({ data: safe });
   }
 
@@ -87,28 +114,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
     }
 
-    // 脱敏：不返回 passphrase
-    const { passphrase: _, ...safe } = data;
-    return NextResponse.json({ data: safe });
-  }
-
-  // 通过 creator_id 查询「我发起的」活动列表
-  if (creator_id) {
-    const { data, error } = await client
-      .from('activities')
-      .select('*')
-      .eq('creator_id', creator_id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    // 脱敏：不返回 passphrase
-    const safe = data.map(({ passphrase: _, ...rest }) => rest);
-    return NextResponse.json({ data: safe });
+    return NextResponse.json({ data: sanitize(data) });
   }
 
   // 无参数时拒绝列出所有活动，保护隐私
-  return NextResponse.json({ error: '请提供 activity_id、access_code 或 creator_id' }, { status: 400 });
+  return NextResponse.json({ error: '请提供 id、ids 或 access_code 参数' }, { status: 400 });
 }

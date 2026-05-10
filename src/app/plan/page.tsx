@@ -44,7 +44,7 @@ function PlanPageContent() {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId, activityPassphrase);
+  const isCreator = isOrganizer(activityId);
   const [plan, setPlan] = useState<{ content: string; prompt_generated: string }>({ content: '', prompt_generated: '' });
   const [addForm, setAddForm] = useState({ name: '', time_range: '', location: '' });
   const [showAddForm, setShowAddForm] = useState(false);

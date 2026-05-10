@@ -123,7 +123,7 @@ function ActivityPage() {
     }).catch(() => {});
   }, [id, accessGranted]);
 
-  const isCreator = activity ? isOrganizer(activity.id, activity.passphrase) : false;
+  const isCreator = activity ? isOrganizer(activity.id) : false;
   const currentIdx = activity ? STATUS_ORDER.indexOf(activity.status) : -1;
 
   const handleAccessVerify = () => {

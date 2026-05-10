@@ -38,7 +38,7 @@ function VotePageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
-  const isCreator = isOrganizer(activityId, activityPassphrase);
+  const isCreator = isOrganizer(activityId);
   const [tab, setTab] = useState<'vote' | 'submit' | 'result'>('vote');
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);

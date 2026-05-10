@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, isOrganizer, setPassphrase } from '@/lib/party';
+import { getUserId, getUserName, isOrganizer, setPassphrase, isActivityAccessed } from '@/lib/party';
 import { UserPlus, X, Check, AlertCircle, FileText, KeyRound } from 'lucide-react';
 
 interface Scene {
@@ -58,6 +58,10 @@ function RegisterContent() {
 
   useEffect(() => {
     if (!activityId) return;
+    if (!isActivityAccessed(activityId)) {
+      window.location.href = `/activity?id=${activityId}`;
+      return;
+    }
     Promise.all([
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/registrations?activity_id=${activityId}`).then(r => r.json()),

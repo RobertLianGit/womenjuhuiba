@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase } from '@/lib/party';
-import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check } from 'lucide-react';
+import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase, getAccessedActivities, markActivityAccessed } from '@/lib/party';
+import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, Lock } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -16,6 +16,7 @@ interface Activity {
   status: string;
   created_at: string;
   passphrase: string;
+  access_code: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string }> = {
@@ -32,10 +33,15 @@ export default function HomePage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPassphraseModal, setShowPassphraseModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [createdPassphrase, setCreatedPassphrase] = useState('');
   const [createdActivityId, setCreatedActivityId] = useState('');
+  const [createdAccessCode, setCreatedAccessCode] = useState('');
   const [copied, setCopied] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '' });
+  const [copiedShare, setCopiedShare] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '', access_code: '' });
+  const [joinCode, setJoinCode] = useState('');
+  const [joinError, setJoinError] = useState('');
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'mine' | 'joined'>('mine');
 
@@ -49,15 +55,17 @@ export default function HomePage() {
       .catch(() => setLoading(false));
   }, []);
 
+  // Only show activities the user has access to (created or joined via access_code)
+  const accessedIds = getAccessedActivities();
   const myActivities = activities.filter(a => isOrganizer(a.id, a.passphrase));
-  const joinedActivities = activities.filter(a => !isOrganizer(a.id, a.passphrase));
+  const joinedActivities = activities.filter(a => !isOrganizer(a.id, a.passphrase) && accessedIds.includes(a.id));
+  const visibleActivities = [...myActivities, ...joinedActivities];
 
   const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
 
   const handleCreate = async () => {
-    if (!form.title || !form.description || !form.rough_time || !form.creator_name) return;
+    if (!form.title || !form.description || !form.rough_time || !form.creator_name || !form.access_code) return;
     const uid = getUserId();
-    // Save creator name
     setUserName(form.creator_name);
     const res = await fetch('/api/activities', {
       method: 'POST',
@@ -66,26 +74,65 @@ export default function HomePage() {
     });
     const result = await res.json();
     if (result.data) {
-      // Save passphrase to localStorage so isOrganizer works immediately
       if (result.data.passphrase) {
         setPassphrase(result.data.id, result.data.passphrase);
       }
+      // Creator auto-accesses their own activity
+      markActivityAccessed(result.data.id);
       setActivities(prev => [result.data, ...prev]);
       setShowCreateModal(false);
-      setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name });
-      // Show passphrase modal
-      const passphrase = result.data.passphrase;
-      setCreatedPassphrase(passphrase);
+      setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '' });
+      setCreatedPassphrase(result.data.passphrase);
       setCreatedActivityId(result.data.id);
+      setCreatedAccessCode(form.access_code);
       setShowPassphraseModal(true);
     }
   };
 
+  const handleJoin = async () => {
+    if (!joinCode.trim()) return;
+    setJoinError('');
+    // Find activity by access_code
+    const match = activities.find(a => a.access_code === joinCode.trim());
+    if (match) {
+      markActivityAccessed(match.id);
+      setShowJoinModal(false);
+      setJoinCode('');
+      // Navigate to activity
+      window.location.href = `/activity?id=${match.id}`;
+    } else {
+      // Try fetching from API in case it's not loaded yet
+      const res = await fetch(`/api/activities?access_code=${encodeURIComponent(joinCode.trim())}`);
+      const result = await res.json();
+      if (result.data) {
+        markActivityAccessed(result.data.id);
+        setActivities(prev => {
+          if (prev.find(a => a.id === result.data.id)) return prev;
+          return [result.data, ...prev];
+        });
+        setShowJoinModal(false);
+        setJoinCode('');
+        window.location.href = `/activity?id=${result.data.id}`;
+      } else {
+        setJoinError('口令不正确，请确认后重试');
+      }
+    }
+  };
+
   const handleCopyPassphrase = async () => {
-    const text = `聚会活动：${activities.find(a => a.id === createdActivityId)?.title || ''}\n管理口令：${createdPassphrase}\n\n请妥善保管此口令，用于管理活动（状态流转、添加分段、记账等）`;
+    const act = activities.find(a => a.id === createdActivityId);
+    const text = `🎉 聚会活动：${act?.title || ''}\n👤 发起人：${act?.creator_name || ''}\n🔑 活动口令：${createdAccessCode}\n\n📎 活动链接：${window.location.origin}/activity?id=${createdActivityId}\n\n🔑 管理口令（仅组织者使用）：${createdPassphrase}\n\n请妥善保管管理口令，用于管理活动（状态流转、添加分段、记账等）`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyShare = async () => {
+    const act = activities.find(a => a.id === createdActivityId);
+    const text = `🎉 聚会活动：${act?.title || ''}\n👤 发起人：${act?.creator_name || ''}\n🔑 活动口令：${createdAccessCode}\n\n📎 活动链接：${window.location.origin}/activity?id=${createdActivityId}\n\n用活动口令即可加入，快来参与吧！`;
+    await navigator.clipboard.writeText(text);
+    setCopiedShare(true);
+    setTimeout(() => setCopiedShare(false), 2000);
   };
 
   return (
@@ -101,15 +148,26 @@ export default function HomePage() {
             <div className="relative z-10">
               <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-3">我们聚会吧<span className="text-base font-normal align-super ml-1 text-secondary">Beta</span></h1>
               <p className="text-xl md:text-2xl font-medium text-muted-foreground mb-8">从创建到结算，一站式聚会工具</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-primary text-primary-foreground border-2 border-outline px-8 py-4 text-xl font-bold tracking-wide hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-[4px_4px_0_#0A0A0A] transition-all cursor-pointer"
-                style={{ boxShadow: '8px 8px 0 #0A0A0A' }}
-              >
-                <span className="flex items-center gap-3">
-                  <Plus className="w-6 h-6" />创建活动
-                </span>
-              </button>
+              <div className="flex flex-wrap gap-4">
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-primary text-primary-foreground border-2 border-outline px-8 py-4 text-xl font-bold tracking-wide hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-[4px_4px_0_#0A0A0A] transition-all cursor-pointer"
+                  style={{ boxShadow: '8px 8px 0 #0A0A0A' }}
+                >
+                  <span className="flex items-center gap-3">
+                    <Plus className="w-6 h-6" />创建活动
+                  </span>
+                </button>
+                <button
+                  onClick={() => setShowJoinModal(true)}
+                  className="bg-accent-blue text-white border-2 border-outline px-8 py-4 text-xl font-bold tracking-wide hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[6px_6px_0_#0A0A0A] active:translate-x-[4px] active:translate-y-[4px] active:shadow-[4px_4px_0_#0A0A0A] transition-all cursor-pointer"
+                  style={{ boxShadow: '8px 8px 0 #0A0A0A' }}
+                >
+                  <span className="flex items-center gap-3">
+                    <Lock className="w-6 h-6" />通过口令加入
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -150,7 +208,7 @@ export default function HomePage() {
                 <div className="text-xs opacity-80 mt-1">AA不伤感情</div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">无需登录，输入昵称即可参与。组织者创建活动后获得管理口令，用于控制活动阶段和管理操作。</p>
+            <p className="text-xs text-muted-foreground mt-3">无需登录，输入昵称即可参与。创建活动时设置活动口令，分享给朋友即可加入。组织者另有管理口令，用于控制活动阶段和管理操作。</p>
           </div>
         </section>
 
@@ -180,8 +238,17 @@ export default function HomePage() {
               <PartyPopper className="w-16 h-16 mx-auto mb-4 text-primary opacity-60" />
               <p className="text-xl font-bold mb-2">{tab === 'mine' ? '还没有发起活动' : '还没有参与活动'}</p>
               <p className="text-muted-foreground mb-6">
-                {tab === 'mine' ? '点击上方按钮，创建你的第一个聚会活动吧' : '通过朋友分享的链接加入聚会活动'}
+                {tab === 'mine' ? '点击上方按钮，创建你的第一个聚会活动吧' : '通过朋友分享的活动口令加入聚会'}
               </p>
+              {tab === 'joined' && (
+                <button
+                  onClick={() => setShowJoinModal(true)}
+                  className="bg-accent-blue text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer"
+                  style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+                >
+                  <span className="flex items-center gap-2"><Lock className="w-4 h-4" />输入口令加入</span>
+                </button>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -268,25 +335,35 @@ export default function HomePage() {
                   placeholder="如：周末、下周六、12月底"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-bold mb-1">活动口令 <span className="text-error">*</span></label>
+                <input
+                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={form.access_code}
+                  onChange={e => setForm(f => ({ ...f, access_code: e.target.value }))}
+                  placeholder="设置一个口令，朋友凭此口令加入活动"
+                />
+                <p className="text-xs text-muted-foreground mt-1">参与者需要输入此口令才能查看和加入活动</p>
+              </div>
               <div className="bg-muted border-2 border-outline p-4 flex items-start gap-3">
                 <KeyRound className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold">管理口令自动生成</p>
-                  <p className="text-xs text-muted-foreground mt-1">创建后会自动生成管理口令，请妥善保管。凭口令可管理活动状态、添加分段、记账等。</p>
+                  <p className="text-xs text-muted-foreground mt-1">创建后会自动生成6位管理口令，凭此可管理活动状态、添加分段、记账等。活动口令是参与者加入用的，管理口令是组织者管理用的，请注意区分。</p>
                 </div>
               </div>
             </div>
             <div className="flex gap-3 mt-8">
               <button
                 onClick={handleCreate}
-                disabled={!form.title || !form.description || !form.rough_time || !form.creator_name}
+                disabled={!form.title || !form.description || !form.rough_time || !form.creator_name || !form.access_code}
                 className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
               >
                 创建活动
               </button>
               <button
-                onClick={() => { setShowCreateModal(false); setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name }); }}
+                onClick={() => { setShowCreateModal(false); setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '' }); }}
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
               >
                 取消
@@ -296,7 +373,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Passphrase Modal */}
+      {/* Passphrase Modal - after creation */}
       {showPassphraseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-card border-2 border-outline w-full max-w-lg p-8 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
@@ -306,23 +383,41 @@ export default function HomePage() {
               </div>
               <h2 className="text-2xl font-bold">活动已创建</h2>
             </div>
-            <p className="text-muted-foreground mb-6">请妥善保管以下管理口令，凭此口令可管理活动所有环节：</p>
-            <div className="bg-muted border-2 border-outline p-6 mb-6">
-              <p className="text-xs text-muted-foreground font-bold mb-2">管理口令</p>
-              <p className="text-3xl font-bold tracking-[0.2em] text-primary font-mono">{createdPassphrase}</p>
+            <p className="text-muted-foreground mb-6">请妥善保管以下口令，分享给朋友时记得带上活动口令：</p>
+
+            {/* Access Code - for sharing */}
+            <div className="bg-accent-blue/10 border-2 border-accent-blue/30 p-4 mb-4">
+              <p className="text-xs text-accent-blue font-bold mb-1">活动口令（分享给参与者）</p>
+              <p className="text-2xl font-bold tracking-[0.2em] text-accent-blue font-mono">{createdAccessCode}</p>
+              <p className="text-xs text-muted-foreground mt-1">参与者凭此口令加入活动</p>
             </div>
-            <div className="flex gap-3">
+
+            {/* Admin Passphrase - for organizer only */}
+            <div className="bg-muted border-2 border-outline p-4 mb-6">
+              <p className="text-xs text-muted-foreground font-bold mb-1">管理口令（仅组织者使用）</p>
+              <p className="text-2xl font-bold tracking-[0.2em] text-primary font-mono">{createdPassphrase}</p>
+              <p className="text-xs text-muted-foreground mt-1">凭此口令可管理活动所有环节，请勿泄露</p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
               <button
-                onClick={handleCopyPassphrase}
-                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
+                onClick={handleCopyShare}
+                className="bg-accent-blue text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
                 style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
               >
+                {copiedShare ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copiedShare ? '已复制' : '复制分享信息'}
+              </button>
+              <button
+                onClick={handleCopyPassphrase}
+                className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer flex items-center gap-2"
+              >
                 {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                {copied ? '已复制' : '复制口令'}
+                {copied ? '已复制' : '复制管理口令'}
               </button>
               <Link
                 href={`/activity?id=${createdActivityId}`}
-                className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
+                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:bg-primary/90 transition-colors"
               >
                 进入活动
               </Link>
@@ -331,6 +426,48 @@ export default function HomePage() {
                 className="text-muted-foreground px-4 py-3 text-sm hover:text-foreground transition-colors cursor-pointer"
               >
                 关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Join Modal - enter access_code */}
+      {showJoinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-card border-2 border-outline w-full max-w-md p-8 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-accent-blue p-2 border-2 border-outline" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
+                <Lock className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold">加入活动</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">输入组织者分享的活动口令，即可加入活动：</p>
+            <div>
+              <label className="block text-sm font-bold mb-1">活动口令</label>
+              <input
+                className="w-full border-2 border-outline bg-muted px-4 py-3 text-lg font-bold font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-accent-blue/30"
+                value={joinCode}
+                onChange={e => { setJoinCode(e.target.value); setJoinError(''); }}
+                placeholder="输入活动口令"
+                onKeyDown={e => e.key === 'Enter' && handleJoin()}
+              />
+              {joinError && <p className="text-sm text-error mt-2 font-bold">{joinError}</p>}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleJoin}
+                disabled={!joinCode.trim()}
+                className="bg-accent-blue text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+              >
+                加入活动
+              </button>
+              <button
+                onClick={() => { setShowJoinModal(false); setJoinCode(''); setJoinError(''); }}
+                className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
+              >
+                取消
               </button>
             </div>
           </div>

@@ -3,10 +3,14 @@ import { getSupabaseClient } from '@/storage/database/supabase-client';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { title, description, rough_time, creator_id, creator_name, passphrase } = body;
+  const { title, description, rough_time, creator_id, creator_name, passphrase, access_code } = body;
 
   if (!title || !description || !rough_time || !creator_id || !creator_name) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
+  }
+
+  if (!access_code) {
+    return NextResponse.json({ error: '请设置活动口令' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
@@ -23,6 +27,7 @@ export async function POST(request: NextRequest) {
       rough_time,
       creator_id,
       creator_name,
+      access_code,
       passphrase: finalPassphrase,
       status: 'collecting',
       intention_deadline: intentionDeadline,
@@ -40,6 +45,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+  const access_code = searchParams.get('access_code');
 
   const client = getSupabaseClient();
 
@@ -48,6 +54,21 @@ export async function GET(request: NextRequest) {
       .from('activities')
       .select('*')
       .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ data });
+  }
+
+  // Find by access_code
+  if (access_code) {
+    const { data, error } = await client
+      .from('activities')
+      .select('*')
+      .eq('access_code', access_code)
       .maybeSingle();
 
     if (error) {

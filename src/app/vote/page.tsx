@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
 import { Plus, Vote, BarChart3, Trophy, CheckCircle2, Lightbulb, Settings2, RefreshCw, KeyRound } from 'lucide-react';
 
 interface Proposal {
@@ -80,6 +80,11 @@ function VotePageContent() {
   };
 
   useEffect(() => {
+    if (!activityId) return;
+    if (!isActivityAccessed(activityId)) {
+      window.location.href = `/activity?id=${activityId}`;
+      return;
+    }
     fetchData().catch(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityId]);

@@ -71,3 +71,31 @@ export function generatePassphrase(): string {
   }
   return result;
 }
+
+// ===== 活动口令（access_code） =====
+const ACCESS_PREFIX = 'party_access_';
+
+/** 记住已通过验证的活动（用户输入了正确的活动口令） */
+export function markActivityAccessed(activityId: string): void {
+  if (typeof window === 'undefined') return;
+  const accessed = getAccessedActivities();
+  if (!accessed.includes(activityId)) {
+    accessed.push(activityId);
+    localStorage.setItem('party_accessed_activities', JSON.stringify(accessed));
+  }
+}
+
+/** 获取已通过活动口令验证的活动ID列表 */
+export function getAccessedActivities(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(localStorage.getItem('party_accessed_activities') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+/** 判断用户是否已通过某活动的口令验证 */
+export function isActivityAccessed(activityId: string): boolean {
+  return getAccessedActivities().includes(activityId);
+}

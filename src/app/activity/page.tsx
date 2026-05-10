@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, setPassphrase, getPassphrase } from '@/lib/party';
+import { isOrganizer, setPassphrase, getPassphrase, markActivityAccessed, isActivityAccessed } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
   Share2, Copy, Check, ArrowRight, Crown, Calendar, ChevronRight,
@@ -20,6 +20,7 @@ interface Activity {
   creator_id: string;
   status: string;
   passphrase?: string;
+  access_code: string;
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string; desc: string }> = {
@@ -81,20 +82,34 @@ function ActivityPage() {
   const [passphraseError, setPassphraseError] = useState('');
   const [stats, setStats] = useState({ intentionCount: 0, voteCount: 0, registrationCount: 0 });
 
+  // Access code verification
+  const [accessGranted, setAccessGranted] = useState(false);
+  const [accessCodeInput, setAccessCodeInput] = useState('');
+  const [accessError, setAccessError] = useState('');
+
   useEffect(() => {
     if (!id) return;
     fetch(`/api/activities?id=${id}`)
       .then(r => r.json())
       .then(res => {
-        setActivity(res.data || null);
+        const data = res.data || null;
+        setActivity(data);
         setLoading(false);
+        // Check if user is organizer or has previously accessed
+        if (data) {
+          const isOrg = isOrganizer(data.id, data.passphrase);
+          const isAccessed = isActivityAccessed(data.id);
+          if (isOrg || isAccessed) {
+            setAccessGranted(true);
+          }
+        }
       })
       .catch(() => setLoading(false));
   }, [id]);
 
   // Fetch progress stats
   useEffect(() => {
-    if (!id) return;
+    if (!id || !accessGranted) return;
     Promise.all([
       fetch(`/api/intentions?activity_id=${id}`).then(r => r.json()),
       fetch(`/api/vote-records?activity_id=${id}`).then(r => r.json()),
@@ -106,10 +121,22 @@ function ActivityPage() {
         registrationCount: (regRes.data || []).length,
       });
     }).catch(() => {});
-  }, [id]);
+  }, [id, accessGranted]);
 
   const isCreator = activity ? isOrganizer(activity.id, activity.passphrase) : false;
   const currentIdx = activity ? STATUS_ORDER.indexOf(activity.status) : -1;
+
+  const handleAccessVerify = () => {
+    if (!activity || !accessCodeInput.trim()) return;
+    if (accessCodeInput.trim() === activity.access_code) {
+      markActivityAccessed(activity.id);
+      setAccessGranted(true);
+      setAccessCodeInput('');
+      setAccessError('');
+    } else {
+      setAccessError('活动口令不正确，请确认后重试');
+    }
+  };
 
   const handleNextStatus = async () => {
     if (!activity) return;
@@ -128,7 +155,7 @@ function ActivityPage() {
   const handleCopyLink = () => {
     const url = `${window.location.origin}/activity?id=${id}`;
     const text = activity
-      ? `${activity.title}（组织者：${activity.creator_name}）\n${url}`
+      ? `🎉 聚会活动：${activity.title}\n👤 发起人：${activity.creator_name}\n🔑 活动口令：${activity.access_code}\n\n📎 活动链接：${url}\n\n用活动口令即可加入，快来参与吧！`
       : url;
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -137,7 +164,6 @@ function ActivityPage() {
 
   const handleVerifyPassphrase = () => {
     if (!activity || !passphraseInput.trim()) return;
-    // Verify passphrase via API — try to PATCH with the passphrase
     fetch(`/api/activities/${activity.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -148,12 +174,10 @@ function ActivityPage() {
         if (result.error) {
           setPassphraseError('口令验证失败，请检查后重试');
         } else {
-          // Save passphrase locally
           setPassphrase(activity.id, passphraseInput.trim());
           setShowPassphraseModal(false);
           setPassphraseInput('');
           setPassphraseError('');
-          // Force re-render
           setActivity({ ...activity });
         }
       })
@@ -176,6 +200,42 @@ function ActivityPage() {
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
   if (!activity) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">活动不存在</div>;
+
+  // ===== ACCESS CODE GATE =====
+  if (!accessGranted) {
+    return (
+      <div className="min-h-screen bg-background text-foreground font-sans">
+        <Navbar />
+        <main className="max-w-md mx-auto px-6 py-20">
+          <div className="bg-card border-2 border-outline p-8 text-center" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <div className="bg-accent-blue p-3 border-2 border-outline inline-block mb-4" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">这是一个私密活动</h1>
+            <p className="text-muted-foreground mb-6">请输入活动口令以查看和参与</p>
+            <div className="mb-4">
+              <input
+                className="w-full border-2 border-outline bg-muted px-4 py-3 text-lg font-bold font-mono tracking-wider text-center focus:outline-none focus:ring-2 focus:ring-accent-blue/30"
+                value={accessCodeInput}
+                onChange={e => { setAccessCodeInput(e.target.value); setAccessError(''); }}
+                placeholder="输入活动口令"
+                onKeyDown={e => e.key === 'Enter' && handleAccessVerify()}
+              />
+              {accessError && <p className="text-sm text-error mt-2 font-bold">{accessError}</p>}
+            </div>
+            <button
+              onClick={handleAccessVerify}
+              disabled={!accessCodeInput.trim()}
+              className="bg-accent-blue text-white border-2 border-outline px-8 py-3 font-bold text-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full"
+              style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+            >
+              进入活动
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const st = STATUS_MAP[activity.status] || STATUS_MAP.collecting;
   const action = ACTION_MAP[activity.status];
@@ -273,7 +333,7 @@ function ActivityPage() {
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? '已复制' : '复制链接'}
+                  {copied ? '已复制' : '分享活动'}
                 </button>
               </div>
             </section>
@@ -384,7 +444,7 @@ function ActivityPage() {
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? '已复制' : '复制链接'}
+                  {copied ? '已复制' : '分享活动'}
                 </button>
               </div>
             </section>

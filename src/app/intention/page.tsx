@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
 import { Send, BarChart3, Clock, Users, MapPin, CheckCircle2, KeyRound } from 'lucide-react';
 
 interface Intention {
@@ -39,6 +39,11 @@ function IntentionPageContent() {
 
   useEffect(() => {
     if (!activityId) return;
+    // Check access - redirect to activity page if not granted
+    if (!isActivityAccessed(activityId)) {
+      window.location.href = `/activity?id=${activityId}`;
+      return;
+    }
     Promise.all([
       fetch(`/api/intentions?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),

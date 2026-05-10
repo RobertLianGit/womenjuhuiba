@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
 import { Receipt, ArrowRight, KeyRound } from 'lucide-react';
 
 interface Scene {
@@ -51,6 +51,10 @@ function SettleContent() {
 
   useEffect(() => {
     if (!activityId) return;
+    if (!isActivityAccessed(activityId)) {
+      window.location.href = `/activity?id=${activityId}`;
+      return;
+    }
     Promise.all([
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/participants?activity_id=${activityId}`).then(r => r.json()),

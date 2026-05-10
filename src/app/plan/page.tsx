@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, getPassphrase, setPassphrase } from '@/lib/party';
+import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
 import { Plus, Trash2, Copy, Check, FileText, Sparkles, Pencil, ArrowRight, Lightbulb, KeyRound } from 'lucide-react';
 
 interface Scene {
@@ -58,6 +58,10 @@ function PlanPageContent() {
 
   useEffect(() => {
     if (!activityId) return;
+    if (!isActivityAccessed(activityId)) {
+      window.location.href = `/activity?id=${activityId}`;
+      return;
+    }
     Promise.all([
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/activities?id=${activityId}`).then(r => r.json()),

@@ -46,9 +46,11 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const access_code = searchParams.get('access_code');
+  const creator_id = searchParams.get('creator_id');
 
   const client = getSupabaseClient();
 
+  // 按 ID 查询单个活动（前端已通过口令验证后才请求）
   if (id) {
     const { data, error } = await client
       .from('activities')
@@ -60,10 +62,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    if (!data) {
+      return NextResponse.json({ error: '活动不存在' }, { status: 404 });
+    }
+
+    // 脱敏：不返回 passphrase
+    const { passphrase: _, ...safe } = data;
+    return NextResponse.json({ data: safe });
   }
 
-  // Find by access_code
+  // 通过活动口令查询（加入活动时使用）
   if (access_code) {
     const { data, error } = await client
       .from('activities')
@@ -75,18 +83,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    if (!data) {
+      return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
+    }
+
+    // 脱敏：不返回 passphrase
+    const { passphrase: _, ...safe } = data;
+    return NextResponse.json({ data: safe });
   }
 
-  // List all activities
-  const { data, error } = await client
-    .from('activities')
-    .select('*')
-    .order('created_at', { ascending: false });
+  // 通过 creator_id 查询「我发起的」活动列表
+  if (creator_id) {
+    const { data, error } = await client
+      .from('activities')
+      .select('*')
+      .eq('creator_id', creator_id)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // 脱敏：不返回 passphrase
+    const safe = data.map(({ passphrase: _, ...rest }) => rest);
+    return NextResponse.json({ data: safe });
   }
 
-  return NextResponse.json({ data });
+  // 无参数时拒绝列出所有活动，保护隐私
+  return NextResponse.json({ error: '请提供 activity_id、access_code 或 creator_id' }, { status: 400 });
 }

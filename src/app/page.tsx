@@ -45,22 +45,40 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'mine' | 'joined'>('mine');
 
-  useEffect(() => {
-    fetch('/api/activities')
-      .then(r => r.json())
-      .then(res => {
-        setActivities(res.data || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const fetchMyActivities = async () => {
+    setLoading(true);
+    const uid = getUserId();
+    const all: Activity[] = [];
 
-  // Only show activities the user has access to (created or joined via access_code)
+    // 1. 获取我发起的活动
+    if (uid) {
+      try {
+        const res = await fetch(`/api/activities?creator_id=${encodeURIComponent(uid)}`);
+        const data = await res.json();
+        if (data.data) all.push(...data.data);
+      } catch { /* ignore */ }
+    }
+
+    // 2. 获取我参与的活动（通过已验证的活动ID逐个查询）
+    const accessedIds = getAccessedActivities();
+    for (const aid of accessedIds) {
+      if (all.some(a => a.id === aid)) continue; // 已在"我发起的"中
+      try {
+        const res = await fetch(`/api/activities/${aid}`);
+        const data = await res.json();
+        if (data.data) all.push(data.data);
+      } catch { /* ignore */ }
+    }
+
+    setActivities(all);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchMyActivities(); }, []);
+
   const accessedIds = getAccessedActivities();
   const myActivities = activities.filter(a => isOrganizer(a.id, a.passphrase));
   const joinedActivities = activities.filter(a => !isOrganizer(a.id, a.passphrase) && accessedIds.includes(a.id));
-  const visibleActivities = [...myActivities, ...joinedActivities];
-
   const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
 
   const handleCreate = async () => {
@@ -92,30 +110,21 @@ export default function HomePage() {
   const handleJoin = async () => {
     if (!joinCode.trim()) return;
     setJoinError('');
-    // Find activity by access_code
-    const match = activities.find(a => a.access_code === joinCode.trim());
-    if (match) {
-      markActivityAccessed(match.id);
-      setShowJoinModal(false);
-      setJoinCode('');
-      // Navigate to activity
-      window.location.href = `/activity?id=${match.id}`;
-    } else {
-      // Try fetching from API in case it's not loaded yet
+    try {
       const res = await fetch(`/api/activities?access_code=${encodeURIComponent(joinCode.trim())}`);
-      const result = await res.json();
-      if (result.data) {
-        markActivityAccessed(result.data.id);
-        setActivities(prev => {
-          if (prev.find(a => a.id === result.data.id)) return prev;
-          return [result.data, ...prev];
-        });
+      const data = await res.json();
+      if (data.error) {
+        setJoinError(data.error);
+        return;
+      }
+      if (data.data) {
+        markActivityAccessed(data.data.id);
         setShowJoinModal(false);
         setJoinCode('');
-        window.location.href = `/activity?id=${result.data.id}`;
-      } else {
-        setJoinError('口令不正确，请确认后重试');
+        setActivities(prev => prev.some(a => a.id === data.data.id) ? prev : [data.data, ...prev]);
       }
+    } catch {
+      setJoinError('网络错误，请重试');
     }
   };
 

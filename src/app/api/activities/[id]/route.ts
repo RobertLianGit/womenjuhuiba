@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const client = getSupabaseClient();
+
+  const { data, error } = await client
+    .from('activities')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: '活动不存在' }, { status: 404 });
+  }
+
+  // 脱敏：不返回 passphrase
+  const { passphrase: _, ...safe } = data;
+  return NextResponse.json({ data: safe });
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

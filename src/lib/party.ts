@@ -56,10 +56,10 @@ export function clearPassphrase(activityId: string): void {
   localStorage.removeItem(PASSPHRASE_PREFIX + activityId);
 }
 
-/** 判断当前用户是否为某活动的组织者（通过管理口令匹配） */
-export function isOrganizer(activityId: string, activityPassphrase: string | null | undefined): boolean {
-  if (!activityPassphrase) return false;
-  return getPassphrase(activityId) === activityPassphrase;
+/** 判断当前用户是否为某活动的组织者（localStorage中存有管理口令即为组织者） */
+export function isOrganizer(activityId: string, _activityPassphrase?: string | null): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!getPassphrase(activityId);
 }
 
 /** 生成6位随机口令（大写字母+数字） */

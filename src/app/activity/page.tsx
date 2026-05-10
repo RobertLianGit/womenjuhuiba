@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -62,7 +62,15 @@ const ORGANIZER_ENTRIES = [
   { key: 'settle', label: '记账结算', icon: Receipt, desc: '分摊费用和转账', minStatus: 5 },
 ];
 
-export default function ActivityPage() {
+export default function ActivityPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><p className="text-xl font-bold">加载中...</p></div>}>
+      <ActivityPage />
+    </Suspense>
+  );
+}
+
+function ActivityPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id') || '';
   const [activity, setActivity] = useState<Activity | null>(null);

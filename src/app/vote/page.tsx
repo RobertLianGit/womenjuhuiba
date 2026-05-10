@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -26,7 +26,7 @@ interface VoteRecord {
 
 const COLORS = ['bg-primary', 'bg-accent-blue', 'bg-success', 'bg-warning', 'bg-purple-500', 'bg-orange-500'];
 
-export default function VotePage() {
+function VotePageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
@@ -320,4 +320,8 @@ export default function VotePage() {
       </main>
     </div>
   );
+}
+
+export default function VotePage() {
+  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><VotePageContent /></Suspense>;
 }

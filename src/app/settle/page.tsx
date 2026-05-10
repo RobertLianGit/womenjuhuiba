@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -38,7 +38,7 @@ interface Transfer {
   amount: number;
 }
 
-export default function SettlePage() {
+function SettleContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
@@ -267,4 +267,8 @@ export default function SettlePage() {
       </main>
     </div>
   );
+}
+
+export default function SettlePage() {
+  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><SettleContent /></Suspense>;
 }

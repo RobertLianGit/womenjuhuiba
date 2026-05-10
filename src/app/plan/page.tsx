@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -23,7 +23,7 @@ interface Activity {
   passphrase: string;
 }
 
-export default function PlanPage() {
+function PlanPageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -309,4 +309,12 @@ ${sceneList || '暂无分段'}
       </main>
     </div>
   );
+}
+
+export default function PlanPage() {
+  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><PlanContent /></Suspense>;
+}
+
+function PlanContent() {
+  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><PlanPageContent /></Suspense>;
 }

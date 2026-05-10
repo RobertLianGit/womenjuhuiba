@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -24,7 +24,7 @@ interface Scene {
   location: string | null;
 }
 
-export default function IntentionPage() {
+function IntentionPageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);
@@ -324,5 +324,13 @@ export default function IntentionPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function IntentionPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><p className="text-lg">加载中...</p></div>}>
+      <IntentionPageContent />
+    </Suspense>
   );
 }

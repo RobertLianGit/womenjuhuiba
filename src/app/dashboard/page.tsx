@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -26,6 +26,10 @@ interface Participant {
 }
 
 export default function DashboardPage() {
+  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><DashboardContent /></Suspense>;
+}
+
+function DashboardContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [activityPassphrase, setActivityPassphrase] = useState<string | null>(null);

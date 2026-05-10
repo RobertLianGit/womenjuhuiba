@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
@@ -24,6 +24,10 @@ interface Registration {
 }
 
 export default function RegisterPage() {
+  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><RegisterContent /></Suspense>;
+}
+
+function RegisterContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
   const [scenes, setScenes] = useState<Scene[]>([]);

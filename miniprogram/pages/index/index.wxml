@@ -1,0 +1,64 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 头部 -->
+  <view class="header">
+    <text class="title">我们聚会吧</text>
+    <view class="user-info" bindtap="goToProfile">
+      <image class="avatar" src="{{userInfo.avatarUrl || '/assets/default-avatar.png'}}" mode="aspectFill"></image>
+      <text class="nickname">{{userInfo.nickName || '点击登录'}}</text>
+    </view>
+  </view>
+
+  <!-- 活动列表 -->
+  <view class="section-title">我的活动</view>
+  
+  <view class="activity-list" wx:if="{{activities.length > 0}}">
+    <view class="activity-card" wx:for="{{activities}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+      <view class="activity-header">
+        <text class="activity-name">{{item.name}}</text>
+        <view class="activity-status status-{{item.status}}">
+          {{item.statusText}}
+        </view>
+      </view>
+      <view class="activity-creator">发起人：{{item.creator_name}}</view>
+      <view class="activity-time" wx:if="{{item.activity_time}}">活动时间：{{item.activity_time}}</view>
+      
+      <view class="activity-stats">
+        <view class="stat-item">
+          <image class="stat-icon" src="/assets/icon-intention.png" mode="aspectFit"></image>
+          <text>意愿 <text class="stat-count">{{item.intentionCount || 0}}</text></text>
+        </view>
+        <view class="stat-item">
+          <image class="stat-icon" src="/assets/icon-vote.png" mode="aspectFit"></image>
+          <text>投票 <text class="stat-count">{{item.voteCount || 0}}</text></text>
+        </view>
+        <view class="stat-item">
+          <image class="stat-icon" src="/assets/icon-register.png" mode="aspectFit"></image>
+          <text>报名 <text class="stat-count">{{item.registerCount || 0}}</text></text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <image class="empty-icon" src="/assets/empty.png" mode="aspectFit"></image>
+    <text class="empty-text">暂无活动，快来创建一个吧</text>
+  </view>
+
+  <!-- 创建活动按钮 -->
+  <view class="fab" bindtap="goToCreate">
+    <image class="fab-icon" src="/assets/icon-add.png" mode="aspectFit"></image>
+  </view>
+
+  <!-- 输入口令弹窗 -->
+  <view class="access-modal" wx:if="{{showAccessModal}}" catchtouchmove="preventTouchMove">
+    <view class="modal-content">
+      <text class="modal-title">输入活动口令</text>
+      <input class="modal-input" placeholder="请输入6位数字口令" type="number" maxlength="6" value="{{accessCodeInput}}" bindinput="onAccessCodeInput"/>
+      <view class="modal-buttons">
+        <button class="modal-btn btn-cancel" bindtap="closeAccessModal">取消</button>
+        <button class="modal-btn btn-confirm" bindtap="confirmAccessCode">确认</button>
+      </view>
+    </view>
+  </view>
+</view>

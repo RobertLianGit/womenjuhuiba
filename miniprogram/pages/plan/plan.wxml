@@ -1,0 +1,70 @@
+<!--pages/plan/plan.wxml-->
+<view class="container">
+  <!-- 投票结果参考 -->
+  <view class="voting-result">
+    <text class="result-title">投票结果参考</text>
+    <view class="result-item" wx:for="{{voteResults}}" wx:key="id">
+      <text>{{item.title}}</text>
+      <text>{{item.vote_count}}票</text>
+    </view>
+    <view wx:if="{{voteResults.length === 0}}" style="font-size: 26rpx; color: #666;">暂无投票结果</view>
+  </view>
+
+  <!-- 分段设置 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">活动分段</text>
+      <view class="add-btn" bindtap="showAddScene" wx:if="{{isAdmin}}">+ 添加分段</view>
+    </view>
+    
+    <view class="scene-list" wx:if="{{scenes.length > 0}}">
+      <view class="scene-item" wx:for="{{scenes}}" wx:key="id">
+        <view class="scene-header">
+          <text class="scene-name">{{item.name}}</text>
+          <view class="scene-actions" wx:if="{{isAdmin}}">
+            <text class="action-text" bindtap="editScene" data-index="{{index}}">编辑</text>
+            <text class="action-text delete" bindtap="deleteScene" data-id="{{item.id}}">删除</text>
+          </view>
+        </view>
+        <view class="scene-info">
+          <text wx:if="{{item.start_time}}">时间：{{item.start_time}}</text>
+          <text wx:if="{{item.location}}"> | 地点：{{item.location}}</text>
+        </view>
+        <view class="scene-info" wx:if="{{item.description}}">{{item.description}}</view>
+      </view>
+    </view>
+    <view wx:else style="text-align: center; color: #999; padding: 32rpx;">
+      暂无分段，活动将作为整体进行
+    </view>
+  </view>
+
+  <!-- 方案内容 -->
+  <view class="section">
+    <text class="section-title">方案详情</text>
+    <textarea class="form-textarea" placeholder="输入活动方案的详细内容..." value="{{planContent}}" bindinput="onPlanInput" disabled="{{!isAdmin}}"/>
+  </view>
+
+  <!-- Prompt 模板 -->
+  <view class="prompt-section">
+    <text class="prompt-title">AI 助手提示词</text>
+    <text class="prompt-text">{{promptTemplate}}</text>
+    <button class="copy-btn" bindtap="copyPrompt">复制提示词</button>
+  </view>
+
+  <button class="save-btn" bindtap="savePlan" wx:if="{{isAdmin}}">保存方案</button>
+</view>
+
+<!-- 添加分段弹窗 -->
+<view class="modal" wx:if="{{showSceneModal}}" catchtouchmove="preventTouchMove">
+  <view class="modal-content">
+    <text class="modal-title">{{editingScene ? '编辑分段' : '添加分段'}}</text>
+    <input class="form-input" placeholder="分段名称" value="{{sceneName}}" bindinput="onSceneNameInput"/>
+    <input class="form-input" placeholder="开始时间" value="{{sceneTime}}" bindinput="onSceneTimeInput"/>
+    <input class="form-input" placeholder="地点" value="{{sceneLocation}}" bindinput="onSceneLocationInput"/>
+    <textarea class="form-textarea" placeholder="描述" value="{{sceneDesc}}" bindinput="onSceneDescInput"/>
+    <view class="modal-buttons">
+      <button class="modal-btn cancel" bindtap="closeSceneModal">取消</button>
+      <button class="modal-btn confirm" bindtap="saveScene">保存</button>
+    </view>
+  </view>
+</view>

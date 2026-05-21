@@ -1,0 +1,58 @@
+<!--pages/settle/settle.wxml-->
+<view class="container">
+  <!-- 费用汇总 -->
+  <view class="summary-section">
+    <text class="summary-title">总费用</text>
+    <text class="summary-amount">¥{{totalAmount}}</text>
+    <text class="summary-info">{{participantsCount}}人参与，人均 ¥{{avgAmount}}</text>
+  </view>
+
+  <!-- 分摊明细 -->
+  <view class="split-section">
+    <text class="split-title">分摊明细</text>
+    <view class="split-item" wx:for="{{splits}}" wx:key="name">
+      <text class="split-name">{{item.name}}</text>
+      <text class="split-amount">¥{{item.amount}}</text>
+    </view>
+  </view>
+
+  <!-- 账单列表 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">账单明细</text>
+      <view class="add-btn" bindtap="showAddBill" wx:if="{{isAdmin}}">+ 添加账单</view>
+    </view>
+    
+    <view class="bill-list" wx:if="{{bills.length > 0}}">
+      <view class="bill-item" wx:for="{{bills}}" wx:key="id">
+        <view class="bill-info">
+          <view class="bill-desc">{{item.description}}</view>
+          <view class="bill-meta">付款人：{{item.payer_name}}</view>
+        </view>
+        <text class="bill-amount">¥{{item.amount}}</text>
+        <view class="bill-actions" wx:if="{{isAdmin}}">
+          <text class="bill-action {{item.settled ? 'action-settled' : 'action-settle'}}" bindtap="toggleSettle" data-id="{{item.id}}" data-settled="{{item.settled}}">
+            {{item.settled ? '已结' : '结算'}}
+          </text>
+        </view>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>暂无账单</view>
+  </view>
+
+  <!-- 管理操作 -->
+  <view class="admin-section">
+    <text class="section-title">管理操作</text>
+    <view class="admin-input" wx:if="{{!isAdmin}}">
+      <input placeholder="输入管理口令" value="{{passphraseInput}}" bindinput="onPassphraseInput" password/>
+      <button class="verify-btn" bindtap="verifyPassphrase">验证</button>
+    </view>
+    
+    <view wx:if="{{isAdmin && showAddBillForm}}">
+      <input class="form-input" placeholder="账单描述" value="{{billDesc}}" bindinput="onBillDescInput"/>
+      <input class="form-input" placeholder="金额" type="digit" value="{{billAmount}}" bindinput="onBillAmountInput"/>
+      <input class="form-input" placeholder="付款人" value="{{billPayer}}" bindinput="onBillPayerInput"/>
+      <button class="verify-btn" style="width: 100%; margin-top: 16rpx;" bindtap="addBill">添加账单</button>
+    </view>
+  </view>
+</view>

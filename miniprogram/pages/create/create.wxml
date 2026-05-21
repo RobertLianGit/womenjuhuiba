@@ -1,0 +1,47 @@
+<!--pages/create/create.wxml-->
+<view class="container">
+  <!-- 活动名称 -->
+  <view class="form-section">
+    <view class="form-label">活动名称 *</view>
+    <input class="form-input" placeholder="给活动起个名字" value="{{name}}" bindinput="onNameInput"/>
+  </view>
+
+  <!-- 活动描述 -->
+  <view class="form-section">
+    <view class="form-label">活动描述</view>
+    <textarea class="form-textarea" placeholder="简单描述一下活动内容..." value="{{description}}" bindinput="onDescInput"/>
+  </view>
+
+  <!-- 活动时间 -->
+  <view class="form-section">
+    <view class="form-label">活动时间</view>
+    <picker mode="date" value="{{activityDate}}" bindchange="onDateChange">
+      <view class="picker-input">
+        <text wx:if="{{activityDate}}">{{activityDate}}</text>
+        <text class="picker-placeholder" wx:else>选择日期</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 活动地点 -->
+  <view class="form-section">
+    <view class="form-label">活动地点</view>
+    <input class="form-input" placeholder="活动在哪里举办" value="{{location}}" bindinput="onLocationInput"/>
+  </view>
+
+  <!-- 口令提示 -->
+  <view class="code-section">
+    <view class="code-title">活动口令（系统自动生成）</view>
+    <view class="code-item">
+      <text class="code-label">活动口令：</text>
+      <text class="code-value">{{generatedAccessCode}}</text>
+    </view>
+    <view class="code-item">
+      <text class="code-label">管理口令：</text>
+      <text class="code-value">{{generatedPassphrase}}</text>
+    </view>
+    <view class="code-hint">创建后请保存口令，管理口令用于活动管理操作</view>
+  </view>
+
+  <button class="submit-btn" bindtap="submit">创建活动</button>
+</view>

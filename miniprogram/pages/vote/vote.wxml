@@ -1,0 +1,50 @@
+<!--pages/vote/vote.wxml-->
+<view class="container">
+  <!-- 标签页 -->
+  <view class="tabs">
+    <view class="tab {{currentTab === 'vote' ? 'active' : ''}}" bindtap="switchTab" data-tab="vote">投票</view>
+    <view class="tab {{currentTab === 'add' ? 'active' : ''}}" bindtap="switchTab" data-tab="add">我有新想法</view>
+  </view>
+
+  <!-- 投票规则 -->
+  <view class="vote-rules">
+    <text class="rules-title">投票规则</text>
+    <text class="rules-text">{{voteRule === 'single' ? '每人可投1票' : '每人可投' + maxVotes + '票'}}，已投 {{selectedProposals.length}} 票</text>
+  </view>
+
+  <!-- 投票页面 -->
+  <view wx:if="{{currentTab === 'vote'}}">
+    <view class="section">
+      <text class="section-title">选择你支持的方案</text>
+      <view class="proposal-list">
+        <view class="proposal-item {{item.selected ? 'selected' : ''}}" 
+              wx:for="{{proposals}}" 
+              wx:key="id"
+              bindtap="toggleProposal"
+              data-index="{{index}}">
+          <view class="proposal-check {{item.selected ? 'checked' : ''}}">
+            <image class="check-icon" src="/assets/icon-check.png" wx:if="{{item.selected}}" mode="aspectFit"></image>
+          </view>
+          <view class="proposal-content">
+            <view class="proposal-name">{{item.title}}</view>
+            <view class="proposal-desc" wx:if="{{item.description}}">{{item.description}}</view>
+            <view class="proposal-votes">当前票数：{{item.vote_count || 0}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加方案页面 -->
+  <view wx:if="{{currentTab === 'add'}}">
+    <view class="section">
+      <text class="section-title">提交新方案</text>
+      <view class="add-form">
+        <input class="add-input" placeholder="方案标题" value="{{newTitle}}" bindinput="onTitleInput"/>
+        <textarea class="add-textarea" placeholder="方案描述（可选）" value="{{newDescription}}" bindinput="onDescInput"/>
+      </view>
+    </view>
+  </view>
+
+  <button class="submit-btn" bindtap="submit">{{currentTab === 'vote' ? '提交投票' : '提交方案'}}</button>
+</view>

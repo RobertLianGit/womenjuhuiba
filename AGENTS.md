@@ -17,7 +17,8 @@
 | Language | TypeScript 5 | JavaScript |
 | UI 组件 | shadcn/ui | 微信原生组件 |
 | Styling | Tailwind CSS 4 (粗野风) | WXSS (微信风格) |
-| Database | Supabase (无前缀表) | Supabase (mp_前缀表) |
+| Database | Supabase (无前缀表) | 微信云开发数据库 |
+| 后端 | Next.js API Routes | 微信云函数 |
 | 登录 | 昵称+localStorage | 微信授权 (openid) |
 | 包管理器 | pnpm | - |
 
@@ -45,8 +46,7 @@
 │   │       ├── registrations/  # 报名
 │   │       ├── participants/   # 参与人
 │   │       ├── bills/          # 账单
-│   │       ├── plans/          # 方案内容
-│   │       └── mp/             # 小程序专用API
+│   │       └── plans/          # 方案内容
 │   ├── components/
 │   │   ├── navbar.tsx          # 顶部导航
 │   │   └── ui/                 # shadcn/ui 组件
@@ -57,7 +57,7 @@
 │   └── storage/database/
 │       ├── supabase-client.ts  # Supabase 客户端
 │       └── shared/schema.ts    # Drizzle ORM Schema
-├── miniprogram/                # 小程序版源码
+├── miniprogram/                # 小程序版源码（完全独立）
 │   ├── app.js                  # 小程序入口
 │   ├── app.json                # 小程序配置
 │   ├── app.wxss                # 全局样式
@@ -71,8 +71,21 @@
 │   │   ├── register/           # 报名
 │   │   ├── dashboard/          # 看板
 │   │   └── settle/             # 结算
+│   ├── cloudfunctions/         # 云函数
+│   │   ├── login/              # 登录
+│   │   ├── activities/         # 活动
+│   │   ├── scenes/             # 分段
+│   │   ├── intentions/         # 意愿
+│   │   ├── voteProposals/      # 投票方案
+│   │   ├── voteRecords/        # 投票记录
+│   │   ├── registrations/      # 报名
+│   │   ├── participants/       # 参与者
+│   │   ├── bills/              # 账单
+│   │   └── plans/              # 方案
 │   ├── utils/                  # 工具函数
-│   └── README.md               # 小程序文档
+│   ├── images/                 # TabBar图标
+│   ├── assets/                 # 页面图标
+│   └── README.md               # 小程序部署文档
 └── public/                     # 静态资源
 ```
 
@@ -92,11 +105,12 @@ pnpm lint         # ESLint 检查
 
 ## 数据库
 
-### Web版表（无前缀）
+### Web版（Supabase PostgreSQL）
 activities, scenes, intentions, vote_proposals, vote_records, registrations, participants, bills, plans
 
-### 小程序版表（mp_前缀）
-mp_activities, mp_scenes, mp_intentions, mp_vote_proposals, mp_vote_records, mp_registrations, mp_participants, mp_bills, mp_plans
+### 小程序版（微信云开发数据库）
+在云开发控制台创建以下集合：
+activities, scenes, intentions, vote_proposals, vote_records, registrations, participants, bills, plans
 
 使用 Supabase service_role_key 绕过 RLS，公开读写。
 

@@ -315,14 +315,14 @@ export default function HomePage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card border-2 border-outline w-full max-w-lg p-8 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
-            <h2 className="text-2xl font-bold mb-6">创建新活动</h2>
-            <div className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 p-4 overflow-y-auto">
+          <div className="bg-card border-2 border-outline w-full max-w-lg p-4 sm:p-8 relative my-4 sm:my-0 max-h-[calc(100vh-2rem)] sm:max-h-none overflow-y-auto sm:overflow-visible" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">创建新活动</h2>
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-sm font-bold mb-1">你的昵称 <span className="text-error">*</span></label>
                 <input
-                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full border-2 border-outline bg-muted px-3 sm:px-4 py-2.5 sm:py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                   value={form.creator_name}
                   onChange={e => setForm(f => ({ ...f, creator_name: e.target.value }))}
                   placeholder="输入你的昵称，方便大家识别"
@@ -331,7 +331,7 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm font-bold mb-1">活动名称 <span className="text-error">*</span></label>
                 <input
-                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full border-2 border-outline bg-muted px-3 sm:px-4 py-2.5 sm:py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                   value={form.title}
                   onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                   placeholder="如：周末烧烤派对"
@@ -340,8 +340,8 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm font-bold mb-1">活动描述 <span className="text-error">*</span></label>
                 <textarea
-                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  rows={3}
+                  className="w-full border-2 border-outline bg-muted px-3 sm:px-4 py-2.5 sm:py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                  rows={2}
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   placeholder="简单描述一下聚会的内容..."
@@ -350,7 +350,7 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm font-bold mb-1">大致时间 <span className="text-error">*</span></label>
                 <input
-                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full border-2 border-outline bg-muted px-3 sm:px-4 py-2.5 sm:py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                   value={form.rough_time}
                   onChange={e => setForm(f => ({ ...f, rough_time: e.target.value }))}
                   placeholder="如：周末、下周六、12月底"
@@ -359,22 +359,22 @@ export default function HomePage() {
               <div>
                 <label className="block text-sm font-bold mb-1">活动口令 <span className="text-error">*</span></label>
                 <input
-                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full border-2 border-outline bg-muted px-3 sm:px-4 py-2.5 sm:py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                   value={form.access_code}
                   onChange={e => setForm(f => ({ ...f, access_code: e.target.value }))}
                   placeholder="设置一个口令，朋友凭此口令加入活动"
                 />
                 <p className="text-xs text-muted-foreground mt-1">参与者需要输入此口令才能查看和加入活动</p>
               </div>
-              <div className="bg-muted border-2 border-outline p-4 flex items-start gap-3">
-                <KeyRound className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
+              <div className="bg-muted border-2 border-outline p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
+                <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 text-secondary shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-bold">管理口令自动生成</p>
+                  <p className="text-xs sm:text-sm font-bold">管理口令自动生成</p>
                   <p className="text-xs text-muted-foreground mt-1">创建后会自动生成6位管理口令，凭此可管理活动状态、添加分段、记账等。活动口令是参与者加入用的，管理口令是组织者管理用的，请注意区分。</p>
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 mt-8">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-8">
               <button
                 onClick={handleCreate}
                 disabled={!form.title || !form.description || !form.rough_time || !form.creator_name || !form.access_code}
@@ -396,55 +396,55 @@ export default function HomePage() {
 
       {/* Passphrase Modal - after creation */}
       {showPassphraseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card border-2 border-outline w-full max-w-lg p-8 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
-            <div className="flex items-center gap-3 mb-4">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 p-4 overflow-y-auto">
+          <div className="bg-card border-2 border-outline w-full max-w-lg p-4 sm:p-8 relative my-4 sm:my-0 max-h-[calc(100vh-2rem)] sm:max-h-none overflow-y-auto sm:overflow-visible" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <div className="flex items-center gap-3 mb-3 sm:mb-4">
               <div className="bg-primary p-2 border-2 border-outline" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-                <KeyRound className="w-6 h-6 text-primary-foreground" />
+                <KeyRound className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
               </div>
-              <h2 className="text-2xl font-bold">活动已创建</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">活动已创建</h2>
             </div>
-            <p className="text-muted-foreground mb-6">请妥善保管以下口令，分享给朋友时记得带上活动口令：</p>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">请妥善保管以下口令，分享给朋友时记得带上活动口令：</p>
 
             {/* Access Code - for sharing */}
-            <div className="bg-accent-blue/10 border-2 border-accent-blue/30 p-4 mb-4">
+            <div className="bg-accent-blue/10 border-2 border-accent-blue/30 p-3 sm:p-4 mb-3 sm:mb-4">
               <p className="text-xs text-accent-blue font-bold mb-1">活动口令（分享给参与者）</p>
-              <p className="text-2xl font-bold tracking-[0.2em] text-accent-blue font-mono">{createdAccessCode}</p>
+              <p className="text-xl sm:text-2xl font-bold tracking-[0.2em] text-accent-blue font-mono">{createdAccessCode}</p>
               <p className="text-xs text-muted-foreground mt-1">参与者凭此口令加入活动</p>
             </div>
 
             {/* Admin Passphrase - for organizer only */}
-            <div className="bg-muted border-2 border-outline p-4 mb-6">
+            <div className="bg-muted border-2 border-outline p-3 sm:p-4 mb-4 sm:mb-6">
               <p className="text-xs text-muted-foreground font-bold mb-1">管理口令（仅组织者使用）</p>
-              <p className="text-2xl font-bold tracking-[0.2em] text-primary font-mono">{createdPassphrase}</p>
+              <p className="text-xl sm:text-2xl font-bold tracking-[0.2em] text-primary font-mono">{createdPassphrase}</p>
               <p className="text-xs text-muted-foreground mt-1">凭此口令可管理活动所有环节，请勿泄露</p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={handleCopyShare}
-                className="bg-accent-blue text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
+                className="bg-accent-blue text-white border-2 border-outline px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-sm sm:text-base hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2 justify-center"
                 style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
               >
-                {copiedShare ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copiedShare ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
                 {copiedShare ? '已复制' : '复制分享信息'}
               </button>
               <button
                 onClick={handleCopyPassphrase}
-                className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer flex items-center gap-2"
+                className="bg-card border-2 border-outline px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-sm sm:text-base hover:bg-muted transition-colors cursor-pointer flex items-center gap-2 justify-center"
               >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copied ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
                 {copied ? '已复制' : '复制管理口令'}
               </button>
               <Link
                 href={`/activity?id=${createdActivityId}`}
-                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:bg-primary/90 transition-colors"
+                className="bg-primary text-primary-foreground border-2 border-outline px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-sm sm:text-base hover:bg-primary/90 transition-colors text-center"
               >
                 进入活动
               </Link>
               <button
                 onClick={() => setShowPassphraseModal(false)}
-                className="text-muted-foreground px-4 py-3 text-sm hover:text-foreground transition-colors cursor-pointer"
+                className="text-muted-foreground px-4 py-2.5 text-sm hover:text-foreground transition-colors cursor-pointer"
               >
                 关闭
               </button>
@@ -455,19 +455,19 @@ export default function HomePage() {
 
       {/* Join Modal - enter access_code */}
       {showJoinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card border-2 border-outline w-full max-w-md p-8 relative" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
-            <div className="flex items-center gap-3 mb-4">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/40 p-4 overflow-y-auto">
+          <div className="bg-card border-2 border-outline w-full max-w-md p-4 sm:p-8 relative my-4 sm:my-0" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <div className="flex items-center gap-3 mb-3 sm:mb-4">
               <div className="bg-accent-blue p-2 border-2 border-outline" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-                <Lock className="w-6 h-6 text-white" />
+                <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <h2 className="text-2xl font-bold">加入活动</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">加入活动</h2>
             </div>
-            <p className="text-muted-foreground mb-6">输入组织者分享的活动口令，即可加入活动：</p>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">输入组织者分享的活动口令，即可加入活动：</p>
             <div>
               <label className="block text-sm font-bold mb-1">活动口令</label>
               <input
-                className="w-full border-2 border-outline bg-muted px-4 py-3 text-lg font-bold font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-accent-blue/30"
+                className="w-full border-2 border-outline bg-muted px-3 sm:px-4 py-2.5 sm:py-3 text-base sm:text-lg font-bold font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-accent-blue/30"
                 value={joinCode}
                 onChange={e => { setJoinCode(e.target.value); setJoinError(''); }}
                 placeholder="输入活动口令"
@@ -475,7 +475,7 @@ export default function HomePage() {
               />
               {joinError && <p className="text-sm text-error mt-2 font-bold">{joinError}</p>}
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={handleJoin}
                 disabled={!joinCode.trim()}

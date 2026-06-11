@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   // 生成6位管理口令（如果前端没传）
   const rawPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
-  // 哈希存储口令，数据库只存哈希值
+  // 活动口令明文存储（用于查找匹配），管理口令哈希存储（仅验证用）
   const { data, error } = await client
     .from('activities')
     .insert({
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       rough_time,
       creator_id,
       creator_name,
-      access_code: hashSecret(access_code),
+      access_code,
       passphrase: hashSecret(rawPassphrase),
       status: 'collecting',
       intention_deadline: intentionDeadline,
@@ -108,16 +108,32 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: safe });
   }
 
-  // 通过活动口令查询（加入活动时使用）—— 对输入口令哈希后比对
+  // 通过活动口令查询（加入活动时使用）
+  // 优先明文匹配（新数据），回退到哈希匹配（旧数据兼容）
   if (access_code) {
-    const { data, error } = await client
+    // 1. 先尝试明文匹配
+    let { data, error } = await client
       .from('activities')
       .select('*')
-      .eq('access_code', hashSecret(access_code))
+      .eq('access_code', access_code)
       .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // 2. 明文没匹配到，尝试哈希匹配（兼容旧数据）
+    if (!data) {
+      const hashedResult = await client
+        .from('activities')
+        .select('*')
+        .eq('access_code', hashSecret(access_code))
+        .maybeSingle();
+
+      if (hashedResult.error) {
+        return NextResponse.json({ error: hashedResult.error.message }, { status: 500 });
+      }
+      data = hashedResult.data;
     }
 
     if (!data) {

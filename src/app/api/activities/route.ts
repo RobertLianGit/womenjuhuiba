@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   // 生成6位管理口令（如果前端没传）
   const rawPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
-  // 活动口令明文存储（用于查找匹配），管理口令哈希存储（仅验证用）
+  // 活动口令和管理口令均哈希存储，开发者无法查看原始口令
   const { data, error } = await client
     .from('activities')
     .insert({
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       rough_time,
       creator_id,
       creator_name,
-      access_code,
+      access_code: hashSecret(access_code),
       passphrase: hashSecret(rawPassphrase),
       status: 'collecting',
       intention_deadline: intentionDeadline,
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   });
 }
 
-/** 脱敏函数：移除 passphrase 和 access_code 哈希值 */
+/** 脱敏函数：移除口令哈希值，API 永不返回任何口令信息 */
 function sanitize(activity: Record<string, unknown>) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passphrase: _p, access_code: _a, ...safe } = activity;
@@ -109,35 +109,37 @@ export async function GET(request: NextRequest) {
   }
 
   // 通过活动口令查询（加入活动时使用）
-  // 优先明文匹配（新数据），回退到哈希匹配（旧数据兼容）
+  // 对用户输入的口令做哈希后与数据库比对
   if (access_code) {
-    // 1. 先尝试明文匹配
-    let { data, error } = await client
+    const hashedCode = hashSecret(access_code);
+
+    const { data, error } = await client
       .from('activities')
       .select('*')
-      .eq('access_code', access_code)
+      .eq('access_code', hashedCode)
       .maybeSingle();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // 2. 明文没匹配到，尝试哈希匹配（兼容旧数据）
     if (!data) {
-      const hashedResult = await client
+      // 兼容旧数据：尝试用旧 HMAC 算法匹配
+      const { createHmac } = await import('crypto');
+      const legacyHash = createHmac('sha256', 'womenjuhuiba-beta-hmac-key-2026').update(access_code.trim()).digest('hex');
+      const legacyResult = await client
         .from('activities')
         .select('*')
-        .eq('access_code', hashSecret(access_code))
+        .eq('access_code', legacyHash)
         .maybeSingle();
 
-      if (hashedResult.error) {
-        return NextResponse.json({ error: hashedResult.error.message }, { status: 500 });
+      if (legacyResult.error) {
+        return NextResponse.json({ error: legacyResult.error.message }, { status: 500 });
       }
-      data = hashedResult.data;
-    }
-
-    if (!data) {
-      return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
+      if (!legacyResult.data) {
+        return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
+      }
+      return NextResponse.json({ data: sanitize(legacyResult.data) });
     }
 
     return NextResponse.json({ data: sanitize(data) });

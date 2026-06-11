@@ -67,7 +67,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-5 space-y-1">
               <li>数据库未启用行级安全策略（RLS），所有数据通过服务端API层控制访问。这意味着如果API层存在漏洞，数据可能被访问。我们会持续审查API安全性。</li>
               <li>本产品使用 Supabase 的 service_role_key 绕过 RLS，这是为了简化多人协作场景下的数据写入。服务端代码是唯一的数据访问入口。</li>
-              <li>活动口令以明文形式存储在数据库中，用于口令匹配查找；管理口令使用 SHA-256 哈希算法存储，即使开发者也无法看到原始管理口令。</li>
+              <li>活动口令和管理口令均使用 SHA-256 单向哈希算法存储。即使开发者查看数据库，也只能看到一串无意义的哈希值，无法还原出原始口令。</li>
             </ul>
           </section>
 

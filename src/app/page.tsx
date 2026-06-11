@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase, getAccessedActivities, getCreatedActivities, markActivityAccessed, addCreatedActivity } from '@/lib/party';
+import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase, setAccessCode, getAccessedActivities, getCreatedActivities, markActivityAccessed, addCreatedActivity } from '@/lib/party';
 import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, Lock } from 'lucide-react';
 
 interface Activity {
@@ -94,6 +94,9 @@ export default function HomePage() {
       if (result.data.passphrase) {
         setPassphrase(result.data.id, result.data.passphrase);
       }
+      if (form.access_code) {
+        setAccessCode(result.data.id, form.access_code);
+      }
       // Creator auto-accesses their own activity
       markActivityAccessed(result.data.id);
       addCreatedActivity(result.data.id);
@@ -118,6 +121,7 @@ export default function HomePage() {
         return;
       }
       if (data.data) {
+        setAccessCode(data.data.id, joinCode.trim());
         markActivityAccessed(data.data.id);
         setShowJoinModal(false);
         setJoinCode('');

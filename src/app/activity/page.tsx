@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, setPassphrase, getPassphrase, markActivityAccessed, isActivityAccessed } from '@/lib/party';
+import { isOrganizer, setPassphrase, getPassphrase, markActivityAccessed, isActivityAccessed, setAccessCode, getAccessCode } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
   Share2, Copy, Check, ArrowRight, Crown, Calendar, ChevronRight,
@@ -126,15 +126,22 @@ function ActivityPage() {
   const isCreator = activity ? isOrganizer(activity.id) : false;
   const currentIdx = activity ? STATUS_ORDER.indexOf(activity.status) : -1;
 
-  const handleAccessVerify = () => {
+  const handleAccessVerify = async () => {
     if (!activity || !accessCodeInput.trim()) return;
-    if (accessCodeInput.trim() === activity.access_code) {
-      markActivityAccessed(activity.id);
-      setAccessGranted(true);
-      setAccessCodeInput('');
-      setAccessError('');
-    } else {
-      setAccessError('活动口令不正确，请确认后重试');
+    try {
+      const res = await fetch(`/api/activities?access_code=${encodeURIComponent(accessCodeInput.trim())}`);
+      const data = await res.json();
+      if (data.data && data.data.id === activity.id) {
+        setAccessCode(activity.id, accessCodeInput.trim());
+        markActivityAccessed(activity.id);
+        setAccessGranted(true);
+        setAccessCodeInput('');
+        setAccessError('');
+      } else {
+        setAccessError('活动口令不正确，请确认后重试');
+      }
+    } catch {
+      setAccessError('网络错误，请重试');
     }
   };
 
@@ -154,8 +161,9 @@ function ActivityPage() {
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/activity?id=${id}`;
+    const accessCode = getAccessCode(id);
     const text = activity
-      ? `🎉 聚会活动：${activity.title}\n👤 发起人：${activity.creator_name}\n🔑 活动口令：${activity.access_code}\n\n📎 活动链接：${url}\n\n用活动口令即可加入，快来参与吧！`
+      ? `🎉 聚会活动：${activity.title}\n👤 发起人：${activity.creator_name}${accessCode ? `\n🔑 活动口令：${accessCode}` : ''}\n\n📎 活动链接：${url}\n\n用活动口令即可加入，快来参与吧！`
       : url;
     navigator.clipboard.writeText(text);
     setCopied(true);

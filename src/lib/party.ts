@@ -74,6 +74,20 @@ export function generatePassphrase(): string {
 
 // ===== 活动口令（access_code） =====
 
+const ACCESS_CODE_PREFIX = 'party_access_code_';
+
+/** 保存某活动的活动口令到 localStorage（创建者/已验证用户） */
+export function setAccessCode(activityId: string, accessCode: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ACCESS_CODE_PREFIX + activityId, accessCode);
+}
+
+/** 获取某活动的活动口令（从 localStorage） */
+export function getAccessCode(activityId: string): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem(ACCESS_CODE_PREFIX + activityId) || '';
+}
+
 /** 记住已通过验证的活动（用户输入了正确的活动口令） */
 export function markActivityAccessed(activityId: string): void {
   if (typeof window === 'undefined') return;

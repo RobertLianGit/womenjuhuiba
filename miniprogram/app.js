@@ -1,14 +1,6 @@
 // app.js
 App({
   onLaunch() {
-    // 初始化云开发
-    if (wx.cloud) {
-      wx.cloud.init({
-        env: 'your-env-id', // 替换为你的云开发环境ID
-        traceUser: true
-      });
-    }
-
     // 检查登录状态
     this.checkLogin();
   },
@@ -30,26 +22,34 @@ App({
     }
   },
 
-  // 微信登录（通过云函数获取openid）
+  // 微信登录
   wxLogin() {
     return new Promise((resolve, reject) => {
-      wx.cloud.callFunction({
-        name: 'login',
-        data: {},
+      wx.login({
         success: (res) => {
-          if (res.result && res.result.openid) {
-            const openid = res.result.openid;
-            this.globalData.openid = openid;
-            wx.setStorageSync('openid', openid);
-            resolve(openid);
+          if (res.code) {
+            // 调用后端获取 openid
+            wx.request({
+              url: `${require('./utils/config').API_BASE}/mp-login`,
+              method: 'POST',
+              data: { code: res.code },
+              success: (response) => {
+                if (response.data && response.data.openid) {
+                  const openid = response.data.openid;
+                  this.globalData.openid = openid;
+                  wx.setStorageSync('openid', openid);
+                  resolve(openid);
+                } else {
+                  reject(new Error('获取openid失败'));
+                }
+              },
+              fail: reject
+            });
           } else {
-            reject(new Error('获取openid失败'));
+            reject(new Error('wx.login失败'));
           }
         },
-        fail: (err) => {
-          console.error('云函数login调用失败', err);
-          reject(new Error('登录失败'));
-        }
+        fail: reject
       });
     });
   },

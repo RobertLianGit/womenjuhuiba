@@ -300,10 +300,17 @@ export default function HomePage() {
           )}
         </section>
 
-        {/* Privacy */}
-        <div className="mt-8 text-center text-xs text-muted-foreground">
-          <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
-        </div>
+        {/* Footer */}
+        <footer className="mt-12 pt-6 border-t-2 border-outline/20 text-center text-xs text-muted-foreground">
+          <div className="space-y-2">
+            <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
+            <div className="mt-3">
+              <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                京ICP备2026027076号
+              </a>
+            </div>
+          </div>
+        </footer>
       </main>
 
       {/* Create Modal */}

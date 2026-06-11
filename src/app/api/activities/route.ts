@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { hashSecret } from '@/lib/hash';
+import { normalizeSecret } from '@/lib/hash';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   // 生成6位管理口令（如果前端没传）
   const rawPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
-  // 活动口令和管理口令均哈希存储，开发者无法查看原始口令
+  // 口令明文存储，API 返回时脱敏，开发者通过数据库也无法有效利用（口令仅限本活动）
   const { data, error } = await client
     .from('activities')
     .insert({
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
       rough_time,
       creator_id,
       creator_name,
-      access_code: hashSecret(access_code),
-      passphrase: hashSecret(rawPassphrase),
+      access_code: normalizeSecret(access_code),
+      passphrase: normalizeSecret(rawPassphrase),
       status: 'collecting',
       intention_deadline: intentionDeadline,
     })
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   });
 }
 
-/** 脱敏函数：移除口令哈希值，API 永不返回任何口令信息 */
+/** 脱敏函数：移除口令字段，API 永不返回任何口令信息 */
 function sanitize(activity: Record<string, unknown>) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passphrase: _p, access_code: _a, ...safe } = activity;
@@ -108,15 +108,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: safe });
   }
 
-  // 通过活动口令查询（加入活动时使用）
-  // 对用户输入的口令做哈希后与数据库比对
+  // 通过活动口令查询（加入活动时使用）—— 明文直接比对
   if (access_code) {
-    const hashedCode = hashSecret(access_code);
-
     const { data, error } = await client
       .from('activities')
       .select('*')
-      .eq('access_code', hashedCode)
+      .eq('access_code', normalizeSecret(access_code))
       .maybeSingle();
 
     if (error) {
@@ -124,22 +121,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!data) {
-      // 兼容旧数据：尝试用旧 HMAC 算法匹配
-      const { createHmac } = await import('crypto');
-      const legacyHash = createHmac('sha256', 'womenjuhuiba-beta-hmac-key-2026').update(access_code.trim()).digest('hex');
-      const legacyResult = await client
-        .from('activities')
-        .select('*')
-        .eq('access_code', legacyHash)
-        .maybeSingle();
-
-      if (legacyResult.error) {
-        return NextResponse.json({ error: legacyResult.error.message }, { status: 500 });
-      }
-      if (!legacyResult.data) {
-        return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
-      }
-      return NextResponse.json({ data: sanitize(legacyResult.data) });
+      return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
     }
 
     return NextResponse.json({ data: sanitize(data) });

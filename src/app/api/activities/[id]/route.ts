@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { hashSecret } from '@/lib/hash';
+import { normalizeSecret } from '@/lib/hash';
 
 /** 脱敏函数 */
 function sanitize(activity: Record<string, unknown>) {
@@ -17,7 +17,7 @@ export async function PATCH(
   const body = await request.json();
   const client = getSupabaseClient();
 
-  // 验证管理口令 — 对输入口令哈希后与数据库中的哈希比对
+  // 验证管理口令 — 明文直接比对
   if (body.passphrase) {
     const { data: activity } = await client
       .from('activities')
@@ -25,7 +25,7 @@ export async function PATCH(
       .eq('id', id)
       .single();
 
-    if (!activity || activity.passphrase !== hashSecret(body.passphrase)) {
+    if (!activity || activity.passphrase !== normalizeSecret(body.passphrase)) {
       return NextResponse.json({ error: '管理口令错误' }, { status: 403 });
     }
   } else if (body.status !== undefined) {

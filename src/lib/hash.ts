@@ -1,13 +1,12 @@
-import { createHash } from 'crypto';
-
 /**
- * 对口令进行单向哈希，存入数据库用
- * 使用普通 SHA-256（与数据库中的旧数据一致）
- * 同一输入始终产生同一输出，可用于 WHERE 条件查询
- * 不可逆：无法从哈希值还原原始口令
+ * 口令工具函数
+ *
+ * access_code 和 passphrase 均以明文存储在数据库中
+ * API 返回时会脱敏（移除口令字段），前端无法获取
+ * 验证时直接明文比对
  */
-export function hashSecret(input: string): string {
-  // 移除前后空格，确保口令一致性
-  const normalized = input.trim();
-  return createHash('sha256').update(normalized).digest('hex');
+
+/** 对口令做 trim 处理，去除前后空格 */
+export function normalizeSecret(input: string): string {
+  return input.trim();
 }

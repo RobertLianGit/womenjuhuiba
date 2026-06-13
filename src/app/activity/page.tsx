@@ -181,6 +181,9 @@ function ActivityPage() {
 
   const [generatingImage, setGeneratingImage] = useState(false);
 
+  const [shareImageVisible, setShareImageVisible] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState('');
+
   const handleGenerateShareImage = async () => {
     if (!activity) return;
     setGeneratingImage(true);
@@ -191,90 +194,100 @@ function ActivityPage() {
 
       const canvas = document.createElement('canvas');
       canvas.width = 750;
-      canvas.height = 1000;
+      canvas.height = 1100;
       const ctx = canvas.getContext('2d')!;
 
       // 背景
       ctx.fillStyle = '#FF4DB8';
-      ctx.fillRect(0, 0, 750, 12);
+      ctx.fillRect(0, 0, 750, 16);
       ctx.fillStyle = '#FAFAF5';
-      ctx.fillRect(0, 12, 750, 988);
+      ctx.fillRect(0, 16, 750, 1068);
+      ctx.fillStyle = '#FF4DB8';
+      ctx.fillRect(0, 1084, 750, 16);
 
       // 标题区
       ctx.fillStyle = '#0A0A0A';
-      ctx.font = 'bold 44px "PingFang SC", "Microsoft YaHei", sans-serif';
-      ctx.fillText(activity.title, 60, 100);
+      ctx.font = 'bold 48px "PingFang SC", "Microsoft YaHei", sans-serif';
+      const titleLines = wrapText(ctx, activity.title, 630);
+      let titleY = 100;
+      titleLines.forEach((line) => {
+        ctx.fillText(line, 60, titleY);
+        titleY += 58;
+      });
 
       // 分割线
       ctx.fillStyle = '#0A0A0A';
-      ctx.fillRect(60, 130, 630, 4);
+      ctx.fillRect(60, titleY + 10, 630, 4);
 
       // 信息区
-      ctx.font = '28px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.font = '30px "PingFang SC", "Microsoft YaHei", sans-serif';
       ctx.fillStyle = '#333333';
-      let yPos = 190;
+      let yPos = titleY + 70;
 
       if (activity.rough_time) {
         ctx.fillStyle = '#FF4DB8';
-        ctx.fillText('⏰', 60, yPos);
+        ctx.font = '30px "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.fillText('时间', 60, yPos);
         ctx.fillStyle = '#333333';
-        ctx.fillText(activity.rough_time, 110, yPos);
+        ctx.fillText(activity.rough_time, 140, yPos);
         yPos += 55;
       }
       if (activity.description) {
         ctx.fillStyle = '#FF4DB8';
-        ctx.fillText('📝', 60, yPos);
+        ctx.font = '30px "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.fillText('内容', 60, yPos);
         ctx.fillStyle = '#333333';
-        const descLines = wrapText(ctx, activity.description, 560);
+        ctx.font = '28px "PingFang SC", "Microsoft YaHei", sans-serif';
+        const descLines = wrapText(ctx, activity.description, 540);
         descLines.forEach((line, i) => {
-          ctx.fillText(line, 110, yPos + i * 42);
+          ctx.fillText(line, 140, yPos + i * 42);
         });
         yPos += descLines.length * 42 + 20;
       }
 
       ctx.fillStyle = '#FF4DB8';
-      ctx.fillText('👤', 60, yPos);
+      ctx.font = '30px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.fillText('发起', 60, yPos);
       ctx.fillStyle = '#333333';
-      ctx.fillText(`发起人：${activity.creator_name}`, 110, yPos);
+      ctx.fillText(activity.creator_name || '匿名', 140, yPos);
       yPos += 55;
 
       if (accessCode) {
         ctx.fillStyle = '#FF4DB8';
-        ctx.fillText('🔑', 60, yPos);
+        ctx.font = '30px "PingFang SC", "Microsoft YaHei", sans-serif';
+        ctx.fillText('口令', 60, yPos);
         ctx.fillStyle = '#333333';
-        ctx.fillText(`活动口令：${accessCode}`, 110, yPos);
+        ctx.fillText(accessCode, 140, yPos);
         yPos += 55;
       }
 
-      // 二维码区
+      // 二维码区 - 居中放置
       const qrImg = new Image();
       qrImg.src = qrDataUrl;
       await new Promise<void>((resolve) => { qrImg.onload = () => resolve(); });
-      const qrSize = 240;
+      const qrSize = 260;
       const qrX = (750 - qrSize) / 2;
-      const qrY = 720;
+      const qrY = Math.max(yPos + 30, 700);
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
       // 底部提示
       ctx.fillStyle = '#999999';
-      ctx.font = '22px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('扫码查看活动详情', 375, 990);
+      ctx.fillText('扫码查看活动详情 · 长按保存图片', 375, qrY + qrSize + 40);
       ctx.textAlign = 'left';
 
-      // 底部粉色条
+      // 品牌名
       ctx.fillStyle = '#FF4DB8';
-      ctx.fillRect(0, 988, 750, 12);
+      ctx.font = 'bold 22px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('我们聚会吧', 375, qrY + qrSize + 80);
+      ctx.textAlign = 'left';
 
-      // 导出下载
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const link = document.createElement('a');
-        link.download = `${activity.title}-聚会活动.png`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-        URL.revokeObjectURL(link.href);
-      }, 'image/png');
+      // 弹出预览
+      const dataUrl = canvas.toDataURL('image/png');
+      setShareImageUrl(dataUrl);
+      setShareImageVisible(true);
     } catch (e) {
       console.error('生成分享图片失败', e);
     } finally {
@@ -491,7 +504,7 @@ function ActivityPage() {
                   className="bg-accent-pink text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
-                  {generatingImage ? '生成中...' : '生成海报'}
+                  {generatingImage ? '生成中...' : <><ImageIcon className="w-4 h-4" /> 生成海报</>}
                 </button>
               </div>
             </section>
@@ -621,7 +634,7 @@ function ActivityPage() {
                   className="bg-accent-pink text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
-                  {generatingImage ? '生成中...' : '生成海报'}
+                  {generatingImage ? '生成中...' : <><ImageIcon className="w-4 h-4" /> 生成海报</>}
                 </button>
               </div>
             </section>
@@ -668,6 +681,37 @@ function ActivityPage() {
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
               >
                 取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 分享图片预览弹窗 */}
+      {shareImageVisible && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShareImageVisible(false)}>
+          <div className="bg-card border-2 border-outline max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b-2 border-outline flex justify-between items-center">
+              <h3 className="font-bold text-lg">分享活动海报</h3>
+              <button onClick={() => setShareImageVisible(false)} className="text-lg font-bold cursor-pointer">✕</button>
+            </div>
+            <div className="p-4 flex justify-center">
+              {shareImageUrl && (
+                <img src={shareImageUrl} alt="活动海报" className="w-full rounded" />
+              )}
+            </div>
+            <div className="p-4 border-t-2 border-outline text-center">
+              <p className="text-sm text-on-surface-variant mb-3">长按图片保存，发送到微信群</p>
+              <button
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = shareImageUrl;
+                  link.download = `${activity.title}-活动海报.png`;
+                  link.click();
+                }}
+                className="bg-accent-pink text-white border-2 border-outline px-6 py-2 font-bold hover:bg-accent-pink/80 transition-colors cursor-pointer"
+              >
+                下载图片
               </button>
             </div>
           </div>

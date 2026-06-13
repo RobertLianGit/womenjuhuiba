@@ -39,7 +39,7 @@ export default function HomePage() {
   const [createdAccessCode, setCreatedAccessCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '', access_code: '' });
+  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '', access_code: '', skip_to_register: false });
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -100,9 +100,20 @@ export default function HomePage() {
       // Creator auto-accesses their own activity
       markActivityAccessed(result.data.id);
       addCreatedActivity(result.data.id);
+
+      // If skip_to_register, update status to registering
+      if (form.skip_to_register) {
+        await fetch(`/api/activities/${result.data.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'registering', passphrase: result.data.passphrase }),
+        });
+        result.data.status = 'registering';
+      }
+
       setActivities(prev => [result.data, ...prev]);
       setShowCreateModal(false);
-      setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '' });
+      setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '', skip_to_register: false });
       setCreatedPassphrase(result.data.passphrase);
       setCreatedActivityId(result.data.id);
       setCreatedAccessCode(form.access_code);
@@ -189,7 +200,7 @@ export default function HomePage() {
         <section className="mb-8">
           <div className="bg-card border-2 border-outline p-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
             <h2 className="text-lg font-bold mb-4">怎么用？</h2>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-center text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-center text-sm">
               <div className="bg-primary text-primary-foreground border-2 border-outline p-3">
                 <div className="font-bold text-lg mb-1">1</div>
                 <div className="font-medium">创建活动</div>
@@ -197,31 +208,20 @@ export default function HomePage() {
               </div>
               <div className="bg-accent-blue text-white border-2 border-outline p-3">
                 <div className="font-bold text-lg mb-1">2</div>
-                <div className="font-medium">收集意愿</div>
-                <div className="text-xs opacity-80 mt-1">大家想去哪</div>
+                <div className="font-medium">报名参加</div>
+                <div className="text-xs opacity-80 mt-1">大家直接报名</div>
               </div>
               <div className="bg-success text-white border-2 border-outline p-3">
                 <div className="font-bold text-lg mb-1">3</div>
-                <div className="font-medium">投票决定</div>
-                <div className="text-xs opacity-80 mt-1">少数服从多数</div>
-              </div>
-              <div className="bg-warning text-primary-foreground border-2 border-outline p-3">
-                <div className="font-bold text-lg mb-1">4</div>
-                <div className="font-medium">确认方案</div>
-                <div className="text-xs opacity-80 mt-1">分段和时间</div>
-              </div>
-              <div className="bg-accent-blue text-white border-2 border-outline p-3">
-                <div className="font-bold text-lg mb-1">5</div>
-                <div className="font-medium">报名参加</div>
-                <div className="text-xs opacity-80 mt-1">选段填人</div>
-              </div>
-              <div className="bg-primary text-primary-foreground border-2 border-outline p-3">
-                <div className="font-bold text-lg mb-1">6</div>
                 <div className="font-medium">记账结算</div>
                 <div className="text-xs opacity-80 mt-1">AA不伤感情</div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">无需登录，输入昵称即可参与。创建活动时设置活动口令，分享给朋友即可加入。组织者另有管理口令，用于控制活动阶段和管理操作。</p>
+            <div className="mt-3 bg-muted border-2 border-outline p-3 text-sm">
+              <p className="font-bold mb-1">意见不统一？随时回退：</p>
+              <p className="text-muted-foreground text-xs">组织者可随时把活动回退到「收集意愿」或「投票」阶段，重新讨论方案后再报名。</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">无需登录，输入昵称即可参与。创建活动时设置活动口令，分享给朋友即可加入。聊好了可以直接报名，没聊好就先收集意愿。组织者另有管理口令，用于控制活动阶段。</p>
           </div>
         </section>
 
@@ -309,7 +309,6 @@ export default function HomePage() {
           <div className="space-y-2">
             <div className="flex items-center justify-center gap-4">
               <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
-              <a href="/admin" className="underline hover:text-foreground transition-colors">管理后台</a>
             </div>
             <div className="mt-3">
               微信公众号搜索<span className="font-bold mx-1">"连通社"</span>留言提出使用问题
@@ -383,6 +382,18 @@ export default function HomePage() {
                   <p className="text-xs text-muted-foreground mt-1">创建后会自动生成6位管理口令，凭此可管理活动状态、添加分段、记账等。活动口令是参与者加入用的，管理口令是组织者管理用的，请注意区分。</p>
                 </div>
               </div>
+              <label className="flex items-center gap-3 cursor-pointer bg-muted border-2 border-outline p-3 sm:p-4">
+                <input
+                  type="checkbox"
+                  checked={form.skip_to_register || false}
+                  onChange={e => setForm(f => ({ ...f, skip_to_register: e.target.checked }))}
+                  className="w-5 h-5 accent-primary shrink-0"
+                />
+                <div>
+                  <p className="text-sm font-bold">直接开始报名</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">跳过意愿收集和投票，创建后直接进入报名阶段（适合已聊好方案的情况）</p>
+                </div>
+              </label>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-8">
               <button
@@ -394,7 +405,7 @@ export default function HomePage() {
                 创建活动
               </button>
               <button
-                onClick={() => { setShowCreateModal(false); setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '' }); }}
+                onClick={() => { setShowCreateModal(false); setForm({ title: '', description: '', rough_time: '', creator_name: form.creator_name, access_code: '', skip_to_register: false }); }}
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer"
               >
                 取消

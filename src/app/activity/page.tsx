@@ -7,9 +7,10 @@ import { Navbar } from '@/components/navbar';
 import { isOrganizer, setPassphrase, getPassphrase, markActivityAccessed, isActivityAccessed, setAccessCode, getAccessCode } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
-  Share2, Copy, Check, ArrowRight, Crown, Calendar, ChevronRight,
-  Send, CheckCircle2, UserCheck, KeyRound, Lock
+  Share2, Copy, Check, ArrowRight, ArrowLeft, Crown, Calendar, ChevronRight,
+  Send, CheckCircle2, UserCheck, KeyRound, Lock, Image as ImageIcon, Download
 } from 'lucide-react';
+import QRCode from 'qrcode';
 
 interface Activity {
   id: string;
@@ -34,6 +35,14 @@ const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string; de
 };
 
 const STATUS_ORDER = ['collecting', 'voting', 'plan', 'registering', 'started', 'settling', 'settled'];
+
+const PREV_STATUS: Record<string, string> = {
+  voting: 'collecting',
+  plan: 'voting',
+  registering: 'plan',
+  started: 'registering',
+  settling: 'started',
+};
 
 const ACTION_MAP: Record<string, { label: string; next: string }> = {
   collecting: { label: '开始投票', next: 'voting' },
@@ -168,6 +177,139 @@ function ActivityPage() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const [generatingImage, setGeneratingImage] = useState(false);
+
+  const handleGenerateShareImage = async () => {
+    if (!activity) return;
+    setGeneratingImage(true);
+    try {
+      const url = `${window.location.origin}/activity?id=${id}`;
+      const accessCode = getAccessCode(id);
+      const qrDataUrl = await QRCode.toDataURL(url, { width: 200, margin: 2, color: { dark: '#0A0A0A', light: '#FFFFFF' } });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 750;
+      canvas.height = 1000;
+      const ctx = canvas.getContext('2d')!;
+
+      // 背景
+      ctx.fillStyle = '#FF4DB8';
+      ctx.fillRect(0, 0, 750, 12);
+      ctx.fillStyle = '#FAFAF5';
+      ctx.fillRect(0, 12, 750, 988);
+
+      // 标题区
+      ctx.fillStyle = '#0A0A0A';
+      ctx.font = 'bold 44px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.fillText(activity.title, 60, 100);
+
+      // 分割线
+      ctx.fillStyle = '#0A0A0A';
+      ctx.fillRect(60, 130, 630, 4);
+
+      // 信息区
+      ctx.font = '28px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.fillStyle = '#333333';
+      let yPos = 190;
+
+      if (activity.rough_time) {
+        ctx.fillStyle = '#FF4DB8';
+        ctx.fillText('⏰', 60, yPos);
+        ctx.fillStyle = '#333333';
+        ctx.fillText(activity.rough_time, 110, yPos);
+        yPos += 55;
+      }
+      if (activity.description) {
+        ctx.fillStyle = '#FF4DB8';
+        ctx.fillText('📝', 60, yPos);
+        ctx.fillStyle = '#333333';
+        const descLines = wrapText(ctx, activity.description, 560);
+        descLines.forEach((line, i) => {
+          ctx.fillText(line, 110, yPos + i * 42);
+        });
+        yPos += descLines.length * 42 + 20;
+      }
+
+      ctx.fillStyle = '#FF4DB8';
+      ctx.fillText('👤', 60, yPos);
+      ctx.fillStyle = '#333333';
+      ctx.fillText(`发起人：${activity.creator_name}`, 110, yPos);
+      yPos += 55;
+
+      if (accessCode) {
+        ctx.fillStyle = '#FF4DB8';
+        ctx.fillText('🔑', 60, yPos);
+        ctx.fillStyle = '#333333';
+        ctx.fillText(`活动口令：${accessCode}`, 110, yPos);
+        yPos += 55;
+      }
+
+      // 二维码区
+      const qrImg = new Image();
+      qrImg.src = qrDataUrl;
+      await new Promise<void>((resolve) => { qrImg.onload = () => resolve(); });
+      const qrSize = 240;
+      const qrX = (750 - qrSize) / 2;
+      const qrY = 720;
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+      // 底部提示
+      ctx.fillStyle = '#999999';
+      ctx.font = '22px "PingFang SC", "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('扫码查看活动详情', 375, 990);
+      ctx.textAlign = 'left';
+
+      // 底部粉色条
+      ctx.fillStyle = '#FF4DB8';
+      ctx.fillRect(0, 988, 750, 12);
+
+      // 导出下载
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const link = document.createElement('a');
+        link.download = `${activity.title}-聚会活动.png`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }, 'image/png');
+    } catch (e) {
+      console.error('生成分享图片失败', e);
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+    const lines: string[] = [];
+    let currentLine = '';
+    for (const char of text) {
+      const testLine = currentLine + char;
+      if (ctx.measureText(testLine).width > maxWidth) {
+        lines.push(currentLine);
+        currentLine = char;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines.slice(0, 4); // 最多4行
+  };
+
+  const handlePrevStatus = async () => {
+    if (!activity) return;
+    const prev = PREV_STATUS[activity.status];
+    if (!prev) return;
+    const passphrase = getPassphrase(activity.id);
+    const res = await fetch(`/api/activities/${activity.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: prev, passphrase }),
+    });
+    const result = await res.json();
+    if (result.data) setActivity(result.data);
   };
 
   const handleVerifyPassphrase = () => {
@@ -341,7 +483,15 @@ function ActivityPage() {
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? '已复制' : '分享活动'}
+                  {copied ? '已复制' : '复制链接'}
+                </button>
+                <button
+                  onClick={handleGenerateShareImage}
+                  disabled={generatingImage}
+                  className="bg-accent-pink text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                >
+                  {generatingImage ? '生成中...' : '生成海报'}
                 </button>
               </div>
             </section>
@@ -392,16 +542,27 @@ function ActivityPage() {
               </div>
             </section>
 
-            {/* Action Button — Organizer Only */}
-            {action && (
-              <section className="mb-6">
-                <button
-                  onClick={handleNextStatus}
-                  className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold text-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
-                  style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
-                >
-                  {action.label} <ArrowRight className="w-5 h-5" />
-                </button>
+            {/* Action Buttons — Organizer Only */}
+            {(action || PREV_STATUS[activity.status]) && (
+              <section className="mb-6 flex flex-wrap gap-3">
+                {PREV_STATUS[activity.status] && (
+                  <button
+                    onClick={handlePrevStatus}
+                    className="bg-white text-foreground border-2 border-outline px-6 py-3 font-bold text-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
+                    style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+                  >
+                    <ArrowLeft className="w-5 h-5" /> 回退到{STATUS_MAP[PREV_STATUS[activity.status]]?.label || '上一阶段'}
+                  </button>
+                )}
+                {action && (
+                  <button
+                    onClick={handleNextStatus}
+                    className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold text-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
+                    style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
+                  >
+                    {action.label} <ArrowRight className="w-5 h-5" />
+                  </button>
+                )}
               </section>
             )}
 
@@ -452,7 +613,15 @@ function ActivityPage() {
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copied ? '已复制' : '分享活动'}
+                  {copied ? '已复制' : '复制链接'}
+                </button>
+                <button
+                  onClick={handleGenerateShareImage}
+                  disabled={generatingImage}
+                  className="bg-accent-pink text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                >
+                  {generatingImage ? '生成中...' : '生成海报'}
                 </button>
               </div>
             </section>

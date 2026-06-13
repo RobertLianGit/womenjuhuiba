@@ -41,8 +41,8 @@ async function main() {
       <!-- 品牌名 - 超大字号 -->
       <text x="${W / 2}" y="200" text-anchor="middle" font-family="'PingFang SC','Noto Sans SC','Microsoft YaHei','Hiragino Sans GB',sans-serif" font-size="110" font-weight="900" fill="#FFFFFF" letter-spacing="8">我们聚会吧</text>
 
-      <!-- 副标题 -->
-      <text x="${W / 2}" y="300" text-anchor="middle" font-family="'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="bold" fill="#FFFFFF" opacity="0.95">组织聚会，一步到位</text>
+      <!-- 广告语 -->
+      <text x="${W / 2}" y="300" text-anchor="middle" font-family="'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="bold" fill="#FFFFFF" opacity="0.95">让每一次聚会都不再只是"下次一定"</text>
 
       <!-- 白色分割线 -->
       <rect x="340" y="340" width="400" height="6" fill="#FFFFFF" rx="3"/>
@@ -118,7 +118,7 @@ async function main() {
       <rect x="0" y="${H - 40}" width="${W}" height="40" fill="url(#dots)"/>
 
       <!-- 底部标语 -->
-      <text x="${W / 2}" y="${H - 12}" text-anchor="middle" font-family="'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif" font-size="22" font-weight="bold" fill="#FFFFFF">我们聚会吧 — 让每一次聚会都简单</text>
+      <text x="${W / 2}" y="${H - 12}" text-anchor="middle" font-family="'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif" font-size="22" font-weight="bold" fill="#FFFFFF">让每一次聚会都不再只是"下次一定"</text>
     </svg>
   `;
 

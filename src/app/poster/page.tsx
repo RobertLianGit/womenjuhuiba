@@ -64,7 +64,7 @@ export default function PosterPage() {
       ctx.textAlign = 'center';
       ctx.fillStyle = '#0A0A0A';
       ctx.font = 'bold 52px "PingFang SC", "Microsoft YaHei", sans-serif';
-      ctx.fillText('组织聚会，一步到位', W / 2, bottomY + 80);
+      ctx.fillText('让每一次聚会都不再只是"下次一定"', W / 2, bottomY + 80);
 
       // 特性列表
       ctx.font = '32px "PingFang SC", "Microsoft YaHei", sans-serif';

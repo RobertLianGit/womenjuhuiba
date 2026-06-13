@@ -600,23 +600,29 @@ function ActivityPage() {
               <h2 className="text-base font-bold mb-3 text-muted-foreground">管理</h2>
               <div className="flex flex-col sm:flex-row gap-3">
                 {!activity.archived && (
-                  <button
-                    onClick={handleHide}
-                    className="bg-muted border-2 border-outline px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
-                    style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-                  >
-                    <Archive className="w-4 h-4" />
-                    从我的列表中隐藏
-                  </button>
+                  <div className="flex flex-col">
+                    <button
+                      onClick={handleHide}
+                      className="bg-muted border-2 border-outline px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                      style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                    >
+                      <Archive className="w-4 h-4" />
+                      从我的列表中隐藏
+                    </button>
+                    <p className="text-xs text-muted-foreground mt-1.5">只是自己看不到，其他人不受影响</p>
+                  </div>
                 )}
-                <button
-                  onClick={() => setShowArchiveDialog('participant_delete')}
-                  className="bg-white border-2 border-red-500 text-red-600 px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
-                  style={{ boxShadow: '3px 3px 0 #991b1b' }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  不再参与此活动
-                </button>
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => setShowArchiveDialog('participant_delete')}
+                    className="bg-white border-2 border-red-500 text-red-600 px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                    style={{ boxShadow: '3px 3px 0 #991b1b' }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    不再参与此活动
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-1.5">同上，仅自己不可见，可随时通过口令重新加入</p>
+                </div>
               </div>
             </section>
           </>
@@ -754,22 +760,30 @@ function ActivityPage() {
             <section className="mt-6 pt-6 border-t-2 border-outline/30">
               <h2 className="text-base font-bold mb-3 text-muted-foreground">管理活动</h2>
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => setShowArchiveDialog('archive')}
-                  className="bg-muted border-2 border-outline px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
-                  style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-                >
-                  <Archive className="w-4 h-4" />
-                  {activity.archived ? '取消归档' : '归档活动'}
-                </button>
-                <button
-                  onClick={() => setShowArchiveDialog('delete')}
-                  className="bg-white border-2 border-red-500 text-red-600 px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
-                  style={{ boxShadow: '3px 3px 0 #991b1b' }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  删除活动
-                </button>
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => setShowArchiveDialog('archive')}
+                    className="bg-muted border-2 border-outline px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                    style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                  >
+                    <Archive className="w-4 h-4" />
+                    {activity.archived ? '取消归档' : '归档活动'}
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    {activity.archived ? '取消后活动回到首页列表' : '活动从首页移到「历史活动」，数据都还在'}
+                  </p>
+                </div>
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => setShowArchiveDialog('delete')}
+                    className="bg-white border-2 border-red-500 text-red-600 px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                    style={{ boxShadow: '3px 3px 0 #991b1b' }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    删除活动
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-1.5">永久删除，所有数据清空，所有人不可恢复</p>
+                </div>
               </div>
             </section>
           </>

@@ -63,6 +63,9 @@ export async function GET(request: NextRequest) {
   const id = searchParams.get('id');
   const access_code = searchParams.get('access_code');
   const ids = searchParams.get('ids'); // 逗号分隔的ID列表，用于批量查询
+  const include_archived = searchParams.get('include_archived') === 'true'; // 是否包含已归档
+  const only_archived = searchParams.get('only_archived') === 'true'; // 仅已归档
+  const user_id = searchParams.get('user_id'); // 用户ID，用于排除隐藏的活动
 
   const client = getSupabaseClient();
 
@@ -94,11 +97,31 @@ export async function GET(request: NextRequest) {
     // 限制最多50个，防止滥用
     const limitedIds = idList.slice(0, 50);
 
-    const { data, error } = await client
+    let query = client
       .from('activities')
       .select('*')
-      .in('id', limitedIds)
-      .order('created_at', { ascending: false });
+      .in('id', limitedIds);
+
+    // 归档过滤
+    if (only_archived) {
+      query = query.eq('archived', true);
+    } else if (!include_archived) {
+      query = query.eq('archived', false);
+    }
+
+    // 排除用户隐藏的活动
+    if (user_id) {
+      const { data: hidden } = await client
+        .from('hidden_activities')
+        .select('activity_id')
+        .eq('user_id', user_id);
+      if (hidden && hidden.length > 0) {
+        const hiddenIds = hidden.map(h => h.activity_id);
+        query = query.not('id', 'in', `(${hiddenIds.join(',')})`);
+      }
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -114,6 +137,7 @@ export async function GET(request: NextRequest) {
       .from('activities')
       .select('*')
       .eq('access_code', normalizeSecret(access_code))
+      .eq('archived', false)
       .maybeSingle();
 
     if (error) {

@@ -4,11 +4,12 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, setPassphrase, getPassphrase, markActivityAccessed, isActivityAccessed, setAccessCode, getAccessCode } from '@/lib/party';
+import { isOrganizer, setPassphrase, getPassphrase, getUserId, markActivityAccessed, isActivityAccessed, setAccessCode, getAccessCode } from '@/lib/party';
 import {
   ClipboardCheck, Vote, FileText, UserPlus, LayoutDashboard, Receipt,
   Share2, Copy, Check, ArrowRight, ArrowLeft, Crown, Calendar, ChevronRight,
-  Send, CheckCircle2, UserCheck, KeyRound, Lock, Image as ImageIcon, Download
+  Send, CheckCircle2, UserCheck, KeyRound, Lock, Image as ImageIcon, Download,
+  Archive, Trash2, AlertTriangle
 } from 'lucide-react';
 import QRCode from 'qrcode';
 
@@ -22,6 +23,7 @@ interface Activity {
   status: string;
   passphrase?: string;
   access_code: string;
+  archived?: boolean;
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string; desc: string }> = {
@@ -95,6 +97,10 @@ function ActivityPage() {
   const [accessGranted, setAccessGranted] = useState(false);
   const [accessCodeInput, setAccessCodeInput] = useState('');
   const [accessError, setAccessError] = useState('');
+
+  // Archive / Delete
+  const [showArchiveDialog, setShowArchiveDialog] = useState<'archive' | 'delete' | 'participant_delete' | null>(null);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -183,6 +189,86 @@ function ActivityPage() {
 
   const [shareImageVisible, setShareImageVisible] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState('');
+
+  const handleArchive = async () => {
+    if (!activity) return;
+    const passphrase = getPassphrase(activity.id);
+    try {
+      const res = await fetch(`/api/activities/${activity.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive', passphrase, archived: true }),
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      // Re-fetch activity to update state
+      const fresh = await fetch(`/api/activities?id=${activity.id}`);
+      const freshData = await fresh.json();
+      if (freshData.data) setActivity(freshData.data);
+      else window.location.href = '/';
+    } catch { alert('归档失败'); }
+  };
+
+  const handleUnarchive = async () => {
+    if (!activity) return;
+    const passphrase = getPassphrase(activity.id);
+    try {
+      const res = await fetch(`/api/activities/${activity.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unarchive', passphrase, archived: false }),
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      const fresh = await fetch(`/api/activities?id=${activity.id}`);
+      const freshData = await fresh.json();
+      if (freshData.data) setActivity(freshData.data);
+    } catch { alert('操作失败'); }
+  };
+
+  const handleHide = async () => {
+    if (!activity) return;
+    const uid = getUserId();
+    if (!uid) return;
+    try {
+      const res = await fetch(`/api/activities/${activity.id}?mode=participant&user_id=${encodeURIComponent(uid)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      window.location.href = '/';
+    } catch { alert('操作失败'); }
+  };
+
+  const handleDelete = async () => {
+    if (!activity) return;
+    const passphrase = getPassphrase(activity.id);
+    try {
+      const res = await fetch(`/api/activities/${activity.id}?mode=organizer&passphrase=${encodeURIComponent(passphrase)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      window.location.href = '/';
+    } catch { alert('删除失败'); }
+  };
+
+  const handleArchiveOrDelete = async () => {
+    if (!showArchiveDialog || !activity) return;
+    if (showArchiveDialog === 'archive') {
+      if (activity.archived) {
+        await handleUnarchive();
+      } else {
+        await handleArchive();
+      }
+    } else if (showArchiveDialog === 'delete') {
+      await handleDelete();
+    } else if (showArchiveDialog === 'participant_delete') {
+      await handleHide();
+    }
+    setShowArchiveDialog(null);
+    setDeleteConfirmInput('');
+  };
 
   const handleGenerateShareImage = async () => {
     if (!activity) return;
@@ -508,6 +594,31 @@ function ActivityPage() {
                 </button>
               </div>
             </section>
+
+            {/* Participant: Hide / Remove */}
+            <section className="mt-6 pt-6 border-t-2 border-outline/30">
+              <h2 className="text-base font-bold mb-3 text-muted-foreground">管理</h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {!activity.archived && (
+                  <button
+                    onClick={handleHide}
+                    className="bg-muted border-2 border-outline px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                    style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                  >
+                    <Archive className="w-4 h-4" />
+                    从我的列表中隐藏
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowArchiveDialog('participant_delete')}
+                  className="bg-white border-2 border-red-500 text-red-600 px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                  style={{ boxShadow: '3px 3px 0 #991b1b' }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  不再参与此活动
+                </button>
+              </div>
+            </section>
           </>
         )}
 
@@ -638,9 +749,88 @@ function ActivityPage() {
                 </button>
               </div>
             </section>
+
+            {/* Archive & Delete */}
+            <section className="mt-6 pt-6 border-t-2 border-outline/30">
+              <h2 className="text-base font-bold mb-3 text-muted-foreground">管理活动</h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowArchiveDialog('archive')}
+                  className="bg-muted border-2 border-outline px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                  style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                >
+                  <Archive className="w-4 h-4" />
+                  {activity.archived ? '取消归档' : '归档活动'}
+                </button>
+                <button
+                  onClick={() => setShowArchiveDialog('delete')}
+                  className="bg-white border-2 border-red-500 text-red-600 px-4 py-3 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                  style={{ boxShadow: '3px 3px 0 #991b1b' }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  删除活动
+                </button>
+              </div>
+            </section>
           </>
         )}
       </main>
+
+      {/* Archive/Delete Confirmation Dialog */}
+      {showArchiveDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-card border-2 border-outline w-full max-w-md p-6" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
+            <h2 className="text-xl font-bold mb-4">
+              {showArchiveDialog === 'archive' ? (activity.archived ? '取消归档' : '归档活动')
+                : showArchiveDialog === 'participant_delete' ? '不再参与此活动' : '删除活动'}
+            </h2>
+            {showArchiveDialog === 'archive' ? (
+              <p className="text-sm text-muted-foreground mb-6">
+                {activity.archived
+                  ? '取消归档后，活动将重新显示在首页活动列表中。'
+                  : '归档后活动将从首页消失，但在"历史活动"中仍可查看。'}
+              </p>
+            ) : showArchiveDialog === 'participant_delete' ? (
+              <p className="text-sm text-muted-foreground mb-6">
+                此操作将从你的列表中隐藏此活动，其他参与者不受影响。
+              </p>
+            ) : (
+              <>
+                <div className="bg-red-50 border-2 border-red-300 p-4 mb-4">
+                  <p className="text-red-700 font-bold text-sm mb-2">⚠️ 警告：删除操作不可撤销！</p>
+                  <p className="text-red-600 text-sm">删除后，所有参与者都将无法看到此活动，包括所有意愿、投票、报名和记账数据。作为管理者，你同时也是参与者，删除后你自己也无法恢复。</p>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">请输入活动标题 <strong>"{activity.title}"</strong> 确认删除：</p>
+                <input
+                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-red-500/30 mb-4"
+                  value={deleteConfirmInput}
+                  onChange={e => setDeleteConfirmInput(e.target.value)}
+                  placeholder="输入活动标题确认"
+                />
+              </>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setShowArchiveDialog(null); setDeleteConfirmInput(''); }}
+                className="border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleArchiveOrDelete}
+                disabled={showArchiveDialog === 'delete' && deleteConfirmInput !== activity.title}
+                className={`px-4 py-2 text-sm font-bold text-white border-2 border-outline hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                  showArchiveDialog === 'delete' ? 'bg-red-600' : 'bg-accent-blue'
+                }`}
+                style={{ boxShadow: showArchiveDialog === 'delete' ? '3px 3px 0 #991b1b' : '3px 3px 0 #0A0A0A' }}
+              >
+                {showArchiveDialog === 'archive' ? (activity.archived ? '取消归档' : '确认归档')
+                  : showArchiveDialog === 'participant_delete' ? '确认隐藏' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Passphrase Verification Modal */}
       {showPassphraseModal && (

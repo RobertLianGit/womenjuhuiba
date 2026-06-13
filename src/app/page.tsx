@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { getUserId, getUserName, setUserName, isOrganizer, setPassphrase, setAccessCode, getAccessedActivities, getCreatedActivities, markActivityAccessed, addCreatedActivity } from '@/lib/party';
-import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, Lock } from 'lucide-react';
+import { Plus, Calendar, PartyPopper, Crown, Users, KeyRound, Copy, Check, Lock, Archive } from 'lucide-react';
 
 interface Activity {
   id: string;
@@ -17,6 +17,7 @@ interface Activity {
   created_at: string;
   passphrase: string;
   access_code: string;
+  archived?: boolean;
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string }> = {
@@ -31,6 +32,7 @@ const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string }> 
 
 export default function HomePage() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [archivedActivities, setArchivedActivities] = useState<Activity[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPassphraseModal, setShowPassphraseModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -43,19 +45,26 @@ export default function HomePage() {
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'mine' | 'joined'>('mine');
+  const [tab, setTab] = useState<'mine' | 'joined' | 'archived'>('mine');
 
   const fetchMyActivities = async () => {
     setLoading(true);
     const all: Activity[] = [];
+    const archivedList: Activity[] = [];
+    const uid = getUserId();
 
     // 1. 获取我发起的活动（通过localStorage中的ID列表批量查询）
     const createdIds = getCreatedActivities();
     if (createdIds.length > 0) {
       try {
-        const res = await fetch(`/api/activities?ids=${createdIds.join(',')}`);
+        const res = await fetch(`/api/activities?ids=${createdIds.join(',')}&user_id=${uid}&include_archived=true`);
         const data = await res.json();
-        if (data.data) all.push(...data.data);
+        if (data.data) {
+          data.data.forEach((a: Activity) => {
+            if (a.archived) archivedList.push(a);
+            else all.push(a);
+          });
+        }
       } catch { /* ignore */ }
     }
 
@@ -63,13 +72,19 @@ export default function HomePage() {
     const accessedIds = getAccessedActivities().filter(id => !createdIds.includes(id));
     if (accessedIds.length > 0) {
       try {
-        const res = await fetch(`/api/activities?ids=${accessedIds.join(',')}`);
+        const res = await fetch(`/api/activities?ids=${accessedIds.join(',')}&user_id=${uid}&include_archived=true`);
         const data = await res.json();
-        if (data.data) all.push(...data.data);
+        if (data.data) {
+          data.data.forEach((a: Activity) => {
+            if (a.archived) archivedList.push(a);
+            else all.push(a);
+          });
+        }
       } catch { /* ignore */ }
     }
 
     setActivities(all);
+    setArchivedActivities(archivedList);
     setLoading(false);
   };
 
@@ -78,7 +93,7 @@ export default function HomePage() {
   const accessedIds = getAccessedActivities();
   const myActivities = activities.filter(a => isOrganizer(a.id));
   const joinedActivities = activities.filter(a => !isOrganizer(a.id) && accessedIds.includes(a.id));
-  const displayedActivities = tab === 'mine' ? myActivities : joinedActivities;
+  const displayedActivities = tab === 'mine' ? myActivities : tab === 'joined' ? joinedActivities : archivedActivities;
 
   const handleCreate = async () => {
     if (!form.title || !form.description || !form.rough_time || !form.creator_name || !form.access_code) return;
@@ -252,6 +267,13 @@ export default function HomePage() {
               <Users className="w-4 h-4" />我参与的
               {joinedActivities.length > 0 && <span className="ml-1 bg-black/10 px-1.5 py-0.5 text-xs">{joinedActivities.length}</span>}
             </button>
+            <button
+              onClick={() => setTab('archived')}
+              className={`px-6 py-3 font-bold text-sm flex items-center gap-2 transition-colors cursor-pointer ${tab === 'archived' ? 'bg-foreground text-background' : 'bg-card hover:bg-muted'}`}
+            >
+              <Archive className="w-4 h-4" />历史活动
+              {archivedActivities.length > 0 && <span className="ml-1 bg-black/10 px-1.5 py-0.5 text-xs">{archivedActivities.length}</span>}
+            </button>
           </div>
 
           {loading ? (
@@ -259,9 +281,9 @@ export default function HomePage() {
           ) : displayedActivities.length === 0 ? (
             <div className="bg-card border-2 border-outline p-12 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
               <PartyPopper className="w-16 h-16 mx-auto mb-4 text-primary opacity-60" />
-              <p className="text-xl font-bold mb-2">{tab === 'mine' ? '还没有发起活动' : '还没有参与活动'}</p>
+              <p className="text-xl font-bold mb-2">{tab === 'mine' ? '还没有发起活动' : tab === 'joined' ? '还没有参与活动' : '还没有历史活动'}</p>
               <p className="text-muted-foreground mb-6">
-                {tab === 'mine' ? '点击上方按钮，创建你的第一个聚会活动吧' : '通过朋友分享的活动口令加入聚会'}
+                {tab === 'mine' ? '点击上方按钮，创建你的第一个聚会活动吧' : tab === 'joined' ? '通过朋友分享的活动口令加入聚会' : '归档的活动会显示在这里'}
               </p>
               {tab === 'joined' && (
                 <button

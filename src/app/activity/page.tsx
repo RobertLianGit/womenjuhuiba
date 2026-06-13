@@ -27,12 +27,12 @@ interface Activity {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string; desc: string }> = {
-  collecting: { label: '意愿收集中', bg: 'bg-primary text-primary-foreground', rotate: '-rotate-2', desc: '大家正在填写参与意愿' },
+  collecting: { label: '意愿收集中', bg: 'bg-primary text-[#0A0A0A]', rotate: '-rotate-2', desc: '大家正在填写参与意愿' },
   voting:     { label: '投票中', bg: 'bg-accent-blue text-white', rotate: 'rotate-1', desc: '正在投票决定去哪里' },
-  plan:       { label: '方案确认中', bg: 'bg-warning text-primary-foreground', rotate: 'rotate-2', desc: '组织者正在确认活动方案' },
+  plan:       { label: '方案确认中', bg: 'bg-warning text-[#0A0A0A]', rotate: 'rotate-2', desc: '组织者正在确认活动方案' },
   registering:{ label: '报名中', bg: 'bg-success text-white', rotate: '-rotate-1', desc: '选择参与的分段报名' },
   started:    { label: '进行中', bg: 'bg-accent-blue text-white', rotate: '-rotate-2', desc: '活动正在进行' },
-  settling:   { label: '结算中', bg: 'bg-warning text-primary-foreground', rotate: 'rotate-1', desc: '正在记账分摊费用' },
+  settling:   { label: '结算中', bg: 'bg-warning text-[#0A0A0A]', rotate: 'rotate-1', desc: '正在记账分摊费用' },
   settled:    { label: '已结算', bg: 'bg-muted text-muted-foreground', rotate: '', desc: '活动费用已结清' },
 };
 
@@ -56,12 +56,12 @@ const ACTION_MAP: Record<string, { label: string; next: string }> = {
 };
 
 const PARTICIPANT_ACTION: Record<string, { label: string; href: string; icon: typeof ClipboardCheck; color: string }> = {
-  collecting: { label: '填写意愿', href: '/intention', icon: Send, color: 'bg-primary text-primary-foreground' },
+  collecting: { label: '填写意愿', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
   voting:     { label: '去投票', href: '/vote', icon: Vote, color: 'bg-accent-blue text-white' },
-  plan:       { label: '查看方案', href: '/plan', icon: FileText, color: 'bg-warning text-primary-foreground' },
+  plan:       { label: '查看方案', href: '/plan', icon: FileText, color: 'bg-warning text-[#0A0A0A]' },
   registering:{ label: '去报名', href: '/register', icon: UserCheck, color: 'bg-success text-white' },
   started:    { label: '查看活动', href: '/register', icon: CheckCircle2, color: 'bg-accent-blue text-white' },
-  settling:   { label: '查看账单', href: '/settle', icon: Receipt, color: 'bg-warning text-primary-foreground' },
+  settling:   { label: '查看账单', href: '/settle', icon: Receipt, color: 'bg-warning text-[#0A0A0A]' },
   settled:    { label: '查看结算', href: '/settle', icon: Receipt, color: 'bg-muted text-muted-foreground' },
 };
 
@@ -587,7 +587,7 @@ function ActivityPage() {
                 <button
                   onClick={handleGenerateShareImage}
                   disabled={generatingImage}
-                  className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  className="bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {generatingImage ? '生成中...' : <><ImageIcon className="w-4 h-4" /> 生成海报</>}
@@ -687,7 +687,7 @@ function ActivityPage() {
                 {action && (
                   <button
                     onClick={handleNextStatus}
-                    className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold text-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
+                    className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold text-lg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-2"
                     style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
                   >
                     {action.label} <ArrowRight className="w-5 h-5" />
@@ -712,7 +712,7 @@ function ActivityPage() {
                       style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
                     >
                       {isCurrentPhase && (
-                        <span className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 border border-outline">当前</span>
+                        <span className="absolute top-2 right-2 bg-primary text-[#0A0A0A] text-[10px] font-bold px-1.5 py-0.5 border border-outline">当前</span>
                       )}
                       <Icon className="w-8 h-8 mb-3 text-primary group-hover:text-accent-blue" />
                       <h3 className="font-bold text-base mb-1">{entry.label}</h3>
@@ -748,7 +748,7 @@ function ActivityPage() {
                 <button
                   onClick={handleGenerateShareImage}
                   disabled={generatingImage}
-                  className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  className="bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {generatingImage ? '生成中...' : <><ImageIcon className="w-4 h-4" /> 生成海报</>}
@@ -852,7 +852,7 @@ function ActivityPage() {
           <div className="bg-card border-2 border-outline w-full max-w-md p-8" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="bg-primary p-2 border-2 border-outline" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-                <KeyRound className="w-5 h-5 text-primary-foreground" />
+                <KeyRound className="w-5 h-5 text-[#0A0A0A]" />
               </div>
               <h2 className="text-xl font-bold">验证管理口令</h2>
             </div>
@@ -875,7 +875,7 @@ function ActivityPage() {
               <button
                 onClick={handleVerifyPassphrase}
                 disabled={!passphraseInput.trim()}
-                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
               >
                 验证
@@ -905,7 +905,7 @@ function ActivityPage() {
               )}
             </div>
             <div className="p-4 border-t-2 border-outline text-center">
-              <p className="text-sm text-on-surface-variant mb-3">长按图片保存，发送到微信群</p>
+              <p className="text-sm text-muted-foreground mb-3">长按图片保存，发送到微信群</p>
               <button
                 onClick={() => {
                   const link = document.createElement('a');
@@ -913,7 +913,7 @@ function ActivityPage() {
                   link.download = `${activity.title}-活动海报.png`;
                   link.click();
                 }}
-                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-2 font-bold hover:bg-primary/80 transition-colors cursor-pointer"
+                className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-2 font-bold hover:bg-primary/80 transition-colors cursor-pointer"
               >
                 下载图片
               </button>

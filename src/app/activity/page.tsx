@@ -587,7 +587,7 @@ function ActivityPage() {
                 <button
                   onClick={handleGenerateShareImage}
                   disabled={generatingImage}
-                  className="bg-accent-pink text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {generatingImage ? '生成中...' : <><ImageIcon className="w-4 h-4" /> 生成海报</>}
@@ -748,7 +748,7 @@ function ActivityPage() {
                 <button
                   onClick={handleGenerateShareImage}
                   disabled={generatingImage}
-                  className="bg-accent-pink text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   {generatingImage ? '生成中...' : <><ImageIcon className="w-4 h-4" /> 生成海报</>}
@@ -913,7 +913,7 @@ function ActivityPage() {
                   link.download = `${activity.title}-活动海报.png`;
                   link.click();
                 }}
-                className="bg-accent-pink text-white border-2 border-outline px-6 py-2 font-bold hover:bg-accent-pink/80 transition-colors cursor-pointer"
+                className="bg-primary text-primary-foreground border-2 border-outline px-6 py-2 font-bold hover:bg-primary/80 transition-colors cursor-pointer"
               >
                 下载图片
               </button>

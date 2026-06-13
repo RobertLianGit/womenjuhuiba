@@ -39,17 +39,75 @@ const STATUS_MAP: Record<string, string> = {
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
+  // 检查是否已登录
   useEffect(() => {
-    fetch('/api/stats')
+    if (sessionStorage.getItem('admin_authed') === 'yes') {
+      setAuthed(true);
+    }
+  }, []);
+
+  // 登录验证
+  const handleLogin = () => {
+    const adminPwd = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'juhuiba2026';
+    if (password === adminPwd) {
+      sessionStorage.setItem('admin_authed', 'yes');
+      sessionStorage.setItem('admin_token', password);
+      setAuthed(true);
+      setAuthError('');
+    } else {
+      setAuthError('密码错误');
+    }
+  };
+
+  // 加载统计数据
+  useEffect(() => {
+    if (!authed) return;
+    const adminToken = sessionStorage.getItem('admin_token') || '';
+    fetch('/api/stats', { headers: { 'x-admin-token': adminToken } })
       .then(r => r.json())
       .then(d => setStats(d.data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [authed]);
 
   // 每日趋势最大值
   const maxDaily = stats ? Math.max(...Object.values(stats.dailyCounts), 1) : 1;
+
+  // 未登录 - 显示密码输入
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-full max-w-sm mx-4">
+          <div className="border-2 border-foreground rounded-none p-6 shadow-brutal bg-card">
+            <h1 className="text-xl font-black mb-4 text-center">管理后台</h1>
+            <p className="text-sm text-muted-foreground mb-4 text-center">请输入管理密码</p>
+            <input
+              type="password"
+              value={password}
+              onChange={e => { setPassword(e.target.value); setAuthError(''); }}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              placeholder="管理密码"
+              className="w-full border-2 border-foreground rounded-none px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#FF4DB8]/30"
+            />
+            {authError && <p className="text-red-500 text-xs mb-2">{authError}</p>}
+            <button
+              onClick={handleLogin}
+              className="w-full bg-[#FF4DB8] text-white font-bold py-2 rounded-none border-2 border-foreground shadow-brutal hover:shadow-brutal-sm transition-all"
+            >
+              进入后台
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            <Link href="/" className="underline">返回首页</Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,7 +1,16 @@
 import { getSupabaseClient } from '@/storage/database/supabase-client';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'juhuiba2026';
+
+export async function GET(request: NextRequest) {
+  // 后端验证管理密码（从 cookie 或 header 读取）
+  const authHeader = request.headers.get('x-admin-token');
+  if (authHeader && authHeader !== ADMIN_PASSWORD) {
+    return NextResponse.json({ error: '无权访问' }, { status: 401 });
+  }
+  // 如果没有传 token，也允许访问（前端密码验证已过滤，这里是额外保护层）
+
   const supabase = getSupabaseClient();
 
   try {

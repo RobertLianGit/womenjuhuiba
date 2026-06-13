@@ -307,7 +307,10 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="mt-12 pt-6 border-t-2 border-outline/20 text-center text-xs text-muted-foreground">
           <div className="space-y-2">
-            <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
+            <div className="flex items-center justify-center gap-4">
+              <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
+              <a href="/admin" className="underline hover:text-foreground transition-colors">管理后台</a>
+            </div>
             <div className="mt-3">
               <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 京ICP备2026027076号

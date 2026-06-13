@@ -340,6 +340,8 @@ export default function HomePage() {
         <footer className="mt-12 pt-6 border-t-2 border-outline/20 text-center text-xs text-muted-foreground">
           <div className="space-y-2">
             <div className="flex items-center justify-center gap-4">
+              <a href="/poster.png" target="_blank" download="我们聚会吧-宣传海报.png" className="underline hover:text-foreground transition-colors">下载宣传海报</a>
+              <span className="text-outline/30">|</span>
               <a href="/privacy" className="underline hover:text-foreground transition-colors">隐私保护声明</a>
             </div>
             <div className="mt-3">

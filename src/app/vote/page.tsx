@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
-import { Plus, Vote, BarChart3, Trophy, CheckCircle2, Lightbulb, Settings2, RefreshCw, KeyRound } from 'lucide-react';
+import { Plus, Vote, BarChart3, Trophy, CheckCircle2, Lightbulb, Settings2, RefreshCw, KeyRound, Calendar, MapPin } from 'lucide-react';
 
 interface Proposal {
   id: string;
@@ -29,6 +29,7 @@ interface Intention {
   user_id: string;
   user_name: string;
   wants: string | null;
+  wants_time: string | null;
   estimated_people: number;
 }
 
@@ -284,11 +285,11 @@ function VotePageContent() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setVoteMode('single')}
-                    className={`px-4 py-2 font-bold border-2 border-outline cursor-pointer ${voteMode === 'single' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+                    className={`px-4 py-2 font-bold border-2 border-outline cursor-pointer ${voteMode === 'single' ? 'bg-primary text-[#0A0A0A]' : 'bg-card hover:bg-muted'}`}
                   >单选</button>
                   <button
                     onClick={() => setVoteMode('multi')}
-                    className={`px-4 py-2 font-bold border-2 border-outline cursor-pointer ${voteMode === 'multi' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+                    className={`px-4 py-2 font-bold border-2 border-outline cursor-pointer ${voteMode === 'multi' ? 'bg-primary text-[#0A0A0A]' : 'bg-card hover:bg-muted'}`}
                   >多选</button>
                 </div>
               </div>
@@ -300,7 +301,7 @@ function VotePageContent() {
                       <button
                         key={n}
                         onClick={() => setMaxSelections(n)}
-                        className={`w-10 h-10 font-bold border-2 border-outline cursor-pointer ${maxSelections === n ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+                        className={`w-10 h-10 font-bold border-2 border-outline cursor-pointer ${maxSelections === n ? 'bg-primary text-[#0A0A0A]' : 'bg-card hover:bg-muted'}`}
                       >{n}</button>
                     ))}
                   </div>
@@ -323,9 +324,89 @@ function VotePageContent() {
                     alert(data.error || '保存失败');
                   }
                 }}
-                className="mt-3 bg-primary text-primary-foreground border-2 border-outline px-5 py-2 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                className="mt-3 bg-primary text-[#0A0A0A] border-2 border-outline px-5 py-2 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                 style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
               >保存规则</button>
+            </div>
+          </div>
+        )}
+
+        {/* Intention Summary from previous stage */}
+        {intentions.length > 0 && (
+          <div className="bg-card border-2 border-outline p-5 mb-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <h3 className="text-lg font-bold mb-3 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-warning" />意愿收集摘要</h3>
+            <p className="text-xs text-muted-foreground mb-3">来自意愿收集阶段的数据，帮你快速了解大家偏好</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Location preferences */}
+              {(() => {
+                const locPrefs = intentions.filter(i => i.wants).reduce<Record<string, number>>((acc, i) => {
+                  i.wants!.split(/[、,，\s]+/).filter(Boolean).forEach(l => {
+                    const key = l.trim();
+                    acc[key] = (acc[key] || 0) + 1;
+                  });
+                  return acc;
+                }, {});
+                const sortedLocs = Object.entries(locPrefs).sort((a, b) => b[1] - a[1]);
+                return sortedLocs.length > 0 ? (
+                  <div className="bg-muted border-2 border-outline p-4">
+                    <h4 className="text-sm font-bold mb-2 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" />热门地点</h4>
+                    <div className="space-y-2">
+                      {sortedLocs.slice(0, 5).map(([loc, count]) => (
+                        <div key={loc} className="flex items-center gap-2">
+                          <span className="text-sm font-medium flex-1">{loc}</span>
+                          <div className="w-20 bg-background border border-outline h-5 relative overflow-hidden">
+                            <div className="bg-primary h-full" style={{ width: `${(count / intentions.length) * 100}%` }} />
+                          </div>
+                          <span className="text-xs font-bold w-10 text-right">{count}人</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleImportIntentions}
+                      disabled={intentionsNotInProposals.length === 0}
+                      className="mt-3 bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      一键导入为投票方案{intentionsNotInProposals.length > 0 ? ` (${intentionsNotInProposals.length}个)` : ''}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-muted border-2 border-outline p-4 text-center text-muted-foreground text-sm">
+                    <MapPin className="w-5 h-5 mx-auto mb-1" />暂无地点偏好
+                  </div>
+                );
+              })()}
+
+              {/* Time preferences */}
+              {(() => {
+                const timePrefs = intentions.filter(i => i.wants_time).reduce<Record<string, number>>((acc, i) => {
+                  i.wants_time!.split(/[、,，\s]+/).filter(Boolean).forEach(t => {
+                    const key = t.trim();
+                    acc[key] = (acc[key] || 0) + 1;
+                  });
+                  return acc;
+                }, {});
+                const sortedTimes = Object.entries(timePrefs).sort((a, b) => b[1] - a[1]);
+                return sortedTimes.length > 0 ? (
+                  <div className="bg-muted border-2 border-outline p-4">
+                    <h4 className="text-sm font-bold mb-2 flex items-center gap-2"><Calendar className="w-4 h-4 text-warning" />热门时间</h4>
+                    <div className="space-y-2">
+                      {sortedTimes.slice(0, 5).map(([time, count]) => (
+                        <div key={time} className="flex items-center gap-2">
+                          <span className="text-sm font-medium flex-1">{time}</span>
+                          <div className="w-20 bg-background border border-outline h-5 relative overflow-hidden">
+                            <div className="bg-warning h-full" style={{ width: `${(count / intentions.length) * 100}%` }} />
+                          </div>
+                          <span className="text-xs font-bold w-10 text-right">{count}人</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-muted border-2 border-outline p-4 text-center text-muted-foreground text-sm">
+                    <Calendar className="w-5 h-5 mx-auto mb-1" />暂无时间偏好
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -341,7 +422,7 @@ function VotePageContent() {
               </div>
               <button
                 onClick={handleImportIntentions}
-                className="bg-primary text-primary-foreground border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                className="bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                 style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
               >
                 一键导入
@@ -380,7 +461,7 @@ function VotePageContent() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === t ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+                className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === t ? 'bg-primary text-[#0A0A0A]' : 'bg-card hover:bg-muted'}`}
               >
                 <span className="flex items-center gap-2"><Icon className="w-4 h-4" />{labels[t]}</span>
               </button>
@@ -399,7 +480,7 @@ function VotePageContent() {
                 {intentionsNotInProposals.length > 0 && (
                   <button
                     onClick={handleImportIntentions}
-                    className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                    className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                     style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
                   >
                     导入 {intentionsNotInProposals.length} 个意愿方案
@@ -428,7 +509,7 @@ function VotePageContent() {
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-6 h-6 border-2 border-outline flex items-center justify-center ${isSelected ? 'bg-primary' : 'bg-card'}`}>
-                            {isSelected && <CheckCircle2 className="w-4 h-4 text-primary-foreground" />}
+                            {isSelected && <CheckCircle2 className="w-4 h-4 text-[#0A0A0A]" />}
                           </div>
                           <div className="flex-1">
                             <span className="font-bold text-lg">{p.location}</span>
@@ -459,7 +540,7 @@ function VotePageContent() {
                   <button
                     onClick={handleVote}
                     disabled={selectedIds.length === 0}
-                    className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
                   >
                     {alreadyVoted ? '更新投票' : '提交投票'}
@@ -536,7 +617,7 @@ function VotePageContent() {
               <button
                 onClick={handleAddProposal}
                 disabled={!proposalForm.location}
-                className="mt-4 bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-4 bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
               >
                 提交方案
@@ -634,7 +715,7 @@ function VotePageContent() {
                       alert(result.error || '操作失败，请重试');
                     }
                   }}
-                  className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                  className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
                 >
                   确认方案，进入方案设置

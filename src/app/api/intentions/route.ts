@@ -3,7 +3,7 @@ import { getSupabaseClient } from '@/storage/database/supabase-client';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { activity_id, user_id, user_name, wants, estimated_people, selected_scenes } = body;
+  const { activity_id, user_id, user_name, wants, wants_time, estimated_people, selected_scenes } = body;
 
   if (!activity_id || !user_id || !user_name) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
         user_id,
         user_name,
         wants: wants || null,
+        wants_time: wants_time || null,
         estimated_people: estimated_people || 1,
         selected_scenes: selected_scenes || null,
       },

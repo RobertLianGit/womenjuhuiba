@@ -5,13 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { getUserId, getUserName, isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
-import { Send, BarChart3, Clock, Users, MapPin, CheckCircle2, KeyRound } from 'lucide-react';
+import { Send, BarChart3, Clock, Users, MapPin, CheckCircle2, KeyRound, Calendar } from 'lucide-react';
 
 interface Intention {
   id: string;
   user_id: string;
   user_name: string;
   wants: string | null;
+  wants_time: string | null;
   estimated_people: number;
   selected_scenes: string | null;
   created_at: string;
@@ -31,7 +32,7 @@ function IntentionPageContent() {
   const [tab, setTab] = useState<'form' | 'summary'>('form');
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [form, setForm] = useState({ user_name: '', wants: '', estimated_people: 1, selected_scenes: [] as string[] });
+  const [form, setForm] = useState({ user_name: '', wants: '', wants_time: '', estimated_people: 1, selected_scenes: [] as string[] });
   const [submitted, setSubmitted] = useState(false);
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,7 @@ function IntentionPageContent() {
       setForm({
         user_name: existing.user_name,
         wants: existing.wants || '',
+        wants_time: existing.wants_time || '',
         estimated_people: existing.estimated_people || 1,
         selected_scenes: existing.selected_scenes ? JSON.parse(existing.selected_scenes) : [],
       });
@@ -81,6 +83,7 @@ function IntentionPageContent() {
         user_id: userId,
         user_name: form.user_name,
         wants: form.wants || null,
+        wants_time: form.wants_time || null,
         estimated_people: form.estimated_people,
         selected_scenes: form.selected_scenes.length > 0 ? JSON.stringify(form.selected_scenes) : null,
       }),
@@ -101,6 +104,33 @@ function IntentionPageContent() {
   const totalPeople = intentions.reduce((sum, i) => sum + (i.estimated_people || 1), 0);
 
   const wantsList = intentions.filter(i => i.wants).map(i => ({ name: i.user_name, wants: i.wants! }));
+
+  const wantsTimeList = intentions.filter(i => i.wants_time).map(i => ({ name: i.user_name, wants_time: i.wants_time! }));
+
+  // 汇总时间偏好：统计每个时间段的出现次数
+  const timePreferences = wantsTimeList.reduce<Record<string, string[]>>((acc, item) => {
+    // 支持用顿号、逗号、空格分隔多个时间段
+    const times = item.wants_time.split(/[、,，\s]+/).filter(Boolean);
+    times.forEach(t => {
+      const key = t.trim();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item.name);
+    });
+    return acc;
+  }, {});
+  const sortedTimePrefs = Object.entries(timePreferences).sort((a, b) => b[1].length - a[1].length);
+
+  // 汇总地点偏好
+  const locationPreferences = wantsList.reduce<Record<string, string[]>>((acc, item) => {
+    const locations = item.wants.split(/[、,，\s]+/).filter(Boolean);
+    locations.forEach(l => {
+      const key = l.trim();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item.name);
+    });
+    return acc;
+  }, {});
+  const sortedLocationPrefs = Object.entries(locationPreferences).sort((a, b) => b[1].length - a[1].length);
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
@@ -144,13 +174,13 @@ function IntentionPageContent() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setTab('form')}
-            className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'form' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+            className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'form' ? 'bg-primary text-[#0A0A0A]' : 'bg-card hover:bg-muted'}`}
           >
             <span className="flex items-center gap-2"><Send className="w-4 h-4" />填写意愿</span>
           </button>
           <button
             onClick={() => setTab('summary')}
-            className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'summary' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
+            className={`px-5 py-2.5 font-bold border-2 border-outline transition-all cursor-pointer ${tab === 'summary' ? 'bg-primary text-[#0A0A0A]' : 'bg-card hover:bg-muted'}`}
           >
             <span className="flex items-center gap-2"><BarChart3 className="w-4 h-4" />汇总看板</span>
           </button>
@@ -168,7 +198,7 @@ function IntentionPageContent() {
         )}
 
         {/* Progress Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
             <div className="text-2xl font-bold text-primary">{intentions.length}</div>
             <div className="text-xs font-medium text-muted-foreground mt-1">已表态人数</div>
@@ -180,6 +210,10 @@ function IntentionPageContent() {
           <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
             <div className="text-2xl font-bold text-success">{wantsList.length}</div>
             <div className="text-xs font-medium text-muted-foreground mt-1">想去的地方</div>
+          </div>
+          <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-2xl font-bold text-warning">{wantsTimeList.length}</div>
+            <div className="text-xs font-medium text-muted-foreground mt-1">填了时间偏好</div>
           </div>
         </div>
 
@@ -206,6 +240,16 @@ function IntentionPageContent() {
                 />
               </div>
               <div>
+                <label className="block text-sm font-bold mb-1">想去的时间</label>
+                <input
+                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  value={form.wants_time}
+                  onChange={e => setForm(f => ({ ...f, wants_time: e.target.value }))}
+                  placeholder="如：周六下午、下周末、7月初等"
+                />
+                <p className="text-xs text-muted-foreground mt-1">可填多个，用顿号或逗号分隔，如"周六下午、周日上午"</p>
+              </div>
+              <div>
                 <label className="block text-sm font-bold mb-1">预计人数</label>
                 <div className="flex items-center gap-3">
                   <button
@@ -224,7 +268,7 @@ function IntentionPageContent() {
                   <label className="block text-sm font-bold mb-2">参与时间段（多选）</label>
                   <div className="space-y-2">
                     {scenes.map(scene => (
-                      <label key={scene.id} className="flex items-center gap-3 bg-muted border-2 border-outline p-3 cursor-pointer hover:bg-surface-container-high transition-colors">
+                      <label key={scene.id} className="flex items-center gap-3 bg-muted border-2 border-outline p-3 cursor-pointer hover:bg-muted/80 transition-colors">
                         <input
                           type="checkbox"
                           checked={form.selected_scenes.includes(scene.id)}
@@ -248,7 +292,7 @@ function IntentionPageContent() {
             <button
               onClick={handleSubmit}
               disabled={!form.user_name}
-              className="mt-6 bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-6 bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
             >
               {submitted ? '更新意愿' : '提交意愿'}
@@ -260,7 +304,7 @@ function IntentionPageContent() {
         {tab === 'summary' && (
           <div className="space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-card border-2 border-outline p-5 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
                 <div className="text-4xl font-bold">{intentions.length}</div>
@@ -276,9 +320,52 @@ function IntentionPageContent() {
                 <div className="text-4xl font-bold">{wantsList.length}</div>
                 <div className="text-sm text-muted-foreground font-medium">想去的地方</div>
               </div>
+              <div className="bg-card border-2 border-outline p-5 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                <Calendar className="w-8 h-8 mx-auto mb-2 text-warning" />
+                <div className="text-4xl font-bold">{wantsTimeList.length}</div>
+                <div className="text-sm text-muted-foreground font-medium">填了时间偏好</div>
+              </div>
             </div>
 
-            {/* Wants List */}
+            {/* Location Preferences Summary */}
+            {sortedLocationPrefs.length > 0 && (
+              <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                <h3 className="text-lg font-bold mb-3 flex items-center gap-2"><MapPin className="w-5 h-5 text-primary" />地点偏好汇总</h3>
+                <div className="space-y-3">
+                  {sortedLocationPrefs.map(([location, names], i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="font-medium min-w-[80px] shrink-0 text-right">{location}</span>
+                      <div className="flex-1 bg-muted border-2 border-outline h-8 relative overflow-hidden">
+                        <div className="bg-primary h-full transition-all" style={{ width: `${(names.length / intentions.length) * 100}%` }} />
+                      </div>
+                      <span className="font-bold w-20 text-right text-sm">{names.length} 人</span>
+                      <span className="text-xs text-muted-foreground w-32 truncate">{names.join('、')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Time Preferences Summary */}
+            {sortedTimePrefs.length > 0 && (
+              <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+                <h3 className="text-lg font-bold mb-3 flex items-center gap-2"><Calendar className="w-5 h-5 text-warning" />时间偏好汇总</h3>
+                <div className="space-y-3">
+                  {sortedTimePrefs.map(([time, names], i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="font-medium min-w-[80px] shrink-0 text-right">{time}</span>
+                      <div className="flex-1 bg-muted border-2 border-outline h-8 relative overflow-hidden">
+                        <div className="bg-warning h-full transition-all" style={{ width: `${(names.length / intentions.length) * 100}%` }} />
+                      </div>
+                      <span className="font-bold w-20 text-right text-sm">{names.length} 人</span>
+                      <span className="text-xs text-muted-foreground w-32 truncate">{names.join('、')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Wants List (raw) */}
             {wantsList.length > 0 && (
               <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <h3 className="text-lg font-bold mb-3 flex items-center gap-2"><MapPin className="w-5 h-5 text-primary" />想去的地方</h3>
@@ -329,6 +416,7 @@ function IntentionPageContent() {
                       <tr className="border-b-2 border-outline">
                         <th className="text-left py-2 px-3 font-bold">昵称</th>
                         <th className="text-left py-2 px-3 font-bold">想去哪</th>
+                        <th className="text-left py-2 px-3 font-bold">想去的时间</th>
                         <th className="text-center py-2 px-3 font-bold">人数</th>
                         <th className="text-left py-2 px-3 font-bold">时间段</th>
                       </tr>
@@ -342,6 +430,7 @@ function IntentionPageContent() {
                           <tr key={i.id} className="border-b border-outline/30 hover:bg-muted transition-colors">
                             <td className="py-2 px-3 font-medium">{i.user_name}</td>
                             <td className="py-2 px-3">{i.wants || '-'}</td>
+                            <td className="py-2 px-3">{i.wants_time || '-'}</td>
                             <td className="py-2 px-3 text-center font-bold">{i.estimated_people}</td>
                             <td className="py-2 px-3">{sceneNames}</td>
                           </tr>
@@ -373,7 +462,7 @@ function IntentionPageContent() {
                       alert(result.error || '操作失败，请重试');
                     }
                   }}
-                  className="bg-primary text-primary-foreground border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                  className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
                 >
                   提前结束收集，进入投票

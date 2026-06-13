@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
-import { Plus, Trash2, Copy, Check, FileText, Sparkles, Pencil, ArrowRight, Lightbulb, KeyRound } from 'lucide-react';
+import { Plus, Trash2, Copy, Check, FileText, Sparkles, Pencil, ArrowRight, Lightbulb, KeyRound, Calendar, MapPin, Trophy } from 'lucide-react';
 
 interface Scene {
   id: string;
@@ -30,6 +30,15 @@ interface VoteRecord {
   voted_proposal_ids: string;
 }
 
+interface Intention {
+  id: string;
+  user_id: string;
+  user_name: string;
+  wants: string | null;
+  wants_time: string | null;
+  estimated_people: number;
+}
+
 interface Activity {
   id: string;
   title: string;
@@ -52,6 +61,7 @@ function PlanPageContent() {
   const [loading, setLoading] = useState(true);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
+  const [intentions, setIntentions] = useState<Intention[]>([]);
   const [editingScene, setEditingScene] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: '', time_range: '', location: '' });
 
@@ -67,7 +77,8 @@ function PlanPageContent() {
       fetch(`/api/plans?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/vote-proposals?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/vote-records?activity_id=${activityId}`).then(r => r.json()),
-    ]).then(([sceneRes, actRes, planRes, propRes, voteRes]) => {
+      fetch(`/api/intentions?activity_id=${activityId}`).then(r => r.json()),
+    ]).then(([sceneRes, actRes, planRes, propRes, voteRes, intRes]) => {
       setScenes(sceneRes.data || []);
       const actData = actRes.data;
       setActivity(actData || null);
@@ -77,6 +88,7 @@ function PlanPageContent() {
       }
       setProposals(propRes.data || []);
       setVoteRecords(voteRes.data || []);
+      setIntentions(intRes.data || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);
@@ -274,25 +286,90 @@ ${sceneList || '暂无分段，请根据投票结果建议合理的分段安排'
           </div>
         </div>
 
-        {/* Vote Results Reference */}
-        {sortedProposals.length > 0 && (
+        {/* Vote Results & Intention Summary Reference */}
+        {(sortedProposals.length > 0 || intentions.length > 0) && (
           <section className="mb-8">
             <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-warning" />投票结果参考</h2>
-              <p className="text-sm text-muted-foreground mb-3">以下为投票排名，可参考结果手动添加分段</p>
-              <div className="space-y-2">
-                {sortedProposals.map((p, i) => (
-                  <div key={p.id} className="bg-muted border-2 border-outline p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className={`font-bold text-lg ${i === 0 ? 'text-warning' : ''}`}>#{i + 1}</span>
-                      <span className="font-bold">{p.location}</span>
-                      {p.activity_type && <span className="text-muted-foreground text-sm">({p.activity_type})</span>}
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-warning" />前序环节数据参考</h2>
+              <p className="text-sm text-muted-foreground mb-4">来自意愿收集和投票环节的数据，帮你快速确定最终方案</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Vote Results */}
+                {sortedProposals.length > 0 && (
+                  <div className="bg-muted border-2 border-outline p-4">
+                    <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><Trophy className="w-4 h-4 text-warning" />投票排名</h3>
+                    <div className="space-y-2">
+                      {sortedProposals.slice(0, 5).map((p, i) => (
+                        <div key={p.id} className="flex items-center justify-between">
+                          <span className="font-medium flex items-center gap-2">
+                            <span className={`font-bold ${i === 0 ? 'text-warning' : ''}`}>#{i + 1}</span>
+                            {p.location}
+                          </span>
+                          <span className="text-sm font-bold">{voteCounts[p.id] || 0} 票</span>
+                        </div>
+                      ))}
                     </div>
-                    <span className="font-bold text-sm">{voteCounts[p.id] || 0} 票</span>
                   </div>
-                ))}
+                )}
+
+                {/* Time Preferences */}
+                {(() => {
+                  const timePrefs = intentions.filter(i => i.wants_time).reduce<Record<string, number>>((acc, i) => {
+                    i.wants_time!.split(/[、,，\s]+/).filter(Boolean).forEach(t => {
+                      const key = t.trim();
+                      acc[key] = (acc[key] || 0) + 1;
+                    });
+                    return acc;
+                  }, {});
+                  const sortedTimes = Object.entries(timePrefs).sort((a, b) => b[1] - a[1]);
+                  return sortedTimes.length > 0 ? (
+                    <div className="bg-muted border-2 border-outline p-4">
+                      <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><Calendar className="w-4 h-4 text-warning" />时间偏好</h3>
+                      <div className="space-y-2">
+                        {sortedTimes.map(([time, count]) => (
+                          <div key={time} className="flex items-center gap-2">
+                            <span className="text-sm font-medium flex-1">{time}</span>
+                            <div className="w-16 bg-background border border-outline h-4 relative overflow-hidden">
+                              <div className="bg-warning h-full" style={{ width: `${(count / intentions.length) * 100}%` }} />
+                            </div>
+                            <span className="text-xs font-bold w-10 text-right">{count}人</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Location Preferences */}
+                {(() => {
+                  const locPrefs = intentions.filter(i => i.wants).reduce<Record<string, number>>((acc, i) => {
+                    i.wants!.split(/[、,，\s]+/).filter(Boolean).forEach(l => {
+                      const key = l.trim();
+                      acc[key] = (acc[key] || 0) + 1;
+                    });
+                    return acc;
+                  }, {});
+                  const sortedLocs = Object.entries(locPrefs).sort((a, b) => b[1] - a[1]);
+                  return sortedLocs.length > 0 ? (
+                    <div className="bg-muted border-2 border-outline p-4">
+                      <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" />地点偏好</h3>
+                      <div className="space-y-2">
+                        {sortedLocs.map(([loc, count]) => (
+                          <div key={loc} className="flex items-center gap-2">
+                            <span className="text-sm font-medium flex-1">{loc}</span>
+                            <div className="w-16 bg-background border border-outline h-4 relative overflow-hidden">
+                              <div className="bg-primary h-full" style={{ width: `${(count / intentions.length) * 100}%` }} />
+                            </div>
+                            <span className="text-xs font-bold w-10 text-right">{count}人</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </div>
-              {isCreator && (
+
+              {isCreator && sortedProposals.length > 0 && (
                 <button
                   onClick={async () => {
                     // Auto-create scenes from top proposals
@@ -317,7 +394,7 @@ ${sceneList || '暂无分段，请根据投票结果建议合理的分段安排'
                       }
                     }
                   }}
-                  className="mt-4 bg-primary text-primary-foreground border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                  className="bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                   style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
                 >
                   一键添加投票结果为分段

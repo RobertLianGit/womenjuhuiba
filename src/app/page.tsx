@@ -312,6 +312,9 @@ export default function HomePage() {
               <a href="/admin" className="underline hover:text-foreground transition-colors">管理后台</a>
             </div>
             <div className="mt-3">
+              微信公众号搜索<span className="font-bold mx-1">"连通社"</span>留言提出使用问题
+            </div>
+            <div className="mt-2">
               <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                 京ICP备2026027076号
               </a>

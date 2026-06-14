@@ -41,7 +41,7 @@ export default function HomePage() {
   const [createdAccessToken, setCreatedAccessToken] = useState('');
   const [copied, setCopied] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '' });
+  const [form, setForm] = useState({ title: '', description: '', rough_time: '', creator_name: getUserName() || '', access_code: '' });
   const [joinCode, setJoinCode] = useState('');
   const [joinError, setJoinError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -115,7 +115,7 @@ export default function HomePage() {
 
       setActivities(prev => [result.data, ...prev]);
       setShowCreateModal(false);
-      setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name }));
+      setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name, access_code: '' }));
       setCreatedPassphrase(result.data.passphrase);
       setCreatedActivityId(result.data.id);
       setCreatedAccessCode(result.data.access_code);
@@ -359,8 +359,18 @@ export default function HomePage() {
                   placeholder="简单描述一下聚会的内容..."
                 />
               </div>
+              <div>
+                <label className="block text-sm font-bold mb-1">自定义活动口令 <span className="text-muted-foreground text-xs font-normal">可选，不填则自动生成</span></label>
+                <input
+                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-[44px] tracking-widest"
+                  value={form.access_code ?? ''}
+                  onChange={e => setForm(f => ({ ...f, access_code: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                  placeholder="6位数字，如 888888"
+                  maxLength={6}
+                />
+              </div>
               <div className="bg-muted border-2 border-outline p-3 text-sm text-muted-foreground">
-                活动口令和管理口令会自动生成。创建后可直接分享链接，朋友点击即可加入，无需再输口令。
+                {form.access_code ? '你自定义了活动口令，管理口令仍会自动生成。' : '活动口令和管理口令会自动生成。'}创建后可直接分享链接，朋友点击即可加入，无需再输口令。
               </div>
             </div>
             <div className="flex gap-3 mt-6">
@@ -373,7 +383,7 @@ export default function HomePage() {
                 创建并邀请朋友
               </button>
               <button
-                onClick={() => { setShowCreateModal(false); setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name })); }}
+                onClick={() => { setShowCreateModal(false); setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name, access_code: '' })); }}
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer min-h-[44px]"
               >
                 取消

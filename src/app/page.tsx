@@ -179,7 +179,7 @@ export default function HomePage() {
             <div className="relative z-10">
               <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-2 sm:mb-3">
                 我们聚会吧
-                <span className="text-sm sm:text-base font-normal align-super ml-1 text-secondary">Beta</span>
+                <span className="text-xs font-normal ml-1 text-secondary bg-muted px-1.5 py-0.5 rounded">Beta</span>
               </h1>
               <p className="text-base sm:text-xl md:text-2xl font-medium text-muted-foreground mb-6 sm:mb-8">
                 让每一次聚会都不再只是"下次一定"

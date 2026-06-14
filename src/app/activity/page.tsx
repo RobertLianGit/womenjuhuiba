@@ -28,13 +28,13 @@ interface Activity {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; rotate: string; desc: string }> = {
-  collecting: { label: '意愿收集中', bg: 'bg-primary text-[#0A0A0A]', rotate: '-rotate-2', desc: '大家正在填写参与意愿' },
-  voting:     { label: '投票中', bg: 'bg-accent-blue text-white', rotate: 'rotate-1', desc: '正在投票决定去哪里' },
-  plan:       { label: '方案确认中', bg: 'bg-warning text-[#0A0A0A]', rotate: 'rotate-2', desc: '组织者正在确认活动方案' },
-  registering:{ label: '报名中', bg: 'bg-success text-white', rotate: '-rotate-1', desc: '选择参与的分段报名' },
-  started:    { label: '进行中', bg: 'bg-accent-blue text-white', rotate: '-rotate-2', desc: '活动正在进行' },
-  settling:   { label: '结算中', bg: 'bg-warning text-[#0A0A0A]', rotate: 'rotate-1', desc: '正在记账分摊费用' },
-  settled:    { label: '已结算', bg: 'bg-muted text-muted-foreground', rotate: '', desc: '活动费用已结清' },
+  collecting: { label: '讨论中', bg: 'bg-primary text-[#0A0A0A]', rotate: '-rotate-2', desc: '大家正在回应和讨论' },
+  voting:     { label: '讨论中', bg: 'bg-primary text-[#0A0A0A]', rotate: '-rotate-2', desc: '大家正在回应和讨论' },
+  plan:       { label: '讨论中', bg: 'bg-primary text-[#0A0A0A]', rotate: '-rotate-2', desc: '组织者正在确认安排' },
+  registering:{ label: '已成行', bg: 'bg-success text-white', rotate: 'rotate-1', desc: '活动已确定，正在报名' },
+  started:    { label: '已成行', bg: 'bg-success text-white', rotate: 'rotate-1', desc: '活动正在进行' },
+  settling:   { label: '已结束', bg: 'bg-warning text-[#0A0A0A]', rotate: 'rotate-2', desc: '正在结算费用' },
+  settled:    { label: '已结束', bg: 'bg-muted text-muted-foreground', rotate: '', desc: '活动费用已结清' },
 };
 
 const STATUS_ORDER = ['collecting', 'voting', 'plan', 'registering', 'started', 'settling', 'settled'];
@@ -48,19 +48,19 @@ const PREV_STATUS: Record<string, string> = {
 };
 
 const ACTION_MAP: Record<string, { label: string; next: string }> = {
-  collecting: { label: '开始投票', next: 'voting' },
-  voting:     { label: '确认方案', next: 'plan' },
-  plan:       { label: '开启报名', next: 'registering' },
+  collecting: { label: '把安排定下来', next: 'registering' },
+  voting:     { label: '把安排定下来', next: 'registering' },
+  plan:       { label: '把安排定下来', next: 'registering' },
   registering:{ label: '活动开始', next: 'started' },
   started:    { label: '开始结算', next: 'settling' },
   settling:   { label: '完成结算', next: 'settled' },
 };
 
 const PARTICIPANT_ACTION: Record<string, { label: string; href: string; icon: typeof ClipboardCheck; color: string }> = {
-  collecting: { label: '填写意愿', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
-  voting:     { label: '去投票', href: '/vote', icon: Vote, color: 'bg-accent-blue text-white' },
-  plan:       { label: '查看方案', href: '/plan', icon: FileText, color: 'bg-warning text-[#0A0A0A]' },
-  registering:{ label: '去报名', href: '/register', icon: UserCheck, color: 'bg-success text-white' },
+  collecting: { label: '填写回应', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
+  voting:     { label: '填写回应', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
+  plan:       { label: '填写回应', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
+  registering:{ label: '确认参加', href: '/register', icon: UserCheck, color: 'bg-success text-white' },
   started:    { label: '查看活动', href: '/register', icon: CheckCircle2, color: 'bg-accent-blue text-white' },
   settling:   { label: '查看账单', href: '/settle', icon: Receipt, color: 'bg-warning text-[#0A0A0A]' },
   settled:    { label: '查看结算', href: '/settle', icon: Receipt, color: 'bg-muted text-muted-foreground' },
@@ -707,39 +707,102 @@ function ActivityPage() {
               </section>
             )}
 
-            {/* Entry Cards */}
+            {/* Organizer Actions - Simplified */}
             <section className="mb-8">
-              <h2 className="text-xl font-bold mb-4">功能入口</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {ORGANIZER_ENTRIES.map(entry => {
-                  const open = currentIdx >= entry.minStatus;
-                  const isCurrentPhase = entry.key === activity.status;
-                  const Icon = entry.icon;
-                  return open ? (
-                    <Link
-                      key={entry.key}
-                      href={pageHref(entry.key)}
-                      className={`bg-card border-2 border-outline p-5 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer group relative ${isCurrentPhase ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-                      style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
-                    >
-                      {isCurrentPhase && (
-                        <span className="absolute top-2 right-2 bg-primary text-[#0A0A0A] text-[10px] font-bold px-1.5 py-0.5 border border-outline">当前</span>
-                      )}
-                      <Icon className="w-8 h-8 mb-3 text-primary group-hover:text-accent-blue" />
-                      <h3 className="font-bold text-base mb-1">{entry.label}</h3>
-                      <p className="text-sm text-muted-foreground">{entry.desc}</p>
-                    </Link>
-                  ) : (
-                    <div
-                      key={entry.key}
-                      className="bg-card border-2 border-outline p-5 opacity-40 cursor-not-allowed"
-                    >
-                      <Icon className="w-8 h-8 mb-3 text-muted-foreground" />
-                      <h3 className="font-bold text-base mb-1">{entry.label}</h3>
-                      <p className="text-sm text-muted-foreground">尚未开放</p>
+              {/* Primary Action */}
+              {activity.status !== 'settled' && (
+                <div className="mb-6">
+                  <button
+                    onClick={handleNextStatus}
+                    className="w-full bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-4 text-lg font-bold hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+                  >
+                    <ArrowRight className="w-5 h-5" />
+                    {ACTION_MAP[activity.status]?.label || '下一步'}
+                  </button>
+                </div>
+              )}
+
+              {/* Quick Links - context-aware */}
+              <div className="space-y-3">
+                {/* Current Phase: Always show intention link during discussion */}
+                {['collecting', 'voting', 'plan'].includes(activity.status) && (
+                  <Link
+                    href={`/intention?activity_id=${activity.id}`}
+                    className="bg-card border-2 border-outline p-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-3 group"
+                    style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                  >
+                    <Send className="w-6 h-6 text-primary" />
+                    <div>
+                      <h3 className="font-bold text-sm">查看大家的回应</h3>
+                      <p className="text-xs text-muted-foreground">{stats.intentionCount} 人已回应</p>
                     </div>
-                  );
-                })}
+                  </Link>
+                )}
+
+                {/* Registering phase */}
+                {activity.status === 'registering' && (
+                  <Link
+                    href={`/register?activity_id=${activity.id}`}
+                    className="bg-card border-2 border-outline p-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-3 group"
+                    style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                  >
+                    <UserCheck className="w-6 h-6 text-success" />
+                    <div>
+                      <h3 className="font-bold text-sm">管理报名</h3>
+                      <p className="text-xs text-muted-foreground">{stats.registrationCount} 人已报名</p>
+                    </div>
+                  </Link>
+                )}
+
+                {/* Settling phase */}
+                {activity.status === 'settling' && (
+                  <Link
+                    href={`/settle?activity_id=${activity.id}`}
+                    className="bg-card border-2 border-outline p-4 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer flex items-center gap-3 group"
+                    style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+                  >
+                    <Receipt className="w-6 h-6 text-warning" />
+                    <div>
+                      <h3 className="font-bold text-sm">记账结算</h3>
+                      <p className="text-xs text-muted-foreground">记录费用和分摊</p>
+                    </div>
+                  </Link>
+                )}
+
+                {/* More Tools - collapsible */}
+                <details className="group">
+                  <summary className="bg-muted border-2 border-outline p-3 cursor-pointer flex items-center gap-2 text-sm font-bold text-muted-foreground hover:bg-muted/80 transition-colors list-none" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
+                    <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
+                    更多工具
+                  </summary>
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <Link href={`/intention?activity_id=${activity.id}`} className="bg-card border-2 border-outline p-3 hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center" style={{ boxShadow: '2px 2px 0 #0A0A0A' }}>
+                      <ClipboardCheck className="w-5 h-5 mx-auto mb-1 text-primary" />
+                      <p className="text-xs font-bold">意愿收集</p>
+                    </Link>
+                    <Link href={`/vote?activity_id=${activity.id}`} className="bg-card border-2 border-outline p-3 hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center" style={{ boxShadow: '2px 2px 0 #0A0A0A' }}>
+                      <Vote className="w-5 h-5 mx-auto mb-1 text-accent-blue" />
+                      <p className="text-xs font-bold">投票</p>
+                    </Link>
+                    <Link href={`/plan?activity_id=${activity.id}`} className="bg-card border-2 border-outline p-3 hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center" style={{ boxShadow: '2px 2px 0 #0A0A0A' }}>
+                      <FileText className="w-5 h-5 mx-auto mb-1 text-warning" />
+                      <p className="text-xs font-bold">方案确认</p>
+                    </Link>
+                    <Link href={`/register?activity_id=${activity.id}`} className="bg-card border-2 border-outline p-3 hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center" style={{ boxShadow: '2px 2px 0 #0A0A0A' }}>
+                      <UserPlus className="w-5 h-5 mx-auto mb-1 text-success" />
+                      <p className="text-xs font-bold">分段报名</p>
+                    </Link>
+                    <Link href={`/dashboard?activity_id=${activity.id}`} className="bg-card border-2 border-outline p-3 hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center" style={{ boxShadow: '2px 2px 0 #0A0A0A' }}>
+                      <LayoutDashboard className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-xs font-bold">看板</p>
+                    </Link>
+                    <Link href={`/settle?activity_id=${activity.id}`} className="bg-card border-2 border-outline p-3 hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer text-center" style={{ boxShadow: '2px 2px 0 #0A0A0A' }}>
+                      <Receipt className="w-5 h-5 mx-auto mb-1 text-warning" />
+                      <p className="text-xs font-bold">记账</p>
+                    </Link>
+                  </div>
+                </details>
               </div>
             </section>
 

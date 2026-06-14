@@ -118,10 +118,7 @@ function ActivityPage() {
           const isOrg = isOrganizer(data.id);
           const isAccessed = isActivityAccessed(data.id);
           if (isOrg || isAccessed || token) {
-            // Token-based access = auto-grant
-            if (token) {
-              markActivityAccessed(data.id);
-            }
+            markActivityAccessed(data.id);
             setAccessGranted(true);
           }
         }

@@ -11,8 +11,9 @@ interface Proposal {
   id: string;
   user_id: string;
   user_name: string;
-  location: string;
+  location: string | null;
   activity_type: string | null;
+  proposed_time: string | null;
   created_at: string;
 }
 
@@ -43,7 +44,7 @@ function VotePageContent() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
   const [intentions, setIntentions] = useState<Intention[]>([]);
-  const [proposalForm, setProposalForm] = useState({ location: '', activity_type: '' });
+  const [proposalForm, setProposalForm] = useState({ location: '', activity_type: '', proposed_time: '' });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showVoteSuccess, setShowVoteSuccess] = useState(false);
@@ -110,14 +111,18 @@ function VotePageContent() {
   const existingVote = voteRecords.find(v => v.user_id === userId);
   const alreadyVoted = !!existingVote;
 
-  // Auto-import intentions as proposals on first load
-  const intentionsNotInProposals = intentions.filter(i =>
+  // Intentions not yet imported as proposals (locations)
+  const locIntentionsNotInProposals = intentions.filter(i =>
     i.wants && !proposals.some(p => p.location === i.wants)
   );
+  // Intentions not yet imported as proposals (times)
+  const timeIntentionsNotInProposals = intentions.filter(i =>
+    i.wants_time && !proposals.some(p => p.proposed_time === i.wants_time)
+  );
 
-  const handleImportIntentions = async () => {
+  const handleImportLocIntentions = async () => {
     let added = 0;
-    for (const intention of intentionsNotInProposals) {
+    for (const intention of locIntentionsNotInProposals) {
       if (!intention.wants) continue;
       const res = await fetch('/api/vote-proposals', {
         method: 'POST',
@@ -134,7 +139,31 @@ function VotePageContent() {
       if (result.data) added++;
     }
     if (added > 0) {
-      // Refresh proposals
+      const propRes = await fetch(`/api/vote-proposals?activity_id=${activityId}`);
+      const propData = await propRes.json();
+      setProposals(propData.data || []);
+    }
+  };
+
+  const handleImportTimeIntentions = async () => {
+    let added = 0;
+    for (const intention of timeIntentionsNotInProposals) {
+      if (!intention.wants_time) continue;
+      const res = await fetch('/api/vote-proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activity_id: activityId,
+          user_id: intention.user_id,
+          user_name: intention.user_name,
+          location: null,
+          proposed_time: intention.wants_time,
+        }),
+      });
+      const result = await res.json();
+      if (result.data) added++;
+    }
+    if (added > 0) {
       const propRes = await fetch(`/api/vote-proposals?activity_id=${activityId}`);
       const propData = await propRes.json();
       setProposals(propData.data || []);
@@ -142,7 +171,7 @@ function VotePageContent() {
   };
 
   const handleAddProposal = async () => {
-    if (!proposalForm.location) return;
+    if (!proposalForm.location && !proposalForm.proposed_time) return;
     const userName = getUserName() || '匿名';
     const res = await fetch('/api/vote-proposals', {
       method: 'POST',
@@ -151,14 +180,15 @@ function VotePageContent() {
         activity_id: activityId,
         user_id: userId,
         user_name: userName,
-        location: proposalForm.location,
+        location: proposalForm.location || null,
         activity_type: proposalForm.activity_type || null,
+        proposed_time: proposalForm.proposed_time || null,
       }),
     });
     const result = await res.json();
     if (result.data) {
       setProposals(prev => [...prev, result.data]);
-      setProposalForm({ location: '', activity_type: '' });
+      setProposalForm({ location: '', activity_type: '', proposed_time: '' });
       setShowProposalSuccess(true);
       setTimeout(() => setShowProposalSuccess(false), 3000);
       // Switch back to vote tab
@@ -362,11 +392,11 @@ function VotePageContent() {
                       ))}
                     </div>
                     <button
-                      onClick={handleImportIntentions}
-                      disabled={intentionsNotInProposals.length === 0}
+                      onClick={handleImportLocIntentions}
+                      disabled={locIntentionsNotInProposals.length === 0}
                       className="mt-3 bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      一键导入为投票方案{intentionsNotInProposals.length > 0 ? ` (${intentionsNotInProposals.length}个)` : ''}
+                      一键导入地点{locIntentionsNotInProposals.length > 0 ? ` (${locIntentionsNotInProposals.length}个)` : ''}
                     </button>
                   </div>
                 ) : (
@@ -400,6 +430,13 @@ function VotePageContent() {
                         </div>
                       ))}
                     </div>
+                    <button
+                      onClick={handleImportTimeIntentions}
+                      disabled={timeIntentionsNotInProposals.length === 0}
+                      className="mt-3 bg-warning text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      一键导入时间{timeIntentionsNotInProposals.length > 0 ? ` (${timeIntentionsNotInProposals.length}个)` : ''}
+                    </button>
                   </div>
                 ) : (
                   <div className="bg-muted border-2 border-outline p-4 text-center text-muted-foreground text-sm">
@@ -412,20 +449,27 @@ function VotePageContent() {
         )}
 
         {/* Auto-import intentions hint */}
-        {intentionsNotInProposals.length > 0 && proposals.length === 0 && (
+        {(locIntentionsNotInProposals.length + timeIntentionsNotInProposals.length) > 0 && proposals.length === 0 && (
           <div className="bg-warning border-2 border-outline p-4 mb-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
             <div className="flex items-center gap-3">
               <Lightbulb className="w-5 h-5 shrink-0" />
               <div className="flex-1">
-                <p className="font-bold text-sm">有 {intentionsNotInProposals.length} 个意愿尚未加入投票</p>
-                <p className="text-xs text-muted-foreground mt-1">大家在意愿收集中提到的想法可以一键导入为投票方案</p>
+                <p className="font-bold text-sm">有 {locIntentionsNotInProposals.length + timeIntentionsNotInProposals.length} 个意愿尚未加入投票</p>
+                <p className="text-xs text-muted-foreground mt-1">大家在意愿收集中提到的地点和时间可以一键导入为投票方案</p>
               </div>
               <button
-                onClick={handleImportIntentions}
+                onClick={handleImportLocIntentions}
                 className="bg-primary text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
                 style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
               >
-                一键导入
+                导入地点
+              </button>
+              <button
+                onClick={handleImportTimeIntentions}
+                className="bg-warning text-[#0A0A0A] border-2 border-outline px-4 py-2 font-bold text-sm hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
+              >
+                导入时间
               </button>
             </div>
           </div>
@@ -477,14 +521,27 @@ function VotePageContent() {
                 <Vote className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-xl font-bold mb-2">还没有投票方案</p>
                 <p className="text-muted-foreground mb-4">点击「提方案」添加你想去的地方，或导入意愿收集中的想法</p>
-                {intentionsNotInProposals.length > 0 && (
-                  <button
-                    onClick={handleImportIntentions}
-                    className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
-                    style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
-                  >
-                    导入 {intentionsNotInProposals.length} 个意愿方案
-                  </button>
+                {(locIntentionsNotInProposals.length + timeIntentionsNotInProposals.length) > 0 && (
+                  <div className="flex gap-2 justify-center">
+                    {locIntentionsNotInProposals.length > 0 && (
+                      <button
+                        onClick={handleImportLocIntentions}
+                        className="bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                        style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+                      >
+                        导入 {locIntentionsNotInProposals.length} 个地点
+                      </button>
+                    )}
+                    {timeIntentionsNotInProposals.length > 0 && (
+                      <button
+                        onClick={handleImportTimeIntentions}
+                        className="bg-warning text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer"
+                        style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+                      >
+                        导入 {timeIntentionsNotInProposals.length} 个时间
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             ) : (
@@ -512,9 +569,10 @@ function VotePageContent() {
                             {isSelected && <CheckCircle2 className="w-4 h-4 text-[#0A0A0A]" />}
                           </div>
                           <div className="flex-1">
-                            <span className="font-bold text-lg">{p.location}</span>
-                            {p.activity_type && <span className="ml-3 text-muted-foreground">{p.activity_type}</span>}
-                          </div>
+                            {p.location && <span className="font-bold text-lg">{p.location}</span>}
+                            {p.proposed_time && <span className="font-bold text-lg text-warning">{p.proposed_time}</span>}
+                            {p.activity_type && <span className="ml-3 text-muted-foreground">{p.activity_type}</span>
+                            }</div>
                           <span className="text-sm font-bold">{voteCounts[p.id] || 0} 票</span>
                         </div>
                       </button>
@@ -555,14 +613,14 @@ function VotePageContent() {
         {tab === 'submit' && (
           <div className="space-y-6">
             {/* Import from intentions */}
-            {intentionsNotInProposals.length > 0 && (
+            {(locIntentionsNotInProposals.length + timeIntentionsNotInProposals.length) > 0 && (
               <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <h3 className="text-lg font-bold mb-3 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-warning" />从意愿导入</h3>
                 <p className="text-sm text-muted-foreground mb-3">以下想法来自意愿收集阶段，点击可快速添加为方案</p>
                 <div className="space-y-2">
-                  {intentionsNotInProposals.map(i => (
+                  {locIntentionsNotInProposals.map(i => (
                     <button
-                      key={i.id}
+                      key={`loc-${i.id}`}
                       onClick={async () => {
                         if (!i.wants) return;
                         const res = await fetch('/api/vote-proposals', {
@@ -588,6 +646,34 @@ function VotePageContent() {
                       <span className="font-medium">{i.wants}</span>
                     </button>
                   ))}
+                  {timeIntentionsNotInProposals.map(i => (
+                    <button
+                      key={`time-${i.id}`}
+                      onClick={async () => {
+                        if (!i.wants_time) return;
+                        const res = await fetch('/api/vote-proposals', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            activity_id: activityId,
+                            user_id: i.user_id,
+                            user_name: i.user_name,
+                            location: null,
+                            proposed_time: i.wants_time,
+                          }),
+                        });
+                        const result = await res.json();
+                        if (result.data) {
+                          setProposals(prev => [...prev, result.data]);
+                        }
+                      }}
+                      className="w-full text-left bg-muted border-2 border-outline p-3 hover:bg-warning/10 transition-colors cursor-pointer"
+                    >
+                      <span className="font-bold text-warning">{i.user_name}</span>
+                      <span className="mx-2">想：</span>
+                      <span className="font-medium">{i.wants_time}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -596,12 +682,21 @@ function VotePageContent() {
               <h3 className="text-lg font-bold mb-4">添加新方案</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-bold mb-1">地点 <span className="text-error">*</span></label>
+                  <label className="block text-sm font-bold mb-1">地点</label>
                   <input
                     className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
                     value={proposalForm.location}
                     onChange={e => setProposalForm(f => ({ ...f, location: e.target.value }))}
                     placeholder="如：望京烧烤"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-1">时间</label>
+                  <input
+                    className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={proposalForm.proposed_time}
+                    onChange={e => setProposalForm(f => ({ ...f, proposed_time: e.target.value }))}
+                    placeholder="如：周六下午3点"
                   />
                 </div>
                 <div>
@@ -616,7 +711,7 @@ function VotePageContent() {
               </div>
               <button
                 onClick={handleAddProposal}
-                disabled={!proposalForm.location}
+                disabled={!proposalForm.location && !proposalForm.proposed_time}
                 className="mt-4 bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
               >
@@ -631,7 +726,8 @@ function VotePageContent() {
                 <div key={p.id} className="bg-card border-2 border-outline p-4" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-lg">{p.location}</span>
+                      {p.location && <span className="font-bold text-lg">{p.location}</span>}
+                      {p.proposed_time && <span className="font-bold text-lg text-warning ml-2">{p.proposed_time}</span>}
                       {p.activity_type && <span className="ml-3 text-muted-foreground">{p.activity_type}</span>}
                     </div>
                     <span className="text-sm text-muted-foreground">by {p.user_name}</span>
@@ -659,7 +755,7 @@ function VotePageContent() {
                         <div className="flex items-center justify-between mb-1">
                           <span className="font-bold flex items-center gap-2">
                             {i === 0 && <Trophy className="w-4 h-4 text-warning" />}
-                            {p.location}
+                            {p.location || p.proposed_time}
                           </span>
                           <span className="font-bold">{count} 票</span>
                         </div>

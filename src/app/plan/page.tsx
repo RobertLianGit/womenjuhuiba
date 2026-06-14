@@ -19,8 +19,9 @@ interface Proposal {
   id: string;
   user_id: string;
   user_name: string;
-  location: string;
+  location: string | null;
   activity_type: string | null;
+  proposed_time: string | null;
 }
 
 interface VoteRecord {
@@ -178,7 +179,7 @@ function PlanPageContent() {
       .join('\n');
 
     const voteSummary = sortedProposals.length > 0
-      ? sortedProposals.map((p, i) => `${i + 1}. ${p.location}${p.activity_type ? `（${p.activity_type}）` : ''} - ${voteCounts[p.id] || 0}票`).join('\n')
+      ? sortedProposals.map((p, i) => `${i + 1}. ${p.location || p.proposed_time}${p.activity_type ? `（${p.activity_type}）` : ''} - ${voteCounts[p.id] || 0}票`).join('\n')
       : '暂无投票结果';
 
     const sceneList = scenes.map(s => `- ${s.name}${s.time_range ? `（${s.time_range}）` : ''}${s.location ? ` @ ${s.location}` : ''}`).join('\n');
@@ -303,7 +304,7 @@ ${sceneList || '暂无分段，请根据投票结果建议合理的分段安排'
                         <div key={p.id} className="flex items-center justify-between">
                           <span className="font-medium flex items-center gap-2">
                             <span className={`font-bold ${i === 0 ? 'text-warning' : ''}`}>#{i + 1}</span>
-                            {p.location}
+                            {p.location || p.proposed_time}
                           </span>
                           <span className="text-sm font-bold">{voteCounts[p.id] || 0} 票</span>
                         </div>
@@ -374,16 +375,16 @@ ${sceneList || '暂无分段，请根据投票结果建议合理的分段安排'
                   onClick={async () => {
                     // Auto-create scenes from top proposals
                     for (const p of sortedProposals) {
-                      if (scenes.some(s => s.name === p.location)) continue;
+                      if (scenes.some(s => s.name === (p.location || p.proposed_time))) continue;
                       const passphrase = getPassphrase(activityId);
                       const res = await fetch('/api/scenes', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           activity_id: activityId,
-                          name: p.location,
-                          time_range: null,
-                          location: p.location,
+                          name: p.location || p.proposed_time,
+                          time_range: p.proposed_time || null,
+                          location: p.location || null,
                           sort_order: scenes.length,
                           passphrase,
                         }),

@@ -60,6 +60,7 @@ export const intentions = pgTable(
     user_id: varchar("user_id", { length: 36 }).notNull(),
     user_name: varchar("user_name", { length: 100 }).notNull(),
     wants: text("wants"),
+    wants_time: text("wants_time"),
     estimated_people: integer("estimated_people").default(1),
     selected_scenes: text("selected_scenes"),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -79,8 +80,9 @@ export const voteProposals = pgTable(
     activity_id: varchar("activity_id", { length: 36 }).notNull().references(() => activities.id, { onDelete: "cascade" }),
     user_id: varchar("user_id", { length: 36 }).notNull(),
     user_name: varchar("user_name", { length: 100 }).notNull(),
-    location: varchar("location", { length: 200 }).notNull(),
+    location: varchar("location", { length: 200 }),
     activity_type: varchar("activity_type", { length: 200 }),
+    proposed_time: varchar("proposed_time", { length: 200 }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [

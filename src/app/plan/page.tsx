@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
+import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed, markActivityAccessed } from '@/lib/party';
 import { Plus, Trash2, Copy, Check, FileText, Sparkles, Pencil, ArrowRight, Lightbulb, KeyRound, Calendar, MapPin, Trophy } from 'lucide-react';
 
 interface Scene {
@@ -60,6 +60,7 @@ function PlanPageContent() {
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
   const [intentions, setIntentions] = useState<Intention[]>([]);
@@ -69,7 +70,8 @@ function PlanPageContent() {
   useEffect(() => {
     if (!activityId) return;
     if (!isActivityAccessed(activityId)) {
-      window.location.href = `/activity?id=${activityId}`;
+      setLoading(false);
+      setAccessDenied(true);
       return;
     }
     Promise.all([
@@ -248,6 +250,7 @@ ${sceneList || '暂无分段，请根据投票结果建议合理的分段安排'
     }
   };
 
+  if (accessDenied) return <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4"><p className="text-muted-foreground">请先进入活动</p><a href={`/activity?id=${activityId}`} className="px-6 py-3 bg-primary text-[#0A0A0A] font-bold border-2 border-[#0A0A0A] shadow-[3px_3px_0_0_#0A0A0A]">进入活动</a></div>;
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
   return (

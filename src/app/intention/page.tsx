@@ -52,10 +52,13 @@ function IntentionPageContent() {
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [accessDenied, setAccessDenied] = useState(false);
+
   useEffect(() => {
     if (!activityId) return;
     if (!isActivityAccessed(activityId) && !isOrganizer(activityId)) {
-      window.location.href = `/activity?id=${activityId}`;
+      setAccessDenied(true);
+      setLoading(false);
       return;
     }
     if (isOrganizer(activityId)) {
@@ -64,7 +67,6 @@ function IntentionPageContent() {
     Promise.all([
       fetch(`/api/intentions?activity_id=${activityId}`).then(r => r.json()),
       fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
-      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
     ]).then(([intRes, sceneRes]) => {
       setIntentions(intRes.data || []);
       setScenes(sceneRes.data || []);
@@ -153,6 +155,13 @@ function IntentionPageContent() {
   }, {});
   const sortedLocationPrefs = Object.entries(locationPreferences).sort((a, b) => b[1].length - a[1].length);
 
+  if (accessDenied) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <p className="text-lg font-bold">需要先进入活动</p>
+      <p className="text-muted-foreground text-sm">请通过活动链接或口令先进入活动页面</p>
+      <a href={`/activity?id=${activityId}`} className="mt-2 px-6 py-3 bg-primary text-[#0A0A0A] font-bold border-2 border-[#0A0A0A] shadow-[3px_3px_0_#0A0A0A] hover:shadow-[1px_1px_0_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all">进入活动</a>
+    </div>
+  );
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
   return (

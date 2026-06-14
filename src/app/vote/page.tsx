@@ -53,11 +53,13 @@ function VotePageContent() {
   const [tab, setTab] = useState<'vote' | 'result'>('vote');
   const [loading, setLoading] = useState(true);
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     if (!activityId) return;
-    if (!isActivityAccessed(activityId)) {
-      window.location.href = `/activity?id=${activityId}`;
+    if (!isActivityAccessed(activityId) && !isOrganizer(activityId)) {
+      setAccessDenied(true);
+      setLoading(false);
       return;
     }
     Promise.all([
@@ -189,6 +191,10 @@ function VotePageContent() {
     }
   };
 
+  if (accessDenied) return <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-4">
+    <p className="text-lg font-bold">请先进入活动</p>
+    <a href={`/activity?id=${activityId}${searchParams.get('token') ? '&token=' + searchParams.get('token') : ''}`} className="bg-primary text-[#0A0A0A] font-bold border-2 border-[#0A0A0A] px-6 py-3 shadow-[3px_3px_0_0_#0A0A0A]">进入活动</a>
+  </div>;
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
   return (

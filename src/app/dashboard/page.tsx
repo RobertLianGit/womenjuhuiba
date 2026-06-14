@@ -40,11 +40,13 @@ function DashboardContent() {
   const [addForm, setAddForm] = useState({ user_name: '', people_count: 1, is_temp: false });
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     if (!activityId) return;
     if (!isActivityAccessed(activityId)) {
-      window.location.href = `/activity?id=${activityId}`;
+      setAccessDenied(true);
+      setLoading(false);
       return;
     }
     Promise.all([
@@ -153,6 +155,13 @@ function DashboardContent() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (accessDenied) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6">
+      <p className="text-lg font-bold">请先通过活动口令或分享链接进入活动</p>
+      <a href={`/activity?id=${activityId}`} className="px-6 py-3 bg-primary text-[#0A0A0A] font-bold border-2 border-black shadow-[4px_4px_0_0_#0A0A0A]">进入活动</a>
+    </div>
+  );
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 

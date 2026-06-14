@@ -48,6 +48,7 @@ function RegisterContent() {
   const [intentions, setIntentions] = useState<Intention[]>([]);
   const [form, setForm] = useState({ user_name: '', selected_whole: true, selected_scenes: [] as string[], people_count: 1, notes: '' });
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState('');
   
@@ -57,7 +58,7 @@ function RegisterContent() {
   useEffect(() => {
     if (!activityId) return;
     if (!isActivityAccessed(activityId)) {
-      window.location.href = `/activity?id=${activityId}`;
+      setAccessDenied(true);
       return;
     }
     Promise.all([
@@ -158,6 +159,12 @@ function RegisterContent() {
 
   const sceneColors = ['bg-primary text-primary-foreground', 'bg-accent-blue text-white', 'bg-warning text-primary-foreground', 'bg-success text-white'];
 
+  if (accessDenied) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <p className="text-lg font-bold">请先通过活动口令或分享链接进入活动</p>
+      <a href={`/activity?id=${activityId}`} className="px-6 py-3 bg-primary text-[#0A0A0A] font-bold border-2 border-[#0A0A0A] shadow-[3px_3px_0_0_#0A0A0A] hover:shadow-[1px_1px_0_0_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all">进入活动</a>
+    </div>
+  );
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
   return (

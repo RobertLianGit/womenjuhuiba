@@ -94,13 +94,13 @@ export default function HomePage() {
   const displayedActivities = tab === 'mine' ? myActivities : tab === 'joined' ? joinedActivities : archivedActivities;
 
   const handleCreate = async () => {
-    if (!form.title || !form.creator_name) return;
+    if (!form.title.trim() || !form.creator_name.trim()) return;
     const uid = getUserId();
-    setUserName(form.creator_name);
+    setUserName(form.creator_name.trim());
     const res = await fetch('/api/activities', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, creator_id: uid, creator_name: form.creator_name }),
+      body: JSON.stringify({ ...form, title: form.title.trim(), creator_name: form.creator_name.trim(), creator_id: uid }),
     });
     const result = await res.json();
     if (result.data) {

@@ -200,6 +200,10 @@ function ActivityPage() {
   const handleArchive = async () => {
     if (!activity) return;
     const passphrase = getPassphrase(activity.id);
+    if (!passphrase) {
+      alert('无法操作：未找到管理口令。\n\n可能原因：\n1. 你不是此活动的创建者\n2. 浏览器数据已被清除\n3. 你在另一台设备上创建的活动');
+      return;
+    }
     try {
       const res = await fetch(`/api/activities/${activity.id}`, {
         method: 'PATCH',
@@ -219,6 +223,10 @@ function ActivityPage() {
   const handleUnarchive = async () => {
     if (!activity) return;
     const passphrase = getPassphrase(activity.id);
+    if (!passphrase) {
+      alert('无法操作：未找到管理口令。');
+      return;
+    }
     try {
       const res = await fetch(`/api/activities/${activity.id}`, {
         method: 'PATCH',
@@ -250,6 +258,10 @@ function ActivityPage() {
   const handleDelete = async () => {
     if (!activity) return;
     const passphrase = getPassphrase(activity.id);
+    if (!passphrase) {
+      alert('无法删除：未找到管理口令。\n\n可能原因：\n1. 你不是此活动的创建者\n2. 浏览器数据已被清除\n3. 你在另一台设备上创建的活动\n\n只有活动创建者可以删除活动。');
+      return;
+    }
     try {
       const res = await fetch(`/api/activities/${activity.id}?mode=organizer&passphrase=${encodeURIComponent(passphrase)}`, {
         method: 'DELETE',
@@ -257,7 +269,7 @@ function ActivityPage() {
       const data = await res.json();
       if (data.error) { alert(data.error); return; }
       window.location.href = '/';
-    } catch { alert('删除失败'); }
+    } catch { alert('删除失败，请重试'); }
   };
 
   const handleArchiveOrDelete = async () => {
@@ -905,7 +917,7 @@ function ActivityPage() {
               </button>
               <button
                 onClick={handleArchiveOrDelete}
-                disabled={showArchiveDialog === 'delete' && deleteConfirmInput !== activity.title}
+                disabled={showArchiveDialog === 'delete' && deleteConfirmInput.trim() !== activity.title.trim()}
                 className={`px-4 py-2 text-sm font-bold text-white border-2 border-outline hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                   showArchiveDialog === 'delete' ? 'bg-red-600' : 'bg-accent-blue'
                 }`}

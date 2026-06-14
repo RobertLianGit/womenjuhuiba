@@ -10,6 +10,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '缺少必填字段（活动名称和发起人昵称）' }, { status: 400 });
   }
 
+  // Trim whitespace from title and creator_name
+  const trimmedTitle = title.trim();
+  const trimmedCreatorName = creator_name.trim();
+
   const client = getSupabaseClient();
   const intentionDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -24,11 +28,11 @@ export async function POST(request: NextRequest) {
   const { data, error } = await client
     .from('activities')
     .insert({
-      title,
+      title: trimmedTitle,
       description: description || '',
       rough_time: rough_time || '',
       creator_id,
-      creator_name,
+      creator_name: trimmedCreatorName,
       access_code: normalizeSecret(rawAccessCode),
       passphrase: normalizeSecret(rawPassphrase),
       status,

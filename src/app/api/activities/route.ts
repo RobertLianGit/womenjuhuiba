@@ -148,6 +148,39 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: safe });
   }
 
+  // 通过 creator_id 查询用户的活动（首页"我的活动"）
+  if (user_id && !ids) {
+    let query = client
+      .from('activities')
+      .select('*')
+      .eq('creator_id', user_id);
+
+    if (only_archived) {
+      query = query.eq('archived', true);
+    } else if (!include_archived) {
+      query = query.eq('archived', false);
+    }
+
+    const { data: hidden } = await client
+      .from('hidden_activities')
+      .select('activity_id')
+      .eq('user_id', user_id);
+
+    if (hidden && hidden.length > 0) {
+      const hiddenIds = hidden.map((h: { activity_id: string }) => h.activity_id);
+      query = query.not('id', 'in', `(${hiddenIds.join(',')})`);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const safe = data.map(sanitize);
+    return NextResponse.json({ data: safe });
+  }
+
   // 通过活动口令查询
   if (access_code) {
     const { data, error } = await client

@@ -59,16 +59,17 @@ function SettleContent() {
       setScenes(sceneRes.data || []);
       setParticipants(partRes.data || []);
       setBills(billRes.data || []);
+      setSettled(actRes.data?.status === 'settled');
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [activityId]);
 
-  const handleAmountChange = async (sceneId: string, amount: string) => {
+  const handleAmountChange = async (sceneId: string | null, amount: string) => {
     const val = parseFloat(amount) || 0;
     setBills(prev => prev.map(b => b.scene_id === sceneId ? { ...b, total_amount: val } : b));
   };
 
-  const handleSaveBill = async (sceneId: string) => {
+  const handleSaveBill = async (sceneId: string | null) => {
     const bill = bills.find(b => b.scene_id === sceneId);
     if (!bill) return;
     const passphrase = getPassphrase(activityId);
@@ -88,20 +89,40 @@ function SettleContent() {
   const personBills: PersonBill[] = [];
   const nameMap = new Map<string, PersonBill>();
 
-  for (const scene of scenes) {
-    const bill = bills.find(b => b.scene_id === scene.id);
-    const sceneParts = participants.filter(p => p.scene_id === scene.id);
-    const totalPeople = sceneParts.reduce((sum, p) => sum + p.people_count, 0);
-    const perPerson = totalPeople > 0 && bill ? bill.total_amount / totalPeople : 0;
+  if (scenes.length > 0) {
+    // With scenes: calculate per scene
+    for (const scene of scenes) {
+      const bill = bills.find(b => b.scene_id === scene.id);
+      const sceneParts = participants.filter(p => p.scene_id === scene.id);
+      const totalPeople = sceneParts.reduce((sum, p) => sum + p.people_count, 0);
+      const perPerson = totalPeople > 0 && bill ? bill.total_amount / totalPeople : 0;
 
-    for (const part of sceneParts) {
+      for (const part of sceneParts) {
+        if (!nameMap.has(part.user_name)) {
+          const pb: PersonBill = { name: part.user_name, scenes: [], total: 0 };
+          nameMap.set(part.user_name, pb);
+          personBills.push(pb);
+        }
+        const pb = nameMap.get(part.user_name)!;
+        if (!pb.scenes.includes(scene.name)) pb.scenes.push(scene.name);
+        pb.total += perPerson * part.people_count;
+      }
+    }
+  } else {
+    // No scenes: calculate based on whole-activity bills
+    const totalBill = bills
+      .filter(b => !b.scene_id)
+      .reduce((sum, b) => sum + (b.total_amount || 0), 0);
+    const totalPeople = participants.reduce((sum, p) => sum + p.people_count, 0);
+    const perPerson = totalPeople > 0 ? totalBill / totalPeople : 0;
+
+    for (const part of participants) {
       if (!nameMap.has(part.user_name)) {
         const pb: PersonBill = { name: part.user_name, scenes: [], total: 0 };
         nameMap.set(part.user_name, pb);
         personBills.push(pb);
       }
       const pb = nameMap.get(part.user_name)!;
-      if (!pb.scenes.includes(scene.name)) pb.scenes.push(scene.name);
       pb.total += perPerson * part.people_count;
     }
   }
@@ -148,9 +169,9 @@ function SettleContent() {
 
         {/* Bills per scene */}
         <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">分段账单</h2>
+          <h2 className="text-xl font-bold mb-4">{scenes.length > 0 ? '分段账单' : '活动账单'}</h2>
           <div className="space-y-4">
-            {scenes.map((scene, i) => {
+            {scenes.length > 0 ? scenes.map((scene, i) => {
               const bill = bills.find(b => b.scene_id === scene.id);
               const sceneParts = participants.filter(p => p.scene_id === scene.id);
               const totalPeople = sceneParts.reduce((sum, p) => sum + p.people_count, 0);
@@ -188,12 +209,53 @@ function SettleContent() {
                     </div>
                     <div>
                       <label className="block text-sm font-bold mb-1">人均</label>
-                      <div className="border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold text-primary">¥{perPerson.toFixed(1)}</div>
+                      <div className="border-2 border-outline bg-accent-blue text-white px-4 py-2.5 text-xl font-bold">¥{perPerson.toFixed(2)}</div>
                     </div>
                   </div>
                 </div>
               );
-            })}
+            }) : (() => {
+              const totalAmount = bills.filter(b => !b.scene_id).reduce((sum, b) => sum + (b.total_amount || 0), 0);
+              const totalPeople = participants.reduce((sum, p) => sum + p.people_count, 0);
+              const perPerson = totalPeople > 0 ? totalAmount / totalPeople : 0;
+              return (
+                <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '5px 5px 0 #0A0A0A' }}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="bg-primary text-primary-foreground border-2 border-outline px-3 py-1 font-bold text-sm">活动总费用</span>
+                    <span className="text-sm text-muted-foreground">{totalPeople} 人参与</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                      <label className="block text-sm font-bold mb-1">总金额</label>
+                      <div className="flex items-center gap-1">
+                        <span className="text-lg font-bold">¥</span>
+                        {isCreator ? (
+                          <input
+                            type="number"
+                            className="flex-1 border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={totalAmount || ''}
+                            onChange={e => handleAmountChange(null, e.target.value)}
+                            onBlur={() => handleSaveBill(null)}
+                            placeholder="0"
+                          />
+                        ) : (
+                          <div className="flex-1 border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold">{totalAmount || '-'}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold mb-1">参与人数</label>
+                      <div className="border-2 border-outline bg-muted px-4 py-2.5 text-xl font-bold">{totalPeople}</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold mb-1">人均</label>
+                      <div className="border-2 border-outline bg-accent-blue text-white px-4 py-2.5 text-xl font-bold">¥{perPerson.toFixed(2)}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
           </div>
         </section>
 
@@ -203,7 +265,7 @@ function SettleContent() {
           <div className="bg-card border-2 border-outline overflow-hidden" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
             <table className="w-full">
               <thead>
-                <tr className="bg-surface-container-high border-b-2 border-outline">
+                <tr className="bg-muted border-b-2 border-outline">
                   <th className="text-left px-4 py-3 font-bold">姓名</th>
                   <th className="text-left px-4 py-3 font-bold">参与段次</th>
                   <th className="text-right px-4 py-3 font-bold">应付总额</th>
@@ -211,7 +273,7 @@ function SettleContent() {
               </thead>
               <tbody>
                 {personBills.map((p, i) => (
-                  <tr key={p.name} className={i % 2 === 1 ? 'bg-surface-container' : ''}>
+                  <tr key={p.name} className={i % 2 === 1 ? 'bg-muted/50' : ''}>
                     <td className="px-4 py-3 font-bold">{p.name}</td>
                     <td className="px-4 py-3">
                       {p.scenes.map(s => (
@@ -232,7 +294,19 @@ function SettleContent() {
         {isCreator && (
           <section>
             <button
-              onClick={() => { setSettled(true); }}
+              onClick={async () => {
+                const passphrase = getPassphrase(activityId);
+                const res = await fetch(`/api/activities/${activityId}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'settled', passphrase }),
+                });
+                if (res.ok) {
+                  setSettled(true);
+                } else {
+                  alert('操作失败，请确认你是活动组织者');
+                }
+              }}
               disabled={settled}
               className="bg-success text-white border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ boxShadow: '4px 4px 0 #0A0A0A' }}

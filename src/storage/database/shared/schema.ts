@@ -21,6 +21,8 @@ export const activities = pgTable(
     intention_deadline: timestamp("intention_deadline", { withTimezone: true }),
     access_code: varchar("access_code", { length: 50 }).notNull().default(''),
     passphrase: varchar("passphrase", { length: 50 }).notNull().default(''),
+    access_token: varchar("access_token", { length: 36 }).default(sql`gen_random_uuid()`),
+    archived: boolean("archived").default(false),
     vote_type: varchar("vote_type", { length: 20 }).notNull().default('single'),
     max_votes: integer("max_votes").notNull().default(1),
     vote_deadline: timestamp("vote_deadline", { withTimezone: true }),
@@ -83,6 +85,7 @@ export const voteProposals = pgTable(
     location: varchar("location", { length: 200 }),
     activity_type: varchar("activity_type", { length: 200 }),
     proposed_time: varchar("proposed_time", { length: 200 }),
+    category: varchar("category", { length: 20 }).default('location'),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
@@ -98,7 +101,8 @@ export const voteRecords = pgTable(
     activity_id: varchar("activity_id", { length: 36 }).notNull().references(() => activities.id, { onDelete: "cascade" }),
     user_id: varchar("user_id", { length: 36 }).notNull(),
     user_name: varchar("user_name", { length: 100 }).notNull(),
-    voted_proposal_ids: text("voted_proposal_ids").notNull(),
+    voted_proposal_ids: text("voted_proposal_ids"),
+    proposal_id: varchar("proposal_id", { length: 36 }),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
@@ -155,7 +159,7 @@ export const bills = pgTable(
   {
     id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
     activity_id: varchar("activity_id", { length: 36 }).notNull().references(() => activities.id, { onDelete: "cascade" }),
-    scene_id: varchar("scene_id", { length: 36 }).notNull().references(() => scenes.id, { onDelete: "cascade" }),
+    scene_id: varchar("scene_id", { length: 36 }).references(() => scenes.id, { onDelete: "cascade" }),
     total_amount: numeric("total_amount", { precision: 10, scale: 2 }).notNull().default("0"),
     created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -179,4 +183,15 @@ export const plans = pgTable(
   (table) => [
     index("plans_activity_id_idx").on(table.activity_id),
   ]
+);
+
+// 隐藏活动表（参与者视角）
+export const hiddenActivities = pgTable(
+  "hidden_activities",
+  {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    user_id: text("user_id").notNull(),
+    activity_id: varchar("activity_id", { length: 36 }).notNull().references(() => activities.id, { onDelete: "cascade" }),
+    created_at: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  }
 );

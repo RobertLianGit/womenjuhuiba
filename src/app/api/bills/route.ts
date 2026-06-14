@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { activity_id, scene_id, total_amount, passphrase } = body;
 
-  if (!activity_id || !scene_id || total_amount === undefined) {
+  if (!activity_id || total_amount === undefined) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
   }
 

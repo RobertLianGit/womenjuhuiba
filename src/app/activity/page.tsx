@@ -23,6 +23,7 @@ interface Activity {
   status: string;
   passphrase?: string;
   access_code: string;
+  access_token?: string;
   archived?: boolean;
 }
 
@@ -85,6 +86,7 @@ export default function ActivityPageWrapper() {
 function ActivityPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get('id') || '';
+  const token = searchParams.get('token') || '';
   const [activity, setActivity] = useState<Activity | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -102,25 +104,30 @@ function ActivityPage() {
   const [showArchiveDialog, setShowArchiveDialog] = useState<'archive' | 'delete' | 'participant_delete' | null>(null);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
 
+  // Fetch activity by id or token
   useEffect(() => {
-    if (!id) return;
-    fetch(`/api/activities?id=${id}`)
+    if (!id && !token) return;
+    const url = token ? `/api/activities?access_token=${token}` : `/api/activities?id=${id}`;
+    fetch(url)
       .then(r => r.json())
       .then(res => {
         const data = res.data || null;
         setActivity(data);
         setLoading(false);
-        // Check if user is organizer or has previously accessed
         if (data) {
           const isOrg = isOrganizer(data.id);
           const isAccessed = isActivityAccessed(data.id);
-          if (isOrg || isAccessed) {
+          if (isOrg || isAccessed || token) {
+            // Token-based access = auto-grant
+            if (token) {
+              markActivityAccessed(data.id);
+            }
             setAccessGranted(true);
           }
         }
       })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, token]);
 
   // Fetch progress stats
   useEffect(() => {
@@ -175,10 +182,12 @@ function ActivityPage() {
   };
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/activity?id=${id}`;
+    const url = activity?.access_token
+      ? `${window.location.origin}/activity?token=${activity.access_token}`
+      : `${window.location.origin}/activity?id=${id}`;
     const accessCode = getAccessCode(id);
     const text = activity
-      ? `🎉 聚会活动：${activity.title}\n👤 发起人：${activity.creator_name}${accessCode ? `\n🔑 活动口令：${accessCode}` : ''}\n\n📎 活动链接：${url}\n\n用活动口令即可加入，快来参与吧！`
+      ? `🎉 聚会活动：${activity.title}\n👤 发起人：${activity.creator_name}\n\n📎 点击链接直接加入：\n${url}${!activity.access_token && accessCode ? `\n\n没有链接？输入活动口令：${accessCode}` : ''}`
       : url;
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -274,7 +283,9 @@ function ActivityPage() {
     if (!activity) return;
     setGeneratingImage(true);
     try {
-      const url = `${window.location.origin}/activity?id=${id}`;
+      const url = activity?.access_token
+        ? `${window.location.origin}/activity?token=${activity.access_token}`
+        : `${window.location.origin}/activity?id=${id}`;
       const accessCode = getAccessCode(id);
       const qrDataUrl = await QRCode.toDataURL(url, { width: 200, margin: 2, color: { dark: '#0A0A0A', light: '#FFFFFF' } });
 
@@ -575,7 +586,7 @@ function ActivityPage() {
             <section>
               <div className="bg-card border-2 border-outline p-5 flex items-center gap-4" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <Share2 className="w-5 h-5 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground truncate flex-1">{`${typeof window !== 'undefined' ? window.location.origin : ''}/activity?id=${id}`}</span>
+                <span className="text-sm text-muted-foreground truncate flex-1">{activity?.access_token ? `${typeof window !== 'undefined' ? window.location.origin : ''}/activity?token=${activity.access_token}` : `${typeof window !== 'undefined' ? window.location.origin : ''}/activity?id=${id}`}</span>
                 <button
                   onClick={handleCopyLink}
                   className="bg-accent-blue text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
@@ -736,7 +747,7 @@ function ActivityPage() {
             <section>
               <div className="bg-card border-2 border-outline p-5 flex items-center gap-4" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <Share2 className="w-5 h-5 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground truncate flex-1">{`${typeof window !== 'undefined' ? window.location.origin : ''}/activity?id=${id}`}</span>
+                <span className="text-sm text-muted-foreground truncate flex-1">{activity?.access_token ? `${typeof window !== 'undefined' ? window.location.origin : ''}/activity?token=${activity.access_token}` : `${typeof window !== 'undefined' ? window.location.origin : ''}/activity?id=${id}`}</span>
                 <button
                   onClick={handleCopyLink}
                   className="bg-accent-blue text-white border-2 border-outline px-4 py-2 text-sm font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5 shrink-0"

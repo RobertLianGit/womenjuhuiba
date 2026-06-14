@@ -4,34 +4,34 @@ import { normalizeSecret } from '@/lib/hash';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { title, description, rough_time, creator_id, creator_name, passphrase, access_code } = body;
+  const { title, description, rough_time, creator_id, creator_name, passphrase, access_code, skip_to_register } = body;
 
-  if (!title || !description || !rough_time || !creator_id || !creator_name) {
-    return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
-  }
-
-  if (!access_code) {
-    return NextResponse.json({ error: '请设置活动口令' }, { status: 400 });
+  if (!title || !creator_id || !creator_name) {
+    return NextResponse.json({ error: '缺少必填字段（活动名称和发起人昵称）' }, { status: 400 });
   }
 
   const client = getSupabaseClient();
   const intentionDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
-  // 生成6位管理口令（如果前端没传）
+  // 自动生成6位数字活动口令
+  const rawAccessCode = access_code || String(Math.floor(100000 + Math.random() * 900000));
+
+  // 自动生成6位管理口令
   const rawPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
 
-  // 口令明文存储，API 返回时脱敏，开发者通过数据库也无法有效利用（口令仅限本活动）
+  const status = skip_to_register ? 'registering' : 'collecting';
+
   const { data, error } = await client
     .from('activities')
     .insert({
       title,
-      description,
-      rough_time,
+      description: description || '',
+      rough_time: rough_time || '',
       creator_id,
       creator_name,
-      access_code: normalizeSecret(access_code),
+      access_code: normalizeSecret(rawAccessCode),
       passphrase: normalizeSecret(rawPassphrase),
-      status: 'collecting',
+      status,
       intention_deadline: intentionDeadline,
     })
     .select()
@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
     data: {
       ...data,
       passphrase: rawPassphrase,
-      access_code,
+      access_code: rawAccessCode,
     },
   });
 }
 
-/** 脱敏函数：移除口令字段，API 永不返回任何口令信息 */
+/** 脱敏函数：移除口令字段，但保留 access_token 用于免口令分享 */
 function sanitize(activity: Record<string, unknown>) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passphrase: _p, access_code: _a, ...safe } = activity;
@@ -62,14 +62,15 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   const access_code = searchParams.get('access_code');
-  const ids = searchParams.get('ids'); // 逗号分隔的ID列表，用于批量查询
-  const include_archived = searchParams.get('include_archived') === 'true'; // 是否包含已归档
-  const only_archived = searchParams.get('only_archived') === 'true'; // 仅已归档
-  const user_id = searchParams.get('user_id'); // 用户ID，用于排除隐藏的活动
+  const access_token = searchParams.get('access_token');
+  const ids = searchParams.get('ids');
+  const include_archived = searchParams.get('include_archived') === 'true';
+  const only_archived = searchParams.get('only_archived') === 'true';
+  const user_id = searchParams.get('user_id');
 
   const client = getSupabaseClient();
 
-  // 按 ID 查询单个活动（前端已通过口令验证后才请求）
+  // 按 ID 查询单个活动
   if (id) {
     const { data, error } = await client
       .from('activities')
@@ -88,13 +89,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: sanitize(data) });
   }
 
-  // 批量按 ID 查询（「我发起的」「我参与的」页面使用）
+  // 通过 access_token 免口令查询
+  if (access_token) {
+    const { data, error } = await client
+      .from('activities')
+      .select('*')
+      .eq('access_token', access_token)
+      .maybeSingle();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data) {
+      return NextResponse.json({ error: '活动不存在或链接已失效' }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: sanitize(data) });
+  }
+
+  // 批量按 ID 查询
   if (ids) {
     const idList = ids.split(',').filter(Boolean);
     if (idList.length === 0) {
       return NextResponse.json({ data: [] });
     }
-    // 限制最多50个，防止滥用
     const limitedIds = idList.slice(0, 50);
 
     let query = client
@@ -102,21 +121,19 @@ export async function GET(request: NextRequest) {
       .select('*')
       .in('id', limitedIds);
 
-    // 归档过滤
     if (only_archived) {
       query = query.eq('archived', true);
     } else if (!include_archived) {
       query = query.eq('archived', false);
     }
 
-    // 排除用户隐藏的活动
     if (user_id) {
       const { data: hidden } = await client
         .from('hidden_activities')
         .select('activity_id')
         .eq('user_id', user_id);
       if (hidden && hidden.length > 0) {
-        const hiddenIds = hidden.map(h => h.activity_id);
+        const hiddenIds = hidden.map((h: { activity_id: string }) => h.activity_id);
         query = query.not('id', 'in', `(${hiddenIds.join(',')})`);
       }
     }
@@ -131,7 +148,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: safe });
   }
 
-  // 通过活动口令查询（加入活动时使用）—— 明文直接比对
+  // 通过活动口令查询
   if (access_code) {
     const { data, error } = await client
       .from('activities')
@@ -151,5 +168,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: sanitize(data) });
   }
 
-  return NextResponse.json({ error: '请提供 access_code、id 或 ids 参数' }, { status: 400 });
+  return NextResponse.json({ error: '请提供 access_code、access_token、id 或 ids 参数' }, { status: 400 });
 }

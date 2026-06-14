@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
 import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
-import { Receipt, ArrowRight, KeyRound } from 'lucide-react';
+import { Receipt, KeyRound } from 'lucide-react';
 
 interface Scene {
   id: string;
@@ -32,11 +32,7 @@ interface PersonBill {
   total: number;
 }
 
-interface Transfer {
-  from: string;
-  to: string;
-  amount: number;
-}
+
 
 function SettleContent() {
   const searchParams = useSearchParams();
@@ -110,25 +106,7 @@ function SettleContent() {
     }
   }
 
-  // Calculate transfers (simple: everyone pays average, those who paid less owe those who paid more)
-  const transfers: Transfer[] = [];
-  if (personBills.length > 0) {
-    const avg = personBills.reduce((sum, p) => sum + p.total, 0) / personBills.length;
-    const debtors = personBills.filter(p => p.total < avg).map(p => ({ name: p.name, diff: avg - p.total }));
-    const creditors = personBills.filter(p => p.total > avg).map(p => ({ name: p.name, diff: p.total - avg }));
 
-    let di = 0, ci = 0;
-    while (di < debtors.length && ci < creditors.length) {
-      const amount = Math.min(debtors[di].diff, creditors[ci].diff);
-      if (amount > 0.01) {
-        transfers.push({ from: debtors[di].name, to: creditors[ci].name, amount: Math.round(amount * 100) / 100 });
-      }
-      debtors[di].diff -= amount;
-      creditors[ci].diff -= amount;
-      if (debtors[di].diff < 0.01) di++;
-      if (creditors[ci].diff < 0.01) ci++;
-    }
-  }
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
@@ -248,27 +226,7 @@ function SettleContent() {
           </div>
         </section>
 
-        {/* Who owes whom */}
-        <section className="mb-8">
-          <h2 className="text-xl font-bold mb-4">谁欠谁</h2>
-          {transfers.length === 0 ? (
-            <div className="bg-card border-2 border-outline p-6 text-center text-muted-foreground" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-              请先填写各段账单金额
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {transfers.map((t, i) => (
-                <div key={i} className="bg-card border-2 border-outline p-4 flex items-center gap-4" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-                  <span className="font-bold text-lg">{t.from}</span>
-                  <ArrowRight className="w-5 h-5 text-primary" />
-                  <span className="font-bold text-lg">{t.to}</span>
-                  <div className="flex-1" />
-                  <span className="text-2xl font-bold text-primary">¥{t.amount.toFixed(1)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+
 
         {/* Settle button - Organizer only */}
         {isCreator && (

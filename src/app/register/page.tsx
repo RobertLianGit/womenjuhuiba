@@ -50,7 +50,6 @@ function RegisterContent() {
   const [loading, setLoading] = useState(true);
   const [showCancelConfirm, setShowCancelConfirm] = useState<string | null>(null);
   const [toast, setToast] = useState('');
-  const [autoRegistered, setAutoRegistered] = useState(false);
   
   const userId = getUserId();
   const isCreator = isOrganizer(activityId);
@@ -85,58 +84,7 @@ function RegisterContent() {
     if (name) setForm(f => ({ ...f, user_name: name }));
   }, []);
 
-  // Auto-register intention submitters
-  useEffect(() => {
-    if (autoRegistered || intentions.length === 0) return;
-    // Need scenes OR no scenes (whole-activity mode)
-    if (scenes.length > 0 && scenes.length === 0) return;
 
-    const registerIntentionUsers = async () => {
-      for (const intention of intentions) {
-        const existingRegs = registrations.filter(r => r.user_id === intention.user_id);
-        if (existingRegs.length > 0) continue;
-
-        if (scenes.length > 0) {
-          // Register for all scenes
-          for (const scene of scenes) {
-            await fetch('/api/registrations', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                activity_id: activityId,
-                scene_id: scene.id,
-                user_id: intention.user_id,
-                user_name: intention.user_name,
-                people_count: intention.estimated_people || 1,
-                notes: null,
-              }),
-            });
-          }
-        } else {
-          // Whole-activity registration
-          await fetch('/api/registrations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              activity_id: activityId,
-              user_id: intention.user_id,
-              user_name: intention.user_name,
-              people_count: intention.estimated_people || 1,
-              notes: null,
-            }),
-          });
-        }
-      }
-
-      // Refresh registrations
-      const res = await fetch(`/api/registrations?activity_id=${activityId}`);
-      const data = await res.json();
-      setRegistrations(data.data || []);
-      setAutoRegistered(true);
-    };
-
-    registerIntentionUsers();
-  }, [scenes, intentions, registrations, autoRegistered, activityId]);
 
   const showToast = (msg: string) => {
     setToast(msg);

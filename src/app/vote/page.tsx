@@ -56,7 +56,11 @@ function VotePageContent() {
   const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
-    if (!activityId) return;
+    if (!activityId) {
+      setAccessDenied(true);
+      setLoading(false);
+      return;
+    }
     if (!isActivityAccessed(activityId) && !isOrganizer(activityId)) {
       setAccessDenied(true);
       setLoading(false);

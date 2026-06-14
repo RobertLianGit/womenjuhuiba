@@ -126,13 +126,14 @@ function ActivityPage() {
       .catch(() => setLoading(false));
   }, [id, token]);
 
-  // Fetch progress stats
+  // Fetch progress stats - use activity.id which works for both id and token access
   useEffect(() => {
-    if (!id || !accessGranted) return;
+    if (!activity?.id || !accessGranted) return;
+    const actId = activity.id;
     Promise.all([
-      fetch(`/api/intentions?activity_id=${id}`).then(r => r.json()),
-      fetch(`/api/vote-records?activity_id=${id}`).then(r => r.json()),
-      fetch(`/api/registrations?activity_id=${id}`).then(r => r.json()),
+      fetch(`/api/intentions?activity_id=${actId}`).then(r => r.json()),
+      fetch(`/api/vote-records?activity_id=${actId}`).then(r => r.json()),
+      fetch(`/api/registrations?activity_id=${actId}`).then(r => r.json()),
     ]).then(([intRes, voteRes, regRes]) => {
       setStats({
         intentionCount: (intRes.data || []).length,
@@ -140,7 +141,7 @@ function ActivityPage() {
         registrationCount: (regRes.data || []).length,
       });
     }).catch(() => {});
-  }, [id, accessGranted]);
+  }, [activity?.id, accessGranted]);
 
   const isCreator = activity ? isOrganizer(activity.id) : false;
   const currentIdx = activity ? STATUS_ORDER.indexOf(activity.status) : -1;
@@ -444,13 +445,14 @@ function ActivityPage() {
   };
 
   const pageHref = (key: string) => {
+    const actId = activity?.id || id;
     const map: Record<string, string> = {
-      collecting: `/intention?activity_id=${id}`,
-      voting: `/vote?activity_id=${id}`,
-      plan: `/plan?activity_id=${id}`,
-      registering: `/register?activity_id=${id}`,
-      dashboard: `/dashboard?activity_id=${id}`,
-      settle: `/settle?activity_id=${id}`,
+      collecting: `/intention?activity_id=${actId}`,
+      voting: `/vote?activity_id=${actId}`,
+      plan: `/plan?activity_id=${actId}`,
+      registering: `/register?activity_id=${actId}`,
+      dashboard: `/dashboard?activity_id=${actId}`,
+      settle: `/settle?activity_id=${actId}`,
     };
     return map[key] || '#';
   };
@@ -537,7 +539,7 @@ function ActivityPage() {
                 </div>
                 {participantAction && (
                   <Link
-                    href={`${participantAction.href}?activity_id=${id}`}
+                    href={`${participantAction.href}?activity_id=${activity.id}`}
                     className={`inline-flex items-center gap-3 ${participantAction.color} border-2 border-outline px-8 py-4 text-lg font-bold hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer`}
                     style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
                   >

@@ -68,7 +68,11 @@ function PlanPageContent() {
   const [editForm, setEditForm] = useState({ name: '', time_range: '', location: '' });
 
   useEffect(() => {
-    if (!activityId) return;
+    if (!activityId) {
+      setAccessDenied(true);
+      setLoading(false);
+      return;
+    }
     if (!isActivityAccessed(activityId)) {
       setLoading(false);
       setAccessDenied(true);

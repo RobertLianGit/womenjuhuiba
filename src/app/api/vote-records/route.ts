@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { activity_id, user_id, user_name, proposal_id, voted_proposal_ids } = body;
 
-  if (!activity_id || !user_id) {
+  if (!activity_id || !user_id || !user_name) {
     return NextResponse.json({ error: '缺少必填字段' }, { status: 400 });
   }
 

@@ -56,9 +56,14 @@ function RegisterContent() {
   const isCreator = isOrganizer(activityId);
 
   useEffect(() => {
-    if (!activityId) return;
+    if (!activityId) {
+      setAccessDenied(true);
+      setLoading(false);
+      return;
+    }
     if (!isActivityAccessed(activityId)) {
       setAccessDenied(true);
+      setLoading(false);
       return;
     }
     Promise.all([

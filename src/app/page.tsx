@@ -93,34 +93,54 @@ export default function HomePage() {
   const joinedActivities = activities.filter(a => !isOrganizer(a.id) && accessedIds.includes(a.id));
   const displayedActivities = tab === 'mine' ? myActivities : tab === 'joined' ? joinedActivities : archivedActivities;
 
+  const [createError, setCreateError] = useState('');
+  const [creating, setCreating] = useState(false);
+
   const handleCreate = async () => {
     if (!form.title.trim() || !form.creator_name.trim()) return;
+    // Validate custom access_code: must be exactly 6 digits if provided
+    if (form.access_code && !/^\d{6}$/.test(form.access_code)) {
+      setCreateError('活动口令必须是6位数字');
+      return;
+    }
+    setCreateError('');
+    setCreating(true);
     const uid = getUserId();
     setUserName(form.creator_name.trim());
-    const res = await fetch('/api/activities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, title: form.title.trim(), creator_name: form.creator_name.trim(), creator_id: uid }),
-    });
-    const result = await res.json();
-    if (result.data) {
-      if (result.data.passphrase) {
-        setPassphrase(result.data.id, result.data.passphrase);
+    try {
+      const res = await fetch('/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, title: form.title.trim(), creator_name: form.creator_name.trim(), creator_id: uid }),
+      });
+      const result = await res.json();
+      if (result.error) {
+        setCreateError(result.error);
+        return;
       }
-      if (result.data.access_code) {
-        setAccessCode(result.data.id, result.data.access_code);
-      }
-      markActivityAccessed(result.data.id);
-      addCreatedActivity(result.data.id);
+      if (result.data) {
+        if (result.data.passphrase) {
+          setPassphrase(result.data.id, result.data.passphrase);
+        }
+        if (result.data.access_code) {
+          setAccessCode(result.data.id, result.data.access_code);
+        }
+        markActivityAccessed(result.data.id);
+        addCreatedActivity(result.data.id);
 
-      setActivities(prev => [result.data, ...prev]);
-      setShowCreateModal(false);
-      setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name, access_code: '' }));
-      setCreatedPassphrase(result.data.passphrase);
-      setCreatedActivityId(result.data.id);
-      setCreatedAccessCode(result.data.access_code);
-      setCreatedAccessToken(result.data.access_token || '');
-      setShowPassphraseModal(true);
+        setActivities(prev => [result.data, ...prev]);
+        setShowCreateModal(false);
+        setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name, access_code: '' }));
+        setCreatedPassphrase(result.data.passphrase);
+        setCreatedActivityId(result.data.id);
+        setCreatedAccessCode(result.data.access_code);
+        setCreatedAccessToken(result.data.access_token || '');
+        setShowPassphraseModal(true);
+      }
+    } catch {
+      setCreateError('网络错误，请重试');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -140,6 +160,8 @@ export default function HomePage() {
         setShowJoinModal(false);
         setJoinCode('');
         setActivities(prev => prev.some(a => a.id === data.data.id) ? prev : [data.data, ...prev]);
+        // P1-7: 自动跳转到活动详情页
+        window.location.href = `/activity?id=${data.data.id}`;
       }
     } catch {
       setJoinError('网络错误，请重试');
@@ -373,17 +395,22 @@ export default function HomePage() {
                 {form.access_code ? '你自定义了活动口令，管理口令仍会自动生成。' : '活动口令和管理口令会自动生成。'}创建后可直接分享链接，朋友点击即可加入，无需再输口令。
               </div>
             </div>
+            {createError && (
+              <div className="bg-error/10 border-2 border-error p-3 text-sm text-error font-bold">
+                {createError}
+              </div>
+            )}
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleCreate}
-                disabled={!form.title || !form.creator_name}
+                disabled={!form.title || !form.creator_name || creating}
                 className="flex-1 bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[4px_4px_0_#0A0A0A] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_#0A0A0A] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
                 style={{ boxShadow: '6px 6px 0 #0A0A0A' }}
               >
-                创建并邀请朋友
+                {creating ? '创建中...' : '创建并邀请朋友'}
               </button>
               <button
-                onClick={() => { setShowCreateModal(false); setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name, access_code: '' })); }}
+                onClick={() => { setShowCreateModal(false); setCreateError(''); setForm(prev => ({ title: '', description: '', rough_time: '', creator_name: prev.creator_name, access_code: '' })); }}
                 className="bg-card border-2 border-outline px-6 py-3 font-bold hover:bg-muted transition-colors cursor-pointer min-h-[44px]"
               >
                 取消
@@ -438,7 +465,7 @@ export default function HomePage() {
                 className="bg-card border-2 border-outline px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-sm sm:text-base hover:bg-muted transition-colors cursor-pointer flex items-center gap-2 justify-center min-h-[44px]"
               >
                 {copied ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
-                {copied ? '已复制' : '复制管理口令'}
+                {copied ? '已复制' : '复制完整备份（含管理口令，请勿转发）'}
               </button>
               <Link
                 href={`/activity?id=${createdActivityId}`}

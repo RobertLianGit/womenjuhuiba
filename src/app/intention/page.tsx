@@ -13,6 +13,7 @@ interface Intention {
   user_name: string;
   wants: string | null;
   wants_time: string | null;
+  rsvp: string;
   estimated_people: number;
   selected_scenes: string | null;
   created_at: string;
@@ -50,6 +51,8 @@ function IntentionPageContent() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [showSubmitSuccess, setShowSubmitSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [accessDenied, setAccessDenied] = useState(false);
@@ -90,14 +93,20 @@ function IntentionPageContent() {
         wants_time: existing.wants_time || '',
         estimated_people: existing.estimated_people || 1,
         selected_scenes: existing.selected_scenes ? JSON.parse(existing.selected_scenes) : [],
-        rsvp: existing.wants ? 'can_join' : existing.wants_time ? 'depends' : 'unsure',
+        rsvp: (existing.rsvp || 'unsure') as RsvpStatus,
       });
       setSubmitted(true);
     }
   }, [intentions]);
 
   const handleSubmit = async () => {
-    if (!form.user_name) return;
+    if (!form.user_name.trim()) return;
+    if (!form.rsvp) {
+      setSubmitError('请先选择你大概能不能参加');
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError('');
     const userId = getUserId();
     const res = await fetch('/api/intentions', {
       method: 'POST',
@@ -105,14 +114,16 @@ function IntentionPageContent() {
       body: JSON.stringify({
         activity_id: activityId,
         user_id: userId,
-        user_name: form.user_name,
+        user_name: form.user_name.trim(),
         wants: form.wants || null,
         wants_time: form.wants_time || null,
+        rsvp: form.rsvp,
         estimated_people: form.estimated_people,
         selected_scenes: form.selected_scenes.length > 0 ? JSON.stringify(form.selected_scenes) : null,
       }),
     });
     const result = await res.json();
+    setSubmitting(false);
     if (result.data) {
       setSubmitted(true);
       setShowSubmitSuccess(true);
@@ -122,14 +133,16 @@ function IntentionPageContent() {
         if (idx >= 0) { const arr = [...prev]; arr[idx] = result.data; return arr; }
         return [...prev, result.data];
       });
+    } else {
+      setSubmitError(result.error || '提交失败，请重试');
     }
   };
 
-  // RSVP counts
+  // RSVP counts - using the rsvp field directly, strictly mutual-exclusive
   const rsvpCounts = {
-    can_join: intentions.filter(i => i.wants || i.wants_time).length,
-    depends: intentions.filter(i => i.wants_time && !i.wants).length,
-    unsure: intentions.filter(i => !i.wants && !i.wants_time).length,
+    can_join: intentions.filter(i => i.rsvp === 'can_join').length,
+    depends: intentions.filter(i => i.rsvp === 'depends').length,
+    unsure: intentions.filter(i => !i.rsvp || i.rsvp === 'unsure').length,
   };
   const totalPeople = intentions.reduce((sum, i) => sum + (i.estimated_people || 1), 0);
   const wantsList = intentions.filter(i => i.wants).map(i => ({ name: i.user_name, wants: i.wants! }));
@@ -240,6 +253,13 @@ function IntentionPageContent() {
           </div>
         )}
 
+        {/* Error Toast */}
+        {submitError && (
+          <div className="mb-6 bg-destructive text-white border-2 border-outline p-4 flex items-center gap-3" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <span className="font-bold">⚠ {submitError}</span>
+          </div>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-card border-2 border-outline p-3 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
@@ -326,11 +346,11 @@ function IntentionPageContent() {
             </div>
             <button
               onClick={handleSubmit}
-              disabled={!form.user_name}
+              disabled={!form.user_name.trim() || !form.rsvp || submitting}
               className="mt-5 bg-primary text-[#0A0A0A] border-2 border-outline px-6 py-3 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed w-full text-center"
               style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
             >
-              {submitted ? '更新意愿' : '提交'}
+              {submitting ? '提交中...' : submitted ? '更新意愿' : '提交'}
             </button>
             {submitted && <p className="text-sm text-muted-foreground text-center mt-2">已记录，有变化随时更新</p>}
           </div>
@@ -393,16 +413,22 @@ function IntentionPageContent() {
               <div className="bg-card border-2 border-outline p-5" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
                 <h3 className="font-bold mb-3">所有人的回应</h3>
                 <div className="space-y-3">
-                  {intentions.map(i => (
-                    <div key={i.id} className="bg-muted p-3 border-2 border-outline">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold">{i.user_name}</span>
-                        <span className="text-xs text-muted-foreground">{i.estimated_people}人</span>
+                  {intentions.map(i => {
+                    const rsvpLabel = RSVP_OPTIONS.find(o => o.value === (i.rsvp || 'unsure'));
+                    return (
+                      <div key={i.id} className="bg-muted p-3 border-2 border-outline">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold">{i.user_name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs">{rsvpLabel?.emoji} {rsvpLabel?.label}</span>
+                            <span className="text-xs text-muted-foreground">{i.estimated_people}人</span>
+                          </div>
+                        </div>
+                        {i.wants_time && <p className="text-sm">🕐 {i.wants_time}</p>}
+                        {i.wants && <p className="text-sm">📍 {i.wants}</p>}
                       </div>
-                      {i.wants_time && <p className="text-sm">🕐 {i.wants_time}</p>}
-                      {i.wants && <p className="text-sm">📍 {i.wants}</p>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

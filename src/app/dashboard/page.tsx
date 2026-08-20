@@ -1,11 +1,32 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/navbar';
-import { isOrganizer, getPassphrase, setPassphrase, isActivityAccessed } from '@/lib/party';
-import { LayoutDashboard, Trash2, Copy, Check, UserPlus, Lock, KeyRound } from 'lucide-react';
+import { getUserId, isOrganizer, getPassphrase, isActivityAccessed, markActivityAccessed } from '@/lib/party';
+import { Users, RefreshCw, CheckCircle2, Loader2 } from 'lucide-react';
+
+interface Participant {
+  id: string;
+  activity_id: string;
+  user_id: string;
+  user_name: string;
+  scene_id: string | null;
+  role: string;
+  created_at: string;
+}
+
+interface Registration {
+  id: string;
+  activity_id: string;
+  scene_id: string | null;
+  user_id: string;
+  user_name: string;
+  people_count: number;
+  notes: string | null;
+  created_at: string;
+}
 
 interface Scene {
   id: string;
@@ -14,350 +35,264 @@ interface Scene {
   location: string | null;
 }
 
-interface Participant {
-  id: string;
-  scene_id: string;
-  user_id: string;
-  user_name: string;
-  people_count: number;
-  is_manual: boolean;
-  is_temp: boolean;
-  status: string;
-}
-
 export default function DashboardPage() {
-  return <Suspense fallback={<div className="p-8 text-center">加载中...</div>}><DashboardContent /></Suspense>;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>}>
+      <DashboardPageContent />
+    </Suspense>
+  );
 }
 
-function DashboardContent() {
+function DashboardPageContent() {
   const searchParams = useSearchParams();
   const activityId = searchParams.get('activity_id') || '';
-    const isCreator = isOrganizer(activityId);
-  const [scenes, setScenes] = useState<Scene[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [activeScene, setActiveScene] = useState<string>('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ user_name: '', people_count: 1, is_temp: false });
-  const [copied, setCopied] = useState(false);
+  const isCreator = isOrganizer(activityId);
+
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    if (!activityId) {
-      setAccessDenied(true);
-      setLoading(false);
-      return;
-    }
-    if (!isActivityAccessed(activityId)) {
-      setAccessDenied(true);
-      setLoading(false);
-      return;
-    }
-    Promise.all([
-      fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
-      fetch(`/api/participants?activity_id=${activityId}`).then(r => r.json()),
-      fetch(`/api/activities?id=${activityId}`).then(r => r.json()),
-    ]).then(([sceneRes, partRes, actRes]) => {
-      const sceneData = sceneRes.data || [];
-      setScenes(sceneData);
-      setParticipants(partRes.data || []);
-      if (sceneData.length > 0) setActiveScene(sceneData[0].id);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    if (!activityId) { setAccessDenied(true); setLoading(false); return; }
+    if (!isActivityAccessed(activityId) && !isOrganizer(activityId)) { setAccessDenied(true); setLoading(false); return; }
+    if (isOrganizer(activityId)) markActivityAccessed(activityId);
+    loadData();
   }, [activityId]);
 
-  // Auto-sync: also load registrations as participants
-  useEffect(() => {
-    if (!activityId || scenes.length === 0) return;
+  const loadData = async () => {
+    try {
+      const [partRes, regRes, sceneRes] = await Promise.all([
+        fetch(`/api/participants?activity_id=${activityId}`).then(r => r.json()),
+        fetch(`/api/registrations?activity_id=${activityId}`).then(r => r.json()),
+        fetch(`/api/scenes?activity_id=${activityId}`).then(r => r.json()),
+      ]);
+      setParticipants(partRes.data || []);
+      setRegistrations(regRes.data || []);
+      setScenes(sceneRes.data || []);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const syncRegistrations = async () => {
-      // Fetch registrations
-      const regRes = await fetch(`/api/registrations?activity_id=${activityId}`);
-      const regData = await regRes.json();
-      const registrations = regData.data || [];
-
-      // Fetch current participants
-      const partRes = await fetch(`/api/participants?activity_id=${activityId}`);
-      const partData = await partRes.json();
-      const currentParticipants: Participant[] = partData.data || [];
-
-      // For each registration that's not already in participants, add it
+  const handleSyncParticipants = async () => {
+    setSyncing(true);
+    setErrorMsg('');
+    try {
+      // For each registration, create/update a participant
+      let synced = 0;
       for (const reg of registrations) {
-        const alreadyExists = currentParticipants.some(
-          p => p.user_id === reg.user_id && p.scene_id === reg.scene_id && !p.is_manual
+        // Check if participant already exists
+        const exists = participants.find(
+          p => p.user_id === reg.user_id && (p.scene_id || '') === (reg.scene_id || '')
         );
-        if (!alreadyExists) {
-          const addRes = await fetch('/api/participants', {
+        if (!exists) {
+          const res = await fetch('/api/participants', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               activity_id: activityId,
-              scene_id: reg.scene_id,
               user_id: reg.user_id,
               user_name: reg.user_name,
-              people_count: reg.people_count,
-              is_manual: false,
-              is_temp: false,
+              scene_id: reg.scene_id || null,
+              role: 'participant',
             }),
           });
-          const addResult = await addRes.json();
-          if (addResult.data) {
-            currentParticipants.push(addResult.data);
+          const result = await res.json();
+          if (result.error) {
+            setErrorMsg(`同步 ${reg.user_name} 失败: ${result.error}`);
+          } else {
+            synced++;
           }
         }
       }
 
-      setParticipants(currentParticipants);
-    };
+      // Also add the organizer as a participant if not already
+      const creatorId = getUserId();
+      const creatorExists = participants.find(p => p.user_id === creatorId);
+      if (!creatorExists) {
+        const creatorName = localStorage.getItem('party_nickname') || '组织者';
+        await fetch('/api/participants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            activity_id: activityId,
+            user_id: creatorId,
+            user_name: creatorName,
+            scene_id: null,
+            role: 'organizer',
+          }),
+        });
+        synced++;
+      }
 
-    syncRegistrations();
-  }, [activityId, scenes]);
-
-  const sceneParticipants = participants.filter(p => p.scene_id === activeScene);
-  const totalPeople = sceneParticipants.reduce((sum, p) => sum + p.people_count, 0);
-  const manualCount = sceneParticipants.filter(p => p.is_manual).length;
-  const tempCount = sceneParticipants.filter(p => p.is_temp).length;
-  const regCount = sceneParticipants.filter(p => !p.is_manual && !p.is_temp).length;
-
-  const handleAddParticipant = async () => {
-    if (!addForm.user_name || !activeScene) return;
-    const passphrase = getPassphrase(activityId);
-    const res = await fetch('/api/participants', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        activity_id: activityId,
-        scene_id: activeScene,
-        user_name: addForm.user_name,
-        people_count: addForm.people_count,
-        is_manual: true,
-        is_temp: addForm.is_temp,
-        passphrase,
-      }),
-    });
-    const result = await res.json();
-    if (result.data) {
-      setParticipants(prev => [...prev, result.data]);
-      setShowAddModal(false);
-      setAddForm({ user_name: '', people_count: 1, is_temp: false });
-    } else {
-      alert(result.error || '添加失败，请确认管理口令');
+      if (!errorMsg) {
+        setSuccessMsg(synced > 0 ? `已同步 ${synced} 位参与人` : '所有参与人已同步');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      }
+      loadData();
+    } catch {
+      setErrorMsg('同步失败，请重试');
+    } finally {
+      setSyncing(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const passphrase = getPassphrase(activityId);
-    await fetch(`/api/participants?id=${id}&passphrase=${passphrase}`, { method: 'DELETE' });
-    setParticipants(prev => prev.filter(p => p.id !== id));
+  const handleRemoveParticipant = async (participantId: string) => {
+    try {
+      const res = await fetch(`/api/participants?id=${participantId}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.error) {
+        setErrorMsg(result.error);
+      } else {
+        setSuccessMsg('已移除');
+        setTimeout(() => setSuccessMsg(''), 2000);
+        loadData();
+      }
+    } catch {
+      setErrorMsg('操作失败');
+    }
   };
 
-  const handleCopyList = () => {
-    const sceneName = scenes.find(s => s.id === activeScene)?.name || '';
-    const lines = sceneParticipants.map(p => `${p.user_name} x${p.people_count}${p.is_temp ? ' (临时)' : ''}`);
-    const text = `${sceneName} 参与名单 (${totalPeople}人):\n${lines.join('\n')}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Group participants by scene
+  const sceneMap = new Map(scenes.map(s => [s.id, s]));
+  const participantsByScene = new Map<string, Participant[]>();
+  const wholeActivityParticipants: Participant[] = [];
+
+  for (const p of participants) {
+    if (p.scene_id) {
+      if (!participantsByScene.has(p.scene_id)) participantsByScene.set(p.scene_id, []);
+      participantsByScene.get(p.scene_id)!.push(p);
+    } else {
+      wholeActivityParticipants.push(p);
+    }
+  }
+
+  const totalParticipants = participants.length;
+  const unregisteredCount = registrations.filter(
+    r => !participants.find(p => p.user_id === r.user_id)
+  ).length;
 
   if (accessDenied) return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6">
-      <p className="text-lg font-bold">请先通过活动口令或分享链接进入活动</p>
-      <a href={`/activity?id=${activityId}`} className="px-6 py-3 bg-primary text-[#0A0A0A] font-bold border-2 border-black shadow-[4px_4px_0_0_#0A0A0A]">进入活动</a>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <p className="text-lg font-bold">需要先进入活动</p>
+      <a href={`/activity?id=${activityId}`} className="mt-2 px-6 py-3 bg-primary text-[#0A0A0A] font-bold border-2 border-[#0A0A0A] shadow-[3px_3px_0_#0A0A0A] hover:shadow-[1px_1px_0_#0A0A0A] hover:translate-x-[2px] hover:translate-y-[2px] transition-all">进入活动</a>
     </div>
   );
-
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">加载中...</div>;
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       <Navbar />
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold flex items-center gap-2"><LayoutDashboard className="w-8 h-8 text-primary" />参与人看板</h1>
-            {isCreator && <span className="bg-accent-blue text-white text-xs font-bold px-2 py-1 border-2 border-outline">组织者</span>}
-            {!isCreator && <span className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 border-2 border-outline">查看</span>}
-          </div>
-          <div className="flex items-center gap-3">
-            {!isCreator && (
-              <button
-                onClick={() => {
-                  const input = prompt('请输入管理口令：');
-                  if (!input?.trim()) return;
-                  fetch(`/api/activities/${activityId}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'verify', passphrase: input.trim() }),
-                  }).then(r => r.json()).then(result => {
-                    if (result.error) { alert('口令验证失败'); }
-                    else { setPassphrase(activityId, input.trim()); window.location.reload(); }
-                  });
-                }}
-                className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground border-2 border-outline px-2 py-1 hover:bg-muted cursor-pointer"
-              >
-                <KeyRound className="w-3 h-3" />验证口令
-              </button>
-            )}
-            <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
-              返回活动
-            </Link>
-          </div>
+          <h1 className="text-2xl font-bold">参与人看板</h1>
+          <Link href={`/activity?id=${activityId}`} className="text-accent-blue font-bold text-sm border-2 border-outline px-3 py-1.5 hover:bg-muted transition-colors">
+            返回活动
+          </Link>
         </div>
+
+        {/* Success Toast */}
+        {successMsg && (
+          <div className="mb-6 bg-success text-white border-2 border-outline p-4 flex items-center gap-3" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span className="font-bold">{successMsg}</span>
+          </div>
+        )}
+
+        {/* Error Toast */}
+        {errorMsg && (
+          <div className="mb-6 bg-destructive text-white border-2 border-outline p-4 flex items-center gap-3" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <span className="font-bold">⚠ {errorMsg}</span>
+          </div>
+        )}
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-            <div className="text-3xl font-bold">{totalPeople}</div>
-            <div className="text-sm text-muted-foreground">总人数</div>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="bg-card border-2 border-outline p-3 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-xl font-bold text-primary">{totalParticipants}</div>
+            <div className="text-xs text-muted-foreground">参与人</div>
           </div>
-          <div className="bg-card border-2 border-outline p-4" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="inline-block w-3 h-3 bg-success" />
-              <span>报名 {regCount}</span>
-              <span className="inline-block w-3 h-3 bg-accent-blue ml-2" />
-              <span>手动 {manualCount}</span>
-              <span className="inline-block w-3 h-3 bg-warning ml-2" />
-              <span>临时 {tempCount}</span>
-            </div>
-            <div className="flex mt-2 h-4 border-2 border-outline overflow-hidden">
-              {totalPeople > 0 && (
-                <>
-                  <div className="bg-success" style={{ width: `${(regCount / totalPeople) * 100}%` }} />
-                  <div className="bg-accent-blue" style={{ width: `${(manualCount / totalPeople) * 100}%` }} />
-                  <div className="bg-warning" style={{ width: `${(tempCount / totalPeople) * 100}%` }} />
-                </>
-              )}
-            </div>
+          <div className="bg-card border-2 border-outline p-3 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-xl font-bold text-accent-blue">{registrations.length}</div>
+            <div className="text-xs text-muted-foreground">已报名</div>
           </div>
-          <div className="bg-card border-2 border-outline p-4 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-            <div className="text-3xl font-bold">{sceneParticipants.length}</div>
-            <div className="text-sm text-muted-foreground">参与条目</div>
+          <div className="bg-card border-2 border-outline p-3 text-center" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <div className="text-xl font-bold text-warning">{unregisteredCount}</div>
+            <div className="text-xs text-muted-foreground">未同步</div>
           </div>
         </div>
 
-        {/* Scene Tabs */}
-        <div className="flex gap-2 mb-6">
-          {scenes.map(scene => (
-            <button
-              key={scene.id}
-              onClick={() => setActiveScene(scene.id)}
-              className={`px-4 py-2 font-bold border-2 border-outline transition-all cursor-pointer ${activeScene === scene.id ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'}`}
-            >
-              {scene.name}
-            </button>
-          ))}
-        </div>
+        {/* Sync Button */}
+        {isCreator && unregisteredCount > 0 && (
+          <button
+            onClick={handleSyncParticipants}
+            disabled={syncing}
+            className="mb-6 w-full bg-primary text-[#0A0A0A] border-2 border-outline p-4 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{ boxShadow: '4px 4px 0 #0A0A0A' }}
+          >
+            {syncing ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+            {syncing ? '同步中...' : `同步 ${unregisteredCount} 位已报名参与人`}
+          </button>
+        )}
 
-        {/* Participant Cards */}
-        <div className="space-y-3 mb-20">
-          {sceneParticipants.map(p => {
-            const sourceLabel = p.is_temp ? '临时' : p.is_manual ? '手动添加' : '报名';
-            const sourceBg = p.is_temp ? 'bg-warning text-primary-foreground' : p.is_manual ? 'bg-accent-blue text-white' : 'bg-success text-white';
-            return (
-              <div key={p.id} className="bg-card border-2 border-outline p-4 flex items-center gap-3 relative" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
-                {p.is_temp && (
-                  <span className="absolute -top-2 -right-2 bg-warning text-primary-foreground border-2 border-outline px-2 py-0.5 text-xs font-bold rotate-3">临时</span>
-                )}
-                <span className="font-bold text-lg">{p.user_name}</span>
-                <span className="text-muted-foreground">x{p.people_count}</span>
-                <span className={`${sourceBg} border-2 border-outline px-2 py-0.5 text-xs font-bold`}>{sourceLabel}</span>
-                <div className="flex-1" />
-                {isCreator && (
-                  <button onClick={() => handleDelete(p.id)} className="text-error border-2 border-outline p-1.5 hover:bg-muted cursor-pointer">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-          {sceneParticipants.length === 0 && (
-            <div className="bg-card border-2 border-outline p-8 text-center text-muted-foreground" style={{ boxShadow: '3px 3px 0 #0A0A0A' }}>
-              暂无参与人
-              {isCreator && '，点击下方按钮添加'}
-            </div>
-          )}
-        </div>
-
-        {/* Bottom Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t-2 border-outline p-4 z-30">
-          <div className="max-w-6xl mx-auto flex items-center gap-3">
-            {isCreator && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-primary text-primary-foreground border-2 border-outline px-5 py-2.5 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
-                style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-              >
-                <UserPlus className="w-4 h-4" />手动添加
-              </button>
-            )}
-            {!isCreator && (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Lock className="w-4 h-4" />
-                <span>管理操作需验证管理口令</span>
-              </div>
-            )}
-            <button
-              onClick={handleCopyList}
-              className="bg-card border-2 border-outline px-5 py-2.5 font-bold hover:bg-muted transition-colors cursor-pointer flex items-center gap-2"
-            >
-              {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-              {copied ? '已复制' : '复制名单'}
-            </button>
-          </div>
-        </div>
-      </main>
-
-      {/* Add Participant Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card border-2 border-outline w-full max-w-md p-6" style={{ boxShadow: '8px 8px 0 #0A0A0A' }}>
-            <h2 className="text-xl font-bold mb-4">手动添加参与人</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold mb-1">姓名 <span className="text-error">*</span></label>
-                <input
-                  className="w-full border-2 border-outline bg-muted px-4 py-3 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  value={addForm.user_name}
-                  onChange={e => setAddForm(f => ({ ...f, user_name: e.target.value }))}
-                  placeholder="参与人姓名"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold mb-1">参与人数</label>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setAddForm(f => ({ ...f, people_count: Math.max(1, f.people_count - 1) }))} className="w-10 h-10 border-2 border-outline bg-card font-bold text-xl hover:bg-muted cursor-pointer">-</button>
-                  <span className="text-2xl font-bold w-12 text-center">{addForm.people_count}</span>
-                  <button onClick={() => setAddForm(f => ({ ...f, people_count: f.people_count + 1 }))} className="w-10 h-10 border-2 border-outline bg-card font-bold text-xl hover:bg-muted cursor-pointer">+</button>
+        {/* Participants List */}
+        {wholeActivityParticipants.length > 0 && (
+          <div className="bg-card border-2 border-outline p-5 mb-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+            <h2 className="font-bold text-lg mb-3 flex items-center gap-2"><Users className="w-5 h-5 text-primary" />全程参与</h2>
+            <div className="space-y-2">
+              {wholeActivityParticipants.map(p => (
+                <div key={p.id} className="bg-muted p-3 border-2 border-outline flex items-center justify-between">
+                  <div>
+                    <span className="font-bold">{p.user_name}</span>
+                    {p.role === 'organizer' && <span className="ml-2 text-xs bg-accent-blue text-white px-2 py-0.5">组织者</span>}
+                  </div>
+                  {isCreator && p.role !== 'organizer' && (
+                    <button onClick={() => handleRemoveParticipant(p.id)} className="text-error text-sm hover:underline cursor-pointer">移除</button>
+                  )}
                 </div>
-              </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={addForm.is_temp}
-                  onChange={e => setAddForm(f => ({ ...f, is_temp: e.target.checked }))}
-                  className="w-5 h-5 accent-warning"
-                />
-                <span className="font-medium">临时参与人</span>
-              </label>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleAddParticipant}
-                disabled={!addForm.user_name}
-                className="bg-primary text-primary-foreground border-2 border-outline px-5 py-2.5 font-bold hover:translate-x-[1px] hover:translate-y-[1px] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ boxShadow: '3px 3px 0 #0A0A0A' }}
-              >
-                添加
-              </button>
-              <button onClick={() => { setShowAddModal(false); setAddForm({ user_name: '', people_count: 1, is_temp: false }); }} className="bg-card border-2 border-outline px-5 py-2.5 font-bold hover:bg-muted cursor-pointer">
-                取消
-              </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Participants by Scene */}
+        {Array.from(participantsByScene.entries()).map(([sceneId, parts]) => {
+          const scene = sceneMap.get(sceneId);
+          return (
+            <div key={sceneId} className="bg-card border-2 border-outline p-5 mb-6" style={{ boxShadow: '4px 4px 0 #0A0A0A' }}>
+              <h2 className="font-bold text-lg mb-3">
+                {scene?.name || '分段'}
+                {scene?.time_range && <span className="text-sm text-muted-foreground ml-2">{scene.time_range}</span>}
+              </h2>
+              <div className="space-y-2">
+                {parts.map(p => (
+                  <div key={p.id} className="bg-muted p-3 border-2 border-outline flex items-center justify-between">
+                    <span className="font-bold">{p.user_name}</span>
+                    {isCreator && (
+                      <button onClick={() => handleRemoveParticipant(p.id)} className="text-error text-sm hover:underline cursor-pointer">移除</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {participants.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="font-bold">暂无参与人</p>
+            <p className="text-sm mt-1">等待大家报名后，点击上方同步按钮</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

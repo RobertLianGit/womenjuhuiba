@@ -79,16 +79,24 @@ function SettleContent() {
     const bill = bills.find(b => b.scene_id === sceneId);
     if (!bill) return;
     const passphrase = getPassphrase(activityId);
-    await fetch('/api/bills', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        activity_id: activityId,
-        scene_id: sceneId,
-        total_amount: bill.total_amount,
-        passphrase,
-      }),
-    });
+    try {
+      const res = await fetch('/api/bills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activity_id: activityId,
+          scene_id: sceneId,
+          total_amount: bill.total_amount,
+          passphrase,
+        }),
+      });
+      const result = await res.json();
+      if (result.error) {
+        alert('保存账单失败：' + result.error);
+      }
+    } catch {
+      alert('网络错误，请重试');
+    }
   };
 
   // Calculate per-person bills

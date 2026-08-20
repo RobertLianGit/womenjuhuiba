@@ -10,6 +10,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '缺少必填字段（活动名称和发起人昵称）' }, { status: 400 });
   }
 
+  // Validate access_code: must be 6 digits if provided
+  if (access_code && !/^\d{6}$/.test(access_code)) {
+    return NextResponse.json({ error: '活动口令必须是6位数字' }, { status: 400 });
+  }
+
   // Trim whitespace from title and creator_name
   const trimmedTitle = title.trim();
   const trimmedCreatorName = creator_name.trim();
@@ -18,7 +23,32 @@ export async function POST(request: NextRequest) {
   const intentionDeadline = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
   // 自动生成6位数字活动口令
-  const rawAccessCode = access_code || String(Math.floor(100000 + Math.random() * 900000));
+  let rawAccessCode = access_code || String(Math.floor(100000 + Math.random() * 900000));
+
+  // Check access_code uniqueness - if custom, check first; if auto, retry on collision
+  if (access_code) {
+    const { data: existing } = await client
+      .from('activities')
+      .select('id')
+      .eq('access_code', normalizeSecret(access_code))
+      .maybeSingle();
+    if (existing) {
+      return NextResponse.json({ error: '该活动口令已被使用，请更换' }, { status: 409 });
+    }
+  } else {
+    // Auto-generated: retry up to 5 times on collision
+    let attempts = 0;
+    while (attempts < 5) {
+      const { data: existing } = await client
+        .from('activities')
+        .select('id')
+        .eq('access_code', normalizeSecret(rawAccessCode))
+        .maybeSingle();
+      if (!existing) break;
+      rawAccessCode = String(Math.floor(100000 + Math.random() * 900000));
+      attempts++;
+    }
+  }
 
   // 自动生成6位管理口令
   const rawPassphrase = passphrase || Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
@@ -42,6 +72,10 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
+    // Handle unique constraint violation on access_code
+    if (error.code === '23505' && error.message?.includes('access_code')) {
+      return NextResponse.json({ error: '该活动口令已被使用，请更换' }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
@@ -56,9 +90,14 @@ export async function POST(request: NextRequest) {
 }
 
 /** 脱敏函数：移除口令字段，但保留 access_token 用于免口令分享 */
-function sanitize(activity: Record<string, unknown>) {
+function sanitize(activity: Record<string, unknown>, includeAccessToken = false) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { passphrase: _p, access_code: _a, ...safe } = activity;
+  if (!includeAccessToken) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { access_token: _t, ...withoutToken } = safe;
+    return withoutToken;
+  }
   return safe;
 }
 
@@ -74,7 +113,7 @@ export async function GET(request: NextRequest) {
 
   const client = getSupabaseClient();
 
-  // 按 ID 查询单个活动
+  // 按 ID 查询单个活动 - 不返回 access_token（需要口令/token验证才能访问）
   if (id) {
     const { data, error } = await client
       .from('activities')
@@ -90,10 +129,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '活动不存在' }, { status: 404 });
     }
 
-    return NextResponse.json({ data: sanitize(data) });
+    // P1-8: Return access_token only if the activity is not archived (public metadata ok)
+    // but don't return access_token for ID-only queries - require access_code or access_token
+    return NextResponse.json({ data: sanitize(data, false) });
   }
 
-  // 通过 access_token 免口令查询
+  // 通过 access_token 免口令查询 - 返回 access_token（用户已有它）
   if (access_token) {
     const { data, error } = await client
       .from('activities')
@@ -109,10 +150,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '活动不存在或链接已失效' }, { status: 404 });
     }
 
-    return NextResponse.json({ data: sanitize(data) });
+    return NextResponse.json({ data: sanitize(data, true) });
   }
 
-  // 批量按 ID 查询
+  // 批量按 ID 查询 - 不返回 access_token
   if (ids) {
     const idList = ids.split(',').filter(Boolean);
     if (idList.length === 0) {
@@ -148,11 +189,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const safe = data.map(sanitize);
+    const safe = data.map((d: Record<string, unknown>) => sanitize(d, false));
     return NextResponse.json({ data: safe });
   }
 
-  // 通过 creator_id 查询用户的活动（首页"我的活动"）
+  // 通过 creator_id 查询用户的活动 - 返回 access_token（组织者需要）
   if (user_id && !ids) {
     let query = client
       .from('activities')
@@ -181,11 +222,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const safe = data.map(sanitize);
+    const safe = data.map((d: Record<string, unknown>) => sanitize(d, true));
     return NextResponse.json({ data: safe });
   }
 
-  // 通过活动口令查询
+  // 通过活动口令查询 - 返回 access_token（验证通过后需要它来分享）
   if (access_code) {
     const { data, error } = await client
       .from('activities')
@@ -202,7 +243,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '活动口令错误或活动不存在' }, { status: 404 });
     }
 
-    return NextResponse.json({ data: sanitize(data) });
+    return NextResponse.json({ data: sanitize(data, true) });
   }
 
   return NextResponse.json({ error: '请提供 access_code、access_token、id 或 ids 参数' }, { status: 400 });

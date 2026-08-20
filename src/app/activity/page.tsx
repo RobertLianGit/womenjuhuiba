@@ -48,9 +48,9 @@ const PREV_STATUS: Record<string, string> = {
 };
 
 const ACTION_MAP: Record<string, { label: string; next: string }> = {
-  collecting: { label: '把安排定下来', next: 'registering' },
-  voting:     { label: '把安排定下来', next: 'registering' },
-  plan:       { label: '把安排定下来', next: 'registering' },
+  collecting: { label: '发起投票', next: 'voting' },
+  voting:     { label: '确认方案', next: 'plan' },
+  plan:       { label: '开放报名', next: 'registering' },
   registering:{ label: '活动开始', next: 'started' },
   started:    { label: '开始结算', next: 'settling' },
   settling:   { label: '完成结算', next: 'settled' },
@@ -58,8 +58,8 @@ const ACTION_MAP: Record<string, { label: string; next: string }> = {
 
 const PARTICIPANT_ACTION: Record<string, { label: string; href: string; icon: typeof ClipboardCheck; color: string }> = {
   collecting: { label: '填写回应', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
-  voting:     { label: '填写回应', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
-  plan:       { label: '填写回应', href: '/intention', icon: Send, color: 'bg-primary text-[#0A0A0A]' },
+  voting:     { label: '去投票', href: '/vote', icon: Vote, color: 'bg-accent-blue text-white' },
+  plan:       { label: '查看方案', href: '/plan', icon: FileText, color: 'bg-warning text-[#0A0A0A]' },
   registering:{ label: '确认参加', href: '/register', icon: UserCheck, color: 'bg-success text-white' },
   started:    { label: '查看活动', href: '/register', icon: CheckCircle2, color: 'bg-accent-blue text-white' },
   settling:   { label: '查看账单', href: '/settle', icon: Receipt, color: 'bg-warning text-[#0A0A0A]' },
@@ -126,6 +126,26 @@ function ActivityPage() {
       .catch(() => setLoading(false));
   }, [id, token]);
 
+  // For organizers accessing by ID, fetch access_token separately via user_id
+  useEffect(() => {
+    if (!activity?.id || !isOrganizer(activity.id) || activity.access_token || token) return;
+    // The id-based query strips access_token for security.
+    // Organizers need it for sharing, so fetch via user_id which returns it.
+    const uid = getUserId();
+    if (!uid) return;
+    fetch(`/api/activities?user_id=${uid}&include_archived=true`)
+      .then(r => r.json())
+      .then(res => {
+        if (res.data) {
+          const match = res.data.find((a: Activity) => a.id === activity.id);
+          if (match?.access_token) {
+            setActivity(prev => prev ? { ...prev, access_token: match.access_token } : prev);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [activity?.id, activity?.access_token, token]);
+
   // Fetch progress stats - use activity.id which works for both id and token access
   useEffect(() => {
     if (!activity?.id || !accessGranted) return;
@@ -170,13 +190,25 @@ function ActivityPage() {
     const action = ACTION_MAP[activity.status];
     if (!action) return;
     const passphrase = getPassphrase(activity.id);
-    const res = await fetch(`/api/activities/${activity.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: action.next, passphrase }),
-    });
-    const result = await res.json();
-    if (result.data) setActivity(result.data);
+    if (!passphrase) {
+      alert('无法操作：未找到管理口令。\n\n可能原因：\n1. 你不是此活动的创建者\n2. 浏览器数据已被清除\n3. 你在另一台设备上创建的活动');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/activities/${activity.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: action.next, passphrase }),
+      });
+      const result = await res.json();
+      if (result.error) {
+        alert(`操作失败：${result.error}`);
+        return;
+      }
+      if (result.data) setActivity(result.data);
+    } catch {
+      alert('网络错误，请重试');
+    }
   };
 
   const handleCopyLink = () => {

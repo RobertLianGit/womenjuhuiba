@@ -1,0 +1,24 @@
+{
+  "description": "报名助手 LBB - 活动报名统计小程序",
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": ".workbuddy" },
+      { "type": "folder", "value": "node_modules" }
+    ],
+    "include": []
+  },
+  "setting": {
+    "bundle": false,
+    "es6": true,
+    "minified": true,
+    "postcss": true,
+    "urlCheck": true,
+    "nodeModules": true,
+    "packNpmManually": false,
+    "packNpmRelationList": []
+  },
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "womenjuhuiba",
+  "miniprogramRoot": "./"
+}

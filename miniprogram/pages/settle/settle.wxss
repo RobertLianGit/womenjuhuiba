@@ -1,0 +1,276 @@
+.summary {
+    display: flex;
+    border: 4rpx solid #0A0A0A;
+    background: #FFFFFF;
+    box-shadow: 8rpx 8rpx 0 #0A0A0A;
+}
+
+.summary-item {
+    flex: 1;
+    padding: 24rpx 12rpx;
+    border-left: 4rpx solid #0A0A0A;
+    text-align: center;
+}
+
+.summary-item:first-child {
+    border-left: none;
+}
+
+.summary-item-key {
+    background: #FF4DB8;
+}
+
+.summary-num {
+    display: block;
+    font-size: 40rpx;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.summary-label {
+    display: block;
+    margin-top: 6rpx;
+    color: #5C5C3D;
+    font-size: 21rpx;
+}
+
+.summary-item-key .summary-label {
+    color: #0A0A0A;
+}
+
+.hints {
+    margin-top: 24rpx;
+    padding: 22rpx 24rpx;
+    border: 4rpx solid #0A0A0A;
+    background: #FFF9B2;
+}
+
+.hints-title {
+    display: block;
+    font-size: 24rpx;
+    font-weight: 800;
+}
+
+.hint-row {
+    display: flex;
+    margin-top: 12rpx;
+    padding-top: 12rpx;
+    align-items: center;
+    border-top: 2rpx dashed #A8A47C;
+}
+
+.hint-payer {
+    flex: none;
+    font-size: 25rpx;
+    font-weight: 800;
+}
+
+.hint-text {
+    flex: 1;
+    padding: 0 12rpx;
+    font-size: 22rpx;
+}
+
+.hint-receive {
+    flex: none;
+    font-size: 23rpx;
+    font-weight: 800;
+}
+
+.hints-tip {
+    display: block;
+    margin-top: 14rpx;
+    color: #5C5C3D;
+    font-size: 21rpx;
+    line-height: 1.6;
+}
+
+.section {
+    margin-top: 36rpx;
+}
+
+.section-head {
+    display: flex;
+    margin-bottom: 16rpx;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-title {
+    font-size: 28rpx;
+    font-weight: 800;
+}
+
+.section-add {
+    padding: 8rpx 18rpx;
+    border: 3rpx solid #0A0A0A;
+    background: #3B82F6;
+    color: #FFFFFF;
+    font-size: 22rpx;
+    font-weight: 700;
+}
+
+.bill {
+    display: flex;
+    margin-bottom: 14rpx;
+    padding: 20rpx;
+    align-items: center;
+    border: 4rpx solid #0A0A0A;
+    background: #FFFFFF;
+}
+
+.bill-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.bill-title {
+    display: block;
+    font-size: 27rpx;
+    font-weight: 800;
+}
+
+.bill-meta {
+    display: block;
+    margin-top: 4rpx;
+    color: #5C5C3D;
+    font-size: 21rpx;
+}
+
+.bill-amount {
+    flex: none;
+    padding: 0 14rpx;
+    font-size: 32rpx;
+    font-weight: 900;
+}
+
+.bill-ops {
+    display: flex;
+    flex: none;
+}
+
+.bill-op {
+    margin-left: 10rpx;
+    padding: 6rpx 12rpx;
+    border: 3rpx solid #0A0A0A;
+    font-size: 20rpx;
+    font-weight: 700;
+}
+
+.bill-op-del {
+    background: #FFE1E1;
+}
+
+/* ===== 我要付多少 ===== */
+.mine {
+    margin-bottom: 26rpx;
+    padding: 26rpx 24rpx;
+    background: #FFFFFF;
+}
+
+.mine-kicker {
+    display: block;
+    color: #5C5C3D;
+    font-size: 22rpx;
+    font-weight: 700;
+}
+
+.mine-amount {
+    display: block;
+    margin-top: 4rpx;
+    font-size: 74rpx;
+    font-weight: 900;
+    line-height: 1.05;
+}
+
+.mine-unit {
+    font-size: 28rpx;
+    font-weight: 800;
+}
+
+.mine-formula {
+    display: block;
+    margin-top: 6rpx;
+    color: #5C5C3D;
+    font-size: 21rpx;
+    line-height: 1.5;
+}
+
+.mine-pay {
+    display: flex;
+    margin-top: 12rpx;
+    padding: 14rpx 16rpx;
+    align-items: center;
+    border: 3rpx solid #0A0A0A;
+    background: #FFF9B2;
+    justify-content: space-between;
+}
+
+.mine-pay-name {
+    font-size: 25rpx;
+    font-weight: 700;
+}
+
+.mine-pay-amount {
+    font-size: 27rpx;
+    font-weight: 900;
+}
+
+.mine-pay-none {
+    display: block;
+    margin-top: 12rpx;
+    color: #5C5C3D;
+    font-size: 23rpx;
+    line-height: 1.5;
+}
+
+.mine-receive {
+    margin-top: 12rpx;
+    padding: 12rpx 16rpx;
+    border: 3rpx solid #0A0A0A;
+    background: #DDF7E6;
+}
+
+.mine-receive-text {
+    font-size: 23rpx;
+    font-weight: 700;
+}
+
+.mine-btn {
+    width: auto;
+    height: 90rpx;
+    margin-top: 20rpx;
+    font-size: 28rpx;
+}
+
+.mine-btn-done {
+    background: #DDF7E6;
+}
+
+.mine-note {
+    display: block;
+    margin-top: 12rpx;
+    color: #6B6B4A;
+    font-size: 20rpx;
+    line-height: 1.5;
+}
+
+.org-note {
+    margin-top: 20rpx;
+    padding: 14rpx 16rpx;
+    border: 3rpx dashed #0A0A0A;
+    background: #FFFFFF;
+}
+
+.org-note-text {
+    font-size: 22rpx;
+    font-weight: 700;
+}
+
+.state-btn {
+    margin-top: 24rpx;
+}
+
+.submit {
+    margin-top: 24rpx;
+}

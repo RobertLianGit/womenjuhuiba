@@ -361,3 +361,41 @@ export const useStore = create<Store>((set) => ({
 3. **遵循 Next.js App Router 规范**，正确区分服务端/客户端组件
 4. **使用 TypeScript** 进行类型安全开发
 5. **使用 `@/` 路径别名** 导入模块（已配置）
+
+---
+
+## 微信小程序：报名助手 LBB
+
+同一套产品的原生微信小程序版本，目录 `miniprogram/`（不依赖上面的 Next.js 工程，可单独打开）。面向个人主体的「工具 - 预约/报名」类目，用于亲友间活动的意愿收集、投票、报名与费用分摊记录。
+
+### 本地运行
+
+1. 微信开发者工具 → 导入项目 → 选择 **`miniprogram/` 目录**（不是仓库根目录）。
+2. AppID 放在 `miniprogram/project.private.config.json`（该文件已加入 `.gitignore`，不会入库）；`project.config.json` 里是 `touristappid` 占位符，首次打开时工具会读私有配置里的 appid。自己跑的话，把私有配置里的 `appid` 换成你的即可。
+3. 首次运行如需安装依赖：在 `miniprogram/` 下执行 `npm install`（只用到 `@tencent-ai/workbuddy-cloud-sdk`）。
+4. 后端为托管云服务（PostgreSQL + RLS + SECURITY DEFINER 函数），配置在 `miniprogram/utils/cloud.js`。其中 `publishableKey` 是客户端公开键，按设计不具管理权限；所有写操作只能通过 `party_*` 数据库函数完成。
+
+### 目录
+
+```
+miniprogram/
+├── app.js / app.json / app.wxss   全局入口与粗野风设计变量（#FFF34D + 4rpx 黑边 + 硬阴影）
+├── pages/index                    身份卡、发起活动（已定好 / 还没定）
+├── pages/activity                 活动详情 + 单张任务卡（意向 / 投票 / 报名 / 重新确认）
+├── pages/vote                     组织者设选项并发布，参与者勾选
+├── pages/arrange                  公布或修改安排（附版本号）
+├── pages/settle                   按需结算，仅记录"付过了"
+└── utils/                         api.js（RPC 封装）、decide.js（任务判定纯函数）、party.js（身份）
+```
+
+### 关键设计
+
+- **两种创建方式**：`fixed`（时间地点已定）与 `flow`（先收意愿再定）。
+- **单一任务卡**：同一时刻只呈现一个待办，`utils/decide.js` 用纯函数决定卡片类型与按钮。
+- **安排版本化**：`arrangement_version` 递增后，旧确认失效，参与者需重新确认。
+- **取消 ≠ 隐藏**：取消报名保留记录、退出名单计数；隐藏只是从列表移除。
+- **可见性**：完整名单与回应仅发起人可见，参与者只看到自己与汇总人数。
+
+### 提审相关
+
+隐私指引填法、提审备注、合规检查清单见 [`PRIVACY-AND-REVIEW.md`](./PRIVACY-AND-REVIEW.md)；头像等素材见 `icon/`。

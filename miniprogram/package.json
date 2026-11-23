@@ -1,0 +1,9 @@
+{
+  "name": "womenjuhuiba-miniprogram",
+  "version": "1.0.0",
+  "description": "报名助手 LBB 微信小程序",
+  "private": true,
+  "dependencies": {
+    "@tencent-ai/workbuddy-cloud-sdk": "dev"
+  }
+}

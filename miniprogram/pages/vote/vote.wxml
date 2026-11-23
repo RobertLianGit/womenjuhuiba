@@ -1,0 +1,193 @@
+<view class="nb-page">
+    <view class="head">
+        <text class="nb-title">投票</text>
+        <text class="nb-sub">{{title}}{{open ? ' · 正在投票' : (published ? ' · 已结束' : '')}}</text>
+    </view>
+
+    <view class="nb-state" wx:if="{{loading}}">
+        <text class="nb-state-icon">…</text>
+        <text class="nb-state-text">正在加载</text>
+    </view>
+
+    <view class="nb-state" wx:elif="{{errorMsg}}">
+        <text class="nb-state-icon">!</text>
+        <text class="nb-state-text">{{errorMsg}}</text>
+        <button class="nb-btn nb-btn-ghost state-btn" bindtap="load">重试</button>
+    </view>
+
+    <!-- 组织者：设置投票 -->
+    <block wx:elif="{{setupMode}}">
+        <view class="setup nb-card-flat">
+            <text class="setup-title">先准备好选项，再发布</text>
+            <text class="setup-tip">发布之后大家才能投票。选项至少两个。</text>
+
+            <view class="nb-field">
+                <text class="nb-field-label">这次投票要决定什么 *</text>
+                <input class="nb-input" value="{{setup.question}}" bindinput="onQuestionInput" placeholder="比如：周六晚上去哪吃？" placeholder-class="nb-placeholder" maxlength="60" />
+            </view>
+
+            <view class="nb-field">
+                <text class="nb-field-label">规则</text>
+                <view class="rule-row">
+                    <view class="rule-opt {{setup.type === 'single' ? 'rule-on' : ''}}" data-type="single" bindtap="setType">单选</view>
+                    <view class="rule-opt {{setup.type === 'multi' ? 'rule-on' : ''}}" data-type="multi" bindtap="setType">多选</view>
+                    <block wx:if="{{setup.type === 'multi'}}">
+                        <input class="rule-input" type="number" value="{{setup.max}}" bindinput="onMaxInput" maxlength="2" />
+                        <text class="rule-unit">项</text>
+                    </block>
+                </view>
+            </view>
+
+            <view class="nb-field">
+                <text class="nb-field-label">选项（至少 2 个）*</text>
+                <view class="opt-row" wx:for="{{setup.options}}" wx:key="k">
+                    <text class="opt-index">{{index + 1}}</text>
+                    <input
+                        class="nb-input opt-input"
+                        value="{{item.location}}"
+                        data-index="{{index}}"
+                        bindinput="onOptionInput"
+                        placeholder="地点 / 方案"
+                        placeholder-class="nb-placeholder"
+                        maxlength="60"
+                    />
+                    <text class="opt-del" data-index="{{index}}" bindtap="removeOption">删</text>
+                </view>
+                <view class="opt-add" bindtap="addOption">＋ 再加一个选项</view>
+            </view>
+
+            <view class="import" wx:if="{{importOptions.length}}">
+                <text class="import-title">从大家的回应里挑（点一下加进选项）</text>
+                <view class="import-list">
+                    <view
+                        class="import-chip"
+                        wx:for="{{importOptions}}"
+                        wx:key="*this"
+                        data-place="{{item}}"
+                        bindtap="importResponse"
+                    >{{item}}</view>
+                </view>
+            </view>
+
+            <view class="nb-field">
+                <text class="nb-field-label">截止时间（可选）</text>
+                <view class="deadline-row">
+                    <picker mode="date" value="{{setup.deadlineDate}}" bindchange="onDeadlineDate">
+                        <view class="deadline-pick">{{setup.deadlineDate || '选日期'}}</view>
+                    </picker>
+                    <picker mode="time" value="{{setup.deadlineTime}}" bindchange="onDeadlineTime">
+                        <view class="deadline-pick">{{setup.deadlineTime}}</view>
+                    </picker>
+                </view>
+                <text class="field-tip">不设截止就一直开着，随时可以手动结束。</text>
+            </view>
+
+            <view class="nb-note nb-note-error" wx:if="{{setupError}}">{{setupError}}</view>
+
+            <button class="nb-btn nb-btn-primary submit" bindtap="publishVote" loading="{{publishing}}" disabled="{{publishing}}">
+                {{publishing ? '正在发布…' : '发布投票'}}
+            </button>
+            <text class="tip">只想直接定下来？回活动页点「公布时间和地点」就行。</text>
+        </view>
+    </block>
+
+    <!-- 还没发布 -->
+    <block wx:elif="{{!published}}">
+        <view class="nb-state">
+            <text class="nb-state-icon">⏳</text>
+            <text class="nb-state-text">组织者还没发起投票\n等选项准备好了再来</text>
+            <button class="nb-btn nb-btn-ghost state-btn" bindtap="load">刷新看看</button>
+        </view>
+    </block>
+
+    <!-- 投票中 / 已结束 -->
+    <block wx:else>
+        <view class="q nb-card-flat">
+            <text class="q-title">{{question || '这次去哪？'}}</text>
+            <view class="q-meta">
+                <text class="nb-tag">{{voteType === 'single' ? '单选，只能选 1 个' : '多选，最多 ' + maxVotes + ' 项'}}</text>
+                <text class="nb-tag nb-tag-gray" wx:if="{{deadlineText}}">截止 {{deadlineText}}</text>
+                <text class="nb-tag nb-tag-gray">{{voters}} 人已投</text>
+            </view>
+        </view>
+
+        <!-- 我的状态 -->
+        <view class="mine" wx:if="{{savedIds.length > 0}}">
+            <text class="mine-title">你已完成投票</text>
+            <text class="mine-sub">{{open ? '还能改，改完再点一次保存。' : '投票已结束，你的票已经记下。'}}</text>
+        </view>
+        <view class="mine" wx:elif="{{open}}">
+            <text class="mine-title">你还没投票</text>
+            <text class="mine-sub">选好之后点下面的按钮才算数。</text>
+        </view>
+        <view class="mine mine-muted" wx:else>
+            <text class="mine-title">这次没赶上投票</text>
+            <text class="mine-sub">等组织者公布最终安排。</text>
+        </view>
+
+        <view
+            class="opt {{item.picked ? 'opt-on' : ''}} {{open ? '' : 'opt-locked'}}"
+            wx:for="{{proposals}}"
+            wx:key="id"
+            data-id="{{item.id}}"
+            bindtap="toggleProposal"
+        >
+            <view class="opt-mark">{{item.picked ? '✓' : ''}}</view>
+            <view class="opt-body">
+                <text class="opt-name">{{item.location}}</text>
+                <text class="opt-meta" wx:if="{{item.activityType || item.userName}}">
+                    {{item.activityType}}{{item.activityType && item.userName ? ' · ' : ''}}{{item.userName ? '@' + item.userName : ''}}
+                </text>
+                <view class="bar"><view class="bar-fill" style="width:{{item.pct}}%"></view></view>
+            </view>
+            <view class="opt-votes">
+                <text class="opt-num">{{item.votes}}</text>
+                <text class="opt-unit">票</text>
+            </view>
+        </view>
+
+        <view class="nb-state" wx:if="{{proposals.length === 0}}">
+            <text class="nb-state-icon">#</text>
+            <text class="nb-state-text">还没有选项</text>
+        </view>
+
+        <view class="dirty-tip" wx:if="{{dirty && open}}">改好了，还没保存</view>
+        <view class="nb-note nb-note-error" wx:if="{{saveError}}">{{saveError}}</view>
+
+        <button class="nb-btn nb-btn-primary submit" wx:if="{{open && proposals.length}}" bindtap="submitVote" loading="{{submitting}}" disabled="{{submitting}}">
+            {{submitting ? '正在保存…' : (savedIds.length ? '保存我的选择' : '提交投票')}}
+        </button>
+
+        <view class="propose-entry" wx:if="{{open}}" bindtap="openPropose">
+            <text class="propose-text">还有别的想法？添加一个建议</text>
+            <text class="propose-arrow">＋</text>
+        </view>
+
+        <!-- 组织者 -->
+        <view class="org" wx:if="{{organizer}}">
+            <text class="org-title">投票有 {{voters}} / {{proposals.length}} 个选项</text>
+            <text class="org-tip">{{open ? '投票结束或你觉得差不多了，就可以公布安排。' : '投票已结束，公布时间和地点后大家就能确认参加。'}}</text>
+            <button class="nb-btn org-btn" wx:if="{{open}}" bindtap="closeVote" loading="{{closing}}" disabled="{{closing}}">结束投票</button>
+            <button class="nb-btn nb-btn-primary org-btn" bindtap="goArrange">去公布安排 →</button>
+        </view>
+    </block>
+</view>
+
+<!-- 添加建议 -->
+<view class="nb-mask" wx:if="{{showPropose}}" bindtap="closePropose"></view>
+<view class="nb-sheet" wx:if="{{showPropose}}">
+    <view class="nb-sheet-head">
+        <text class="nb-sheet-title">添加建议</text>
+        <text class="nb-close" bindtap="closePropose">×</text>
+    </view>
+    <view class="nb-field">
+        <text class="nb-field-label">地点 / 方案 *</text>
+        <input class="nb-input" value="{{propose.location}}" data-field="location" bindinput="onProposeInput" placeholder="比如：河边那家烧烤" placeholder-class="nb-placeholder" maxlength="60" />
+    </view>
+    <view class="nb-field">
+        <text class="nb-field-label">是什么类型</text>
+        <input class="nb-input" value="{{propose.activityType}}" data-field="activityType" bindinput="onProposeInput" placeholder="吃饭 / 桌游 / 露营" placeholder-class="nb-placeholder" maxlength="20" />
+    </view>
+    <view class="nb-note nb-note-error" wx:if="{{proposeError}}">{{proposeError}}</view>
+    <button class="nb-btn nb-btn-primary submit" bindtap="submitPropose" loading="{{proposing}}" disabled="{{proposing}}">加进投票选项</button>
+</view>

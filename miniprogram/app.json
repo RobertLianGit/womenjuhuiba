@@ -1,0 +1,20 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/activity/activity",
+    "pages/vote/vote",
+    "pages/arrange/arrange",
+    "pages/settle/settle"
+  ],
+  "window": {
+    "navigationBarTitleText": "报名助手 LBB",
+    "navigationBarBackgroundColor": "#FFF34D",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#FFF34D",
+    "backgroundTextStyle": "dark",
+    "enablePullDownRefresh": false
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

@@ -1,0 +1,125 @@
+<view class="nb-page">
+    <view class="head">
+        <text class="nb-title">结算</text>
+        <text class="nb-sub">{{title}} · {{phaseLabel}}</text>
+    </view>
+
+    <view class="nb-state" wx:if="{{loading}}">
+        <text class="nb-state-icon">…</text>
+        <text class="nb-state-text">正在加载账单</text>
+    </view>
+
+    <view class="nb-state" wx:elif="{{errorMsg}}">
+        <text class="nb-state-icon">!</text>
+        <text class="nb-state-text">{{errorMsg}}</text>
+        <button class="nb-btn nb-btn-ghost state-btn" bindtap="load">重试</button>
+    </view>
+
+    <block wx:else>
+        <!-- 我该付多少 -->
+        <view class="mine nb-card" wx:if="{{isParticipant && totalText !== '0.00'}}">
+            <text class="mine-kicker">你要付</text>
+            <text class="mine-amount">{{myShareText}}<text class="mine-unit"> 元</text></text>
+            <text class="mine-formula">总支出 {{totalText}} 元 ÷ {{peopleCount}} 人，你报了 {{myPeople}} 人</text>
+
+            <block wx:if="{{myPayTo.length}}">
+                <view class="mine-pay" wx:for="{{myPayTo}}" wx:key="name">
+                    <text class="mine-pay-name">转给 {{item.name}}</text>
+                    <text class="mine-pay-amount">{{item.amountText}} 元</text>
+                </view>
+            </block>
+            <text class="mine-pay-none" wx:else>你就是垫付的人，不用转给别人。</text>
+
+            <view class="mine-receive" wx:if="{{myReceiveText !== '0.00'}}">
+                <text class="mine-receive-text">你垫了钱，应该收回 {{myReceiveText}} 元</text>
+            </view>
+
+            <button class="nb-btn mine-btn {{myPaid ? 'mine-btn-done' : 'nb-btn-dark'}}" bindtap="markPaid" loading="{{marking}}" disabled="{{marking}}">
+                {{myPaid ? '已记录：我付过了' : '我付过了，记一下'}}
+            </button>
+            <text class="mine-note">这里只是一行记录，钱请线下自行结算；本小程序不代收、不代付。</text>
+        </view>
+
+        <!-- 汇总 -->
+        <view class="summary">
+            <view class="summary-item">
+                <text class="summary-num">{{totalText}}</text>
+                <text class="summary-label">总支出（元）</text>
+            </view>
+            <view class="summary-item">
+                <text class="summary-num">{{peopleCount}}</text>
+                <text class="summary-label">实际参加（人）</text>
+            </view>
+            <view class="summary-item">
+                <text class="summary-num">{{perPersonText}}</text>
+                <text class="summary-label">人均（元）</text>
+            </view>
+        </view>
+
+        <view class="section">
+            <view class="section-head">
+                <text class="section-title">账单明细</text>
+                <text class="section-add" wx:if="{{organizer}}" bindtap="addBill">＋ 记一笔</text>
+            </view>
+
+            <view class="bill" wx:for="{{bills}}" wx:key="id">
+                <view class="bill-main">
+                    <text class="bill-title">{{item.title}}</text>
+                    <text class="bill-meta">{{item.payerName}} 垫付{{item.settled ? ' · 已结清' : ''}}</text>
+                </view>
+                <text class="bill-amount">{{item.amountText}}</text>
+                <view class="bill-ops" wx:if="{{organizer}}">
+                    <text class="bill-op" data-id="{{item.id}}" data-title="{{item.title}}" data-amount="{{item.amountText}}" data-payer="{{item.payerName}}" bindtap="editBill">改</text>
+                    <text class="bill-op bill-op-del" data-id="{{item.id}}" bindtap="deleteBill">删</text>
+                </view>
+            </view>
+
+            <view class="nb-state" wx:if="{{bills.length === 0}}">
+                <text class="nb-state-icon">￥</text>
+                <text class="nb-state-text">这次没有共同费用\n不用结算也可以直接结束</text>
+                <button class="nb-btn nb-btn-ghost state-btn" bindtap="goActivity">回活动</button>
+            </view>
+        </view>
+
+        <view class="nb-note nb-note-ok" wx:if="{{message}}">{{message}}</view>
+
+        <block wx:if="{{organizer}}">
+            <view class="org-note" wx:if="{{bills.length}}">
+                <text class="org-note-text">{{paidCount}} / {{peopleCount}} 人标了「已转」，以实际到账为准。</text>
+            </view>
+            <button class="nb-btn nb-btn-primary submit" wx:if="{{bills.length}}" bindtap="settleAll" loading="{{finishing}}" disabled="{{finishing || allSettled}}">
+                {{allSettled ? '已结算完成' : '标记结清并结束活动'}}
+            </button>
+        </block>
+
+        <button class="nb-btn nb-btn-ghost submit" wx:if="{{bills.length}}" bindtap="copySummary">复制结算信息</button>
+    </block>
+</view>
+
+<!-- 账单编辑 -->
+<view class="nb-mask" wx:if="{{showBill}}" bindtap="closeBill"></view>
+<view class="nb-sheet" wx:if="{{showBill}}">
+    <view class="nb-sheet-head">
+        <text class="nb-sheet-title">{{billForm.id ? '修改账单' : '记一笔'}}</text>
+        <text class="nb-close" bindtap="closeBill">×</text>
+    </view>
+
+    <view class="nb-field">
+        <text class="nb-field-label">花在哪 *</text>
+        <input class="nb-input" value="{{billForm.title}}" data-field="title" bindinput="onBillInput" placeholder="晚饭 / 打车 / 门票" placeholder-class="nb-placeholder" maxlength="40" />
+    </view>
+
+    <view class="nb-field">
+        <text class="nb-field-label">金额（元）*</text>
+        <input class="nb-input" type="digit" value="{{billForm.amount}}" data-field="amount" bindinput="onBillInput" placeholder="0.00" placeholder-class="nb-placeholder" maxlength="10" />
+    </view>
+
+    <view class="nb-field">
+        <text class="nb-field-label">谁垫付的</text>
+        <input class="nb-input" value="{{billForm.payerName}}" data-field="payerName" bindinput="onBillInput" placeholder="昵称" placeholder-class="nb-placeholder" maxlength="20" />
+    </view>
+
+    <view class="nb-note nb-note-error" wx:if="{{billError}}">{{billError}}</view>
+
+    <button class="nb-btn nb-btn-dark submit" bindtap="saveBill" loading="{{billSaving}}" disabled="{{billSaving}}">保存</button>
+</view>

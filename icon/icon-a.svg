@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#FFF34D"/>
+  <!-- 硬阴影 -->
+  <rect x="240" y="240" width="616" height="616" fill="#0A0A0A"/>
+  <!-- 名单卡 -->
+  <rect x="204" y="204" width="616" height="616" fill="#FFFFFF" stroke="#0A0A0A" stroke-width="40"/>
+  <!-- 三行：勾 + 条目 -->
+  <g fill="none" stroke="#0A0A0A" stroke-width="46" stroke-linecap="butt" stroke-linejoin="miter">
+    <path d="M296 336 L344 384 L428 288"/>
+    <path d="M296 512 L344 560 L428 464"/>
+    <path d="M296 688 L344 736 L428 640"/>
+  </g>
+  <g fill="#0A0A0A">
+    <rect x="492" y="316" width="272" height="40"/>
+    <rect x="492" y="492" width="224" height="40"/>
+    <rect x="492" y="668" width="248" height="40"/>
+  </g>
+</svg>

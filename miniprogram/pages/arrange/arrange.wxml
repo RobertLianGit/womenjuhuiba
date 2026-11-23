@@ -1,0 +1,123 @@
+<view class="nb-page">
+    <view class="head">
+        <text class="nb-title">{{version > 0 ? '修改安排' : '公布安排'}}</text>
+        <text class="nb-sub">{{version > 0 ? '改完保存，朋友那边会看到最新版本。' : '填好时间地点，公布后大家就能确认参加。'}}</text>
+    </view>
+
+    <view class="nb-state" wx:if="{{loading}}">
+        <text class="nb-state-icon">…</text>
+        <text class="nb-state-text">正在加载</text>
+    </view>
+
+    <view class="nb-state" wx:elif="{{errorMsg}}">
+        <text class="nb-state-icon">!</text>
+        <text class="nb-state-text">{{errorMsg}}</text>
+        <button class="nb-btn nb-btn-ghost state-btn" bindtap="goActivity">返回活动</button>
+    </view>
+
+    <block wx:else>
+        <view class="panel nb-card-flat">
+            <text class="panel-title">{{title}}</text>
+
+            <view class="nb-field">
+                <text class="nb-field-label">时间 *</text>
+                <input class="nb-input" value="{{form.timeText}}" data-field="timeText" bindinput="onInput" placeholder="比如：11 月 21 日 18:30" placeholder-class="nb-placeholder" maxlength="40" />
+            </view>
+
+            <view class="nb-field">
+                <text class="nb-field-label">地点</text>
+                <input class="nb-input" value="{{form.place}}" data-field="place" bindinput="onInput" placeholder="比如：城南那家小馆" placeholder-class="nb-placeholder" maxlength="60" />
+            </view>
+
+            <view class="nb-field">
+                <text class="nb-field-label">费用说明</text>
+                <input class="nb-input" value="{{form.costNote}}" data-field="costNote" bindinput="onInput" placeholder="比如：人均 80，AA" placeholder-class="nb-placeholder" maxlength="60" />
+            </view>
+
+            <view class="nb-field">
+                <text class="nb-field-label">注意事项</text>
+                <textarea class="nb-textarea" value="{{form.extraNote}}" data-field="extraNote" bindinput="onInput" placeholder="带什么、几点前散、停车在哪……" placeholder-class="nb-placeholder" maxlength="120" />
+            </view>
+
+            <view class="nb-note nb-note-error" wx:if="{{saveError}}">{{saveError}}</view>
+        </view>
+
+        <!-- 预览 -->
+        <view class="preview">
+            <text class="preview-kicker">朋友会看到</text>
+            <text class="preview-title">{{title}}</text>
+            <view class="preview-facts">
+                <text class="preview-fact">{{form.timeText || '时间待定'}}</text>
+                <text class="preview-fact">{{form.place || '地点待定'}}</text>
+                <text class="preview-fact" wx:if="{{form.costNote}}">{{form.costNote}}</text>
+            </view>
+            <text class="preview-ask">安排定好了，你来吗？</text>
+        </view>
+
+        <button class="nb-btn nb-btn-primary submit" bindtap="publish" loading="{{saving}}" disabled="{{saving}}">
+            {{saving ? '正在保存…' : (version > 0 ? '保存最新安排' : '公布安排')}}
+        </button>
+        <text class="tip" wx:if="{{version > 0}}">改了时间、地点或费用，已确认的人会被要求重新确认。</text>
+        <text class="tip" wx:else>公布后朋友进来看到的就是这份安排，可以直接确认参加。</text>
+
+        <block wx:if="{{published}}">
+            <view class="done nb-card-flat">
+                <text class="done-title">安排已是最新</text>
+                <text class="done-sub" wx:if="{{changedCount > 0}}">有 {{changedCount}} 人需要重新确认，他们打开活动会看到变化。</text>
+                <text class="done-sub" wx:else>朋友打开活动就能看到这份安排。</text>
+            </view>
+            <button class="nb-btn nb-btn-blue submit" open-type="share">把最新安排发出去</button>
+            <button class="nb-btn nb-btn-ghost submit" bindtap="goActivity">回活动看名单</button>
+        </block>
+
+        <!-- 环节 -->
+        <view class="scene-block">
+            <view class="scene-head">
+                <text class="scene-title">环节（可选）</text>
+                <text class="scene-add" bindtap="addScene">＋ 添加</text>
+            </view>
+            <text class="scene-tip">只有真的分「晚饭」「桌游」这种多段安排时才需要；写清楚名字，朋友报名时就能选。</text>
+
+            <view class="scene" wx:for="{{scenes}}" wx:key="id">
+                <view class="scene-main">
+                    <text class="scene-name">{{item.name}}</text>
+                    <text class="scene-meta" wx:if="{{item.time_range || item.location}}">{{item.time_range}}{{item.time_range && item.location ? ' · ' : ''}}{{item.location}}</text>
+                </view>
+                <view class="scene-ops">
+                    <text class="scene-op" data-id="{{item.id}}" bindtap="editScene">改</text>
+                    <text class="scene-op scene-op-del" data-id="{{item.id}}" bindtap="deleteScene">删</text>
+                </view>
+            </view>
+
+            <view class="scene-empty" wx:if="{{scenes.length === 0}}">没有环节就是整场一起，不用选。</view>
+        </view>
+    </block>
+</view>
+
+<!-- 环节编辑 -->
+<view class="nb-mask" wx:if="{{showScene}}" bindtap="closeScene"></view>
+<view class="nb-sheet" wx:if="{{showScene}}">
+    <view class="nb-sheet-head">
+        <text class="nb-sheet-title">{{sceneForm.id ? '改环节' : '加一个环节'}}</text>
+        <text class="nb-close" bindtap="closeScene">×</text>
+    </view>
+
+    <view class="nb-field">
+        <text class="nb-field-label">叫什么 *</text>
+        <input class="nb-input" value="{{sceneForm.name}}" data-field="name" bindinput="onSceneInput" placeholder="晚饭 / 桌游 / 散步" placeholder-class="nb-placeholder" maxlength="20" />
+    </view>
+
+    <view class="nb-field">
+        <text class="nb-field-label">时间</text>
+        <input class="nb-input" value="{{sceneForm.timeRange}}" data-field="timeRange" bindinput="onSceneInput" placeholder="比如：18:30 - 20:00" placeholder-class="nb-placeholder" maxlength="30" />
+    </view>
+
+    <view class="nb-field">
+        <text class="nb-field-label">地点</text>
+        <input class="nb-input" value="{{sceneForm.location}}" data-field="location" bindinput="onSceneInput" placeholder="比如：城南小馆" placeholder-class="nb-placeholder" maxlength="40" />
+    </view>
+
+    <view class="nb-note nb-note-error" wx:if="{{sceneError}}">{{sceneError}}</view>
+
+    <button class="nb-btn nb-btn-primary submit" bindtap="saveScene" loading="{{sceneSaving}}" disabled="{{sceneSaving}}">保存</button>
+</view>

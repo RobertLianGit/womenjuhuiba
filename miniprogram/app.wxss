@@ -1,0 +1,509 @@
+page {
+    min-height: 100%;
+    background: #FFF34D;
+    color: #0A0A0A;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    font-size: 28rpx;
+    line-height: 1.5;
+}
+
+view,
+text,
+input,
+textarea,
+scroll-view,
+button {
+    box-sizing: border-box;
+}
+
+/* ============ 粗野风基础件 ============ */
+.nb-page {
+    min-height: 100vh;
+    padding: 32rpx 28rpx 80rpx;
+}
+
+.nb-card {
+    background: #FFFFFF;
+    border: 4rpx solid #0A0A0A;
+    box-shadow: 8rpx 8rpx 0 #0A0A0A;
+}
+
+.nb-card-flat {
+    background: #FFFFFF;
+    border: 4rpx solid #0A0A0A;
+}
+
+.nb-label {
+    display: inline-block;
+    padding: 6rpx 18rpx;
+    border: 4rpx solid #0A0A0A;
+    background: #FFFFFF;
+    font-size: 22rpx;
+    font-weight: 700;
+    letter-spacing: 1rpx;
+}
+
+.nb-title {
+    font-size: 44rpx;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.nb-sub {
+    color: #5C5C3D;
+    font-size: 24rpx;
+}
+
+.nb-mono {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    letter-spacing: 4rpx;
+}
+
+/* 按钮 */
+.nb-btn {
+    display: flex;
+    height: 92rpx;
+    align-items: center;
+    border: 4rpx solid #0A0A0A;
+    border-radius: 0;
+    background: #FFFFFF;
+    box-shadow: 8rpx 8rpx 0 #0A0A0A;
+    color: #0A0A0A;
+    font-size: 30rpx;
+    font-weight: 800;
+    justify-content: center;
+    line-height: 1;
+    padding: 0 28rpx;
+}
+
+.nb-btn::after {
+    border: none;
+}
+
+.nb-btn-primary {
+    background: #FF4DB8;
+}
+
+.nb-btn-blue {
+    background: #3B82F6;
+    color: #FFFFFF;
+}
+
+.nb-btn-dark {
+    background: #0A0A0A;
+    color: #FFFFFF;
+}
+
+.nb-btn-ghost {
+    height: 72rpx;
+    font-size: 26rpx;
+    box-shadow: 4rpx 4rpx 0 #0A0A0A;
+}
+
+.nb-btn-sm {
+    display: inline-flex;
+    height: 60rpx;
+    align-items: center;
+    padding: 0 20rpx;
+    font-size: 24rpx;
+    font-weight: 700;
+}
+
+.nb-btn[disabled] {
+    opacity: 0.45;
+}
+
+.nb-btn-press {
+    box-shadow: 2rpx 2rpx 0 #0A0A0A;
+    transform: translate(4rpx, 4rpx);
+}
+
+/* 表单 */
+.nb-field {
+    margin-top: 28rpx;
+}
+
+.nb-field-label {
+    display: block;
+    margin-bottom: 10rpx;
+    font-size: 24rpx;
+    font-weight: 700;
+}
+
+.nb-input {
+    width: 100%;
+    height: 88rpx;
+    padding: 0 20rpx;
+    border: 4rpx solid #0A0A0A;
+    background: #F5F0D0;
+    font-size: 28rpx;
+}
+
+.nb-textarea {
+    width: 100%;
+    min-height: 160rpx;
+    padding: 18rpx 20rpx;
+    border: 4rpx solid #0A0A0A;
+    background: #F5F0D0;
+    font-size: 28rpx;
+    line-height: 1.5;
+}
+
+.nb-placeholder {
+    color: #A0A080;
+}
+
+/* 提示条 */
+.nb-note {
+    margin-top: 24rpx;
+    padding: 18rpx 20rpx;
+    border: 4rpx solid #0A0A0A;
+    background: #FFF9B2;
+    font-size: 24rpx;
+    line-height: 1.6;
+}
+
+.nb-note-error {
+    background: #FFE1E1;
+}
+
+.nb-note-ok {
+    background: #DDF7E6;
+}
+
+/* 浮层 */
+.nb-mask {
+    position: fixed;
+    z-index: 900;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(10, 10, 10, 0.55);
+}
+
+.nb-sheet {
+    position: fixed;
+    z-index: 901;
+    right: 20rpx;
+    bottom: 40rpx;
+    left: 20rpx;
+    max-height: 84vh;
+    padding: 32rpx;
+    overflow-y: auto;
+    border: 4rpx solid #0A0A0A;
+    background: #FFFFFF;
+    box-shadow: 12rpx 12rpx 0 #0A0A0A;
+}
+
+.nb-sheet-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.nb-sheet-title {
+    font-size: 36rpx;
+    font-weight: 800;
+}
+
+.nb-close {
+    padding: 0 8rpx;
+    font-size: 40rpx;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* 标签 */
+.nb-tag {
+    display: inline-block;
+    padding: 4rpx 14rpx;
+    border: 3rpx solid #0A0A0A;
+    background: #FFF34D;
+    font-size: 20rpx;
+    font-weight: 700;
+}
+
+.nb-tag-pink {
+    background: #FF4DB8;
+}
+
+.nb-tag-blue {
+    background: #3B82F6;
+    color: #FFFFFF;
+}
+
+.nb-tag-green {
+    background: #22C55E;
+    color: #FFFFFF;
+}
+
+.nb-tag-gray {
+    background: #EDE8B8;
+}
+
+/* 空态 / 加载 */
+.nb-state {
+    display: flex;
+    padding: 72rpx 32rpx;
+    align-items: center;
+    border: 4rpx dashed #0A0A0A;
+    background: rgba(255, 255, 255, 0.6);
+    flex-direction: column;
+    text-align: center;
+}
+
+.nb-state-icon {
+    font-size: 64rpx;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.nb-state-text {
+    margin-top: 16rpx;
+    color: #5C5C3D;
+    font-size: 26rpx;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.nb-divider {
+    margin: 32rpx 0;
+    border-top: 4rpx solid #0A0A0A;
+}
+
+.nb-row {
+    display: flex;
+    align-items: center;
+}
+
+.nb-grow {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ============ 跨页面复用块 ============ */
+.head {
+    padding-top: 8rpx;
+}
+
+.head .nb-title {
+    display: block;
+}
+
+.head .nb-sub {
+    display: block;
+    margin-top: 10rpx;
+    line-height: 1.6;
+}
+
+.tabs {
+    display: flex;
+    margin: 32rpx 0 24rpx;
+    border: 4rpx solid #0A0A0A;
+    background: #FFFFFF;
+}
+
+.tab {
+    flex: 1;
+    padding: 22rpx 0;
+    font-size: 27rpx;
+    font-weight: 700;
+    text-align: center;
+}
+
+.tab-on {
+    background: #0A0A0A;
+    color: #FFFFFF;
+}
+
+.submit {
+    margin-top: 28rpx;
+}
+
+.tip {
+    display: block;
+    margin-top: 16rpx;
+    color: #5C5C3D;
+    font-size: 22rpx;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.verify {
+    margin-top: 40rpx;
+}
+
+.state-btn {
+    margin-top: 24rpx;
+}
+
+.section-label {
+    display: block;
+    margin-bottom: 16rpx;
+    font-size: 26rpx;
+    font-weight: 800;
+}
+
+/* 列表行卡 */
+.row {
+    margin-bottom: 20rpx;
+    padding: 24rpx;
+    background: #FFFFFF;
+}
+
+.row-head {
+    display: flex;
+    align-items: center;
+}
+
+.row-name {
+    font-size: 27rpx;
+    font-weight: 800;
+}
+
+.row-head .nb-tag {
+    margin-left: 12rpx;
+}
+
+.row-people {
+    margin-left: auto;
+    color: #5C5C3D;
+    font-size: 23rpx;
+    font-weight: 700;
+}
+
+.row-wants {
+    display: block;
+    margin-top: 12rpx;
+    font-size: 27rpx;
+    line-height: 1.6;
+}
+
+.row-notes {
+    display: block;
+    margin-top: 10rpx;
+    padding: 12rpx 16rpx;
+    background: #F5F0D0;
+    color: #3A3A2A;
+    font-size: 24rpx;
+    line-height: 1.5;
+}
+
+.row-time {
+    display: block;
+    margin-top: 12rpx;
+    color: #8A8A6A;
+    font-size: 21rpx;
+}
+
+/* ============ 身份条 ============ */
+.idbar {
+    display: flex;
+    margin-bottom: 28rpx;
+    padding: 18rpx 20rpx;
+    align-items: center;
+    border: 4rpx solid #0A0A0A;
+    background: #FFFFFF;
+    box-shadow: 6rpx 6rpx 0 #0A0A0A;
+}
+
+.idbar-avatar {
+    width: 78rpx;
+    height: 78rpx;
+    flex-shrink: 0;
+    border: 4rpx solid #0A0A0A;
+    background: #F5F0D0;
+}
+
+.idbar-avatar-ph {
+    display: flex;
+    align-items: center;
+    background: #FF4DB8;
+    font-size: 34rpx;
+    font-weight: 900;
+    justify-content: center;
+}
+
+.idbar-main {
+    flex: 1;
+    min-width: 0;
+    padding: 0 18rpx;
+}
+
+.idbar-name {
+    display: block;
+    overflow: hidden;
+    font-size: 29rpx;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.idbar-tag {
+    display: block;
+    margin-top: 2rpx;
+    color: #5C5C3D;
+    font-size: 21rpx;
+}
+
+.idbar-hint {
+    display: block;
+    margin-top: 4rpx;
+    color: #B3261E;
+    font-size: 20rpx;
+    line-height: 1.3;
+    word-break: break-all;
+}
+
+.idbar-edit {
+    flex-shrink: 0;
+    padding: 8rpx 16rpx;
+    border: 3rpx solid #0A0A0A;
+    background: #FFF34D;
+    font-size: 22rpx;
+    font-weight: 800;
+}
+
+/* ============ 头像与昵称 ============ */
+.profile-row {
+    display: flex;
+    margin-top: 24rpx;
+    align-items: flex-end;
+}
+
+.avatar-btn {
+    width: 130rpx;
+    height: 130rpx;
+    flex-shrink: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 4rpx solid #0A0A0A;
+    border-radius: 0;
+    background: #F5F0D0;
+    line-height: 1.2;
+}
+
+.avatar-btn::after {
+    border: none;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+}
+
+.avatar-ph {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    font-size: 22rpx;
+    font-weight: 700;
+    justify-content: center;
+}
+
+.profile-main {
+    flex: 1;
+    min-width: 0;
+    padding-left: 20rpx;
+}

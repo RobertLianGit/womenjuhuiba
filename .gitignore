@@ -103,3 +103,6 @@ Desktop.ini
 .preview
 .cozeproj/reduction
 .codegraph
+
+# 微信开发者工具私有配置（含本机 appid/路径，不入库）
+project.private.config.json

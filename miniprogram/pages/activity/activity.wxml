@@ -1,0 +1,365 @@
+<view class="nb-page">
+    <view class="nb-state" wx:if="{{loading}}">
+        <text class="nb-state-icon">…</text>
+        <text class="nb-state-text">正在打开活动</text>
+    </view>
+
+    <view class="nb-state" wx:elif="{{gate === 'error'}}">
+        <text class="nb-state-icon">!</text>
+        <text class="nb-state-text">{{errorMsg}}</text>
+        <button class="nb-btn nb-btn-ghost state-btn" wx:if="{{!notFound}}" bindtap="refresh">重试</button>
+        <button class="nb-btn nb-btn-ghost state-btn" wx:else bindtap="backHome">回首页</button>
+    </view>
+
+    <!-- 还没加入 -->
+    <view class="gate nb-card" wx:elif="{{gate === 'guest' && a}}">
+        <text class="gate-kicker">有人叫你来玩</text>
+        <text class="gate-title">{{a.title}}</text>
+        <text class="gate-desc" wx:if="{{a.description}}">{{a.description}}</text>
+        <view class="gate-meta">
+            <text class="gate-meta-t">发起人 {{a.creatorName}}</text>
+            <text class="gate-meta-t">{{a.timeText || '时间待定'}}</text>
+            <text class="gate-meta-t" wx:if="{{a.place}}">{{a.place}}</text>
+        </view>
+        <view class="gate-divider"></view>
+        <text class="gate-hint">点一下申请，发起人通过后就能看到具体安排。</text>
+        <button class="nb-btn nb-btn-primary gate-btn" bindtap="applyJoin" loading="{{joining}}" disabled="{{joining}}">申请加入</button>
+    </view>
+
+    <!-- 待审批 -->
+    <view class="gate nb-card" wx:elif="{{gate === 'pending' && a}}">
+        <text class="gate-emoji">⏳</text>
+        <text class="gate-title">申请已发出</text>
+        <text class="gate-desc">等 {{a.creatorName}} 通过，就能看到「{{a.title}}」的安排。</text>
+        <view class="gate-divider"></view>
+        <text class="gate-hint">通过后活动会出现在首页「我参与的」里。</text>
+        <button class="nb-btn nb-btn-primary gate-btn" bindtap="refresh">刷新看看</button>
+        <button class="nb-btn gate-btn" bindtap="backHome">先回首页</button>
+    </view>
+
+    <!-- 被拒绝 -->
+    <view class="gate nb-card" wx:elif="{{gate === 'rejected' && a}}">
+        <text class="gate-emoji">🚪</text>
+        <text class="gate-title">这次没进去</text>
+        <text class="gate-desc">{{a.creatorName}} 没有通过你的申请。可以问问他是不是发错了活动。</text>
+        <button class="nb-btn gate-btn" bindtap="backHome">回首页</button>
+    </view>
+
+    <!-- 已加入：固定入口 -->
+    <block wx:elif="{{gate === 'member' && a}}">
+        <view class="top">
+            <view class="top-row">
+                <text class="top-kicker">{{a.creatorName}} 发起的聚会</text>
+                <view class="top-chip" style="background:{{a.phaseBg}};color:{{a.phaseFg}}">{{a.phaseLabel}}</view>
+            </view>
+            <text class="top-title">{{a.title}}</text>
+
+            <view class="facts">
+                <view class="fact">
+                    <text class="fact-k">时间</text>
+                    <text class="fact-v {{a.timeText ? '' : 'fact-pending'}}">{{a.timeText || '待定'}}</text>
+                </view>
+                <view class="fact">
+                    <text class="fact-k">地点</text>
+                    <text class="fact-v {{a.place ? '' : 'fact-pending'}}">{{a.place || '待定'}}</text>
+                </view>
+                <view class="fact fact-wide" wx:if="{{a.costNote}}">
+                    <text class="fact-k">费用</text>
+                    <text class="fact-v">{{a.costNote}}</text>
+                </view>
+            </view>
+
+            <text class="top-note" wx:if="{{a.extraNote}}">{{a.extraNote}}</text>
+            <text class="top-desc" wx:if="{{a.description}}">{{a.description}}</text>
+        </view>
+
+        <!-- 任务卡：一次只做一件事 -->
+        <view class="task task-{{card.kind}}">
+            <view class="task-head">
+                <text class="task-kicker">{{card.resultTitle ? '你的状态' : '现在你要做的'}}</text>
+                <text class="task-state" wx:if="{{card.kind === 'confirmed' || card.kind === 'voted' || card.kind === 'intent-done'}}">已保存</text>
+            </view>
+
+            <text class="task-ask">{{card.ask}}</text>
+            <text class="task-hint" wx:if="{{card.hint}}">{{card.hint}}</text>
+
+            <!-- 安排变化 -->
+            <view class="change" wx:if="{{card.changes.length}}">
+                <text class="change-title">安排变了</text>
+                <view class="change-row" wx:for="{{card.changes}}" wx:key="label">
+                    <text class="change-label">{{item.label}}</text>
+                    <text class="change-from">{{item.from}}</text>
+                    <text class="change-arrow">→</text>
+                    <text class="change-to">{{item.to}}</text>
+                </view>
+            </view>
+
+            <!-- 已保存结果 -->
+            <view class="result" wx:if="{{card.resultTitle && !formVisible}}">
+                <text class="result-title">{{card.resultTitle}}</text>
+                <text class="result-line" wx:for="{{card.resultLines}}" wx:key="*this">{{item}}</text>
+            </view>
+
+            <!-- 选项 -->
+            <view class="opts" wx:if="{{formVisible}}">
+                <view
+                    class="opt {{pick === item.value ? 'opt-on' : ''}}"
+                    wx:for="{{card.options}}"
+                    wx:key="value"
+                    data-value="{{item.value}}"
+                    bindtap="pickOption"
+                >
+                    <view class="opt-mark">{{pick === item.value ? '✓' : ''}}</view>
+                    <view class="opt-body">
+                        <text class="opt-label">{{item.label}}</text>
+                        <text class="opt-desc">{{item.desc}}</text>
+                    </view>
+                </view>
+            </view>
+
+            <!-- 补充信息（默认收起） -->
+            <view class="more" wx:if="{{formVisible}}">
+                <view class="more-toggle" bindtap="toggleExtra">
+                    {{extraOpen ? '收起补充信息' : '＋ 补充信息（可选）'}}
+                    <text class="more-hint" wx:if="{{!extraOpen && people > 1}}">已填 {{people}} 人</text>
+                </view>
+
+                <block wx:if="{{extraOpen}}">
+                    <block wx:if="{{isIntent}}">
+                        <view class="field">
+                            <text class="field-label">方便的时间</text>
+                            <input class="nb-input" value="{{availableTime}}" data-field="availableTime" bindinput="onInput" placeholder="比如：周六晚上都行" placeholder-class="nb-placeholder" maxlength="40" />
+                        </view>
+                        <view class="field">
+                            <text class="field-label">想去哪 / 想做什么</text>
+                            <input class="nb-input" value="{{placeWish}}" data-field="placeWish" bindinput="onInput" placeholder="比如：想找个能坐很久的地方" placeholder-class="nb-placeholder" maxlength="60" />
+                        </view>
+                        <view class="field">
+                            <text class="field-label">其他建议</text>
+                            <textarea class="nb-textarea" value="{{notes}}" data-field="notes" bindinput="onInput" placeholder="忌口、预算、必须几点前散……" placeholder-class="nb-placeholder" maxlength="80" />
+                        </view>
+                    </block>
+
+                    <block wx:else>
+                        <view class="field">
+                            <text class="field-label">来几个人（含你自己）</text>
+                            <view class="stepper">
+                                <view class="step" data-delta="-1" bindtap="stepPeople">−</view>
+                                <text class="step-num">{{people}}</text>
+                                <view class="step" data-delta="1" bindtap="stepPeople">＋</view>
+                                <text class="step-tip">多带的人也算在人数里</text>
+                            </view>
+                        </view>
+
+                        <view class="field" wx:if="{{scenes.length > 1}}">
+                            <text class="field-label">参加哪些环节</text>
+                            <view class="chips">
+                                <view
+                                    class="chip {{item.checked ? 'chip-on' : ''}}"
+                                    wx:for="{{scenes}}"
+                                    wx:key="id"
+                                    data-id="{{item.id}}"
+                                    bindtap="toggleScene"
+                                >{{item.name}}</view>
+                            </view>
+                            <text class="field-tip">都去就全选；只来其中一段也可以。</text>
+                        </view>
+
+                        <view class="field">
+                            <text class="field-label">忌口 / 备注</text>
+                            <textarea class="nb-textarea" value="{{notes}}" data-field="notes" bindinput="onInput" placeholder="不吃辣、带个朋友、会晚到……" placeholder-class="nb-placeholder" maxlength="80" />
+                        </view>
+                    </block>
+                </block>
+            </view>
+
+            <view class="dirty-tip" wx:if="{{dirty && formVisible && !saving}}">选好了，还没提交</view>
+            <view class="save-error" wx:if="{{saveError}}">{{saveError}}</view>
+
+            <button
+                class="nb-btn nb-btn-primary task-btn"
+                wx:if="{{formVisible}}"
+                bindtap="submitTask"
+                loading="{{saving}}"
+                disabled="{{saving}}"
+            >{{saving ? '正在保存…' : submitLabel}}</button>
+
+            <button class="nb-btn nb-btn-dark task-btn" wx:if="{{card.kind === 'vote'}}" bindtap="goVote">去投票</button>
+            <button class="nb-btn task-btn" wx:if="{{card.kind === 'voted' || card.kind === 'vote-closed'}}" bindtap="goVote">看投票和结果</button>
+            <button class="nb-btn nb-btn-dark task-btn" wx:if="{{card.kind === 'vote-wait'}}" bindtap="refresh" loading="{{loading}}">刷新看看</button>
+
+            <view class="task-ops" wx:if="{{!formVisible && (card.canEdit || card.canCancel)}}">
+                <text class="task-op" wx:if="{{card.canEdit}}" bindtap="editAgain">修改{{isIntent ? '回应' : '报名'}}</text>
+                <text class="task-op task-op-del" wx:if="{{card.canCancel}}" bindtap="cancelMy">取消报名</text>
+            </view>
+        </view>
+
+        <!-- 统计 -->
+        <view class="stats">
+            <view class="stat" wx:for="{{stats}}" wx:key="label">
+                <text class="stat-num">{{item.num}}</text>
+                <text class="stat-label">{{item.label}}</text>
+            </view>
+        </view>
+
+        <!-- 名单 -->
+        <view class="block nb-card-flat">
+            <view class="block-head" bindtap="toggleRoster">
+                <text class="block-title">{{rosterTitle}}</text>
+                <text class="block-side">{{roster.length}} 条 · {{rosterOpen ? '收起' : '展开'}}</text>
+            </view>
+            <block wx:if="{{rosterOpen}}">
+                <view class="person" wx:for="{{roster}}" wx:key="id">
+                    <view class="person-avatar">{{item.initial}}</view>
+                    <view class="person-main">
+                        <view class="person-line">
+                            <text class="person-name">{{item.userName}}</text>
+                            <text class="nb-tag nb-tag-pink" wx:if="{{item.isMe}}">我</text>
+                            <text class="nb-tag person-stale" wx:if="{{item.stale}}">待重新确认</text>
+                        </view>
+                        <text class="person-sub" wx:if="{{item.peopleText || item.sceneText}}">{{item.peopleText}}{{item.sceneText ? ' · ' + item.sceneText : ''}}</text>
+                        <text class="person-sub" wx:if="{{item.notes}}">{{item.notes}}</text>
+                    </view>
+                    <text class="person-state p-{{item.response}}">{{item.responseText}}</text>
+                </view>
+                <view class="block-empty" wx:if="{{roster.length === 0}}">{{rosterEmpty}}</view>
+            </block>
+        </view>
+
+        <!-- 大家的回应（只有组织者能看） -->
+        <view class="block nb-card-flat" wx:if="{{organizer && responses.length > 0}}">
+            <view class="block-head" bindtap="toggleResponses">
+                <text class="block-title">大家怎么说</text>
+                <text class="block-side">{{responses.length}} 条 · {{responsesOpen ? '收起' : '展开'}}</text>
+            </view>
+            <block wx:if="{{responsesOpen}}">
+                <view class="resp" wx:for="{{responses}}" wx:key="key">
+                    <text class="resp-name">{{item.userName}}</text>
+                    <text class="resp-state">{{item.responseText}}</text>
+                    <text class="resp-detail" wx:if="{{item.detail}}">{{item.detail}}</text>
+                </view>
+            </block>
+        </view>
+
+        <!-- 组织者 -->
+        <view class="org" wx:if="{{organizer}}">
+            <view class="org-head">
+                <text class="org-title">你是发起人</text>
+                <text class="org-manage" bindtap="openManage">管理设置</text>
+            </view>
+
+            <view class="org-pending" wx:if="{{pendingCount > 0}}" bindtap="openMembers">
+                <text class="org-pending-text">{{pendingCount}} 人申请加入，等你点一下</text>
+                <text class="org-pending-arrow">→</text>
+            </view>
+
+            <text class="org-tip">{{nextStep.tip}}</text>
+
+            <button class="nb-btn nb-btn-primary org-btn" wx:if="{{nextStep.primaryAction === 'share'}}" open-type="share">{{nextStep.primary}}</button>
+            <button class="nb-btn nb-btn-primary org-btn" wx:else bindtap="runNext">{{nextStep.primary}}</button>
+
+            <view class="org-sec" wx:if="{{nextStep.secondary}}" bindtap="runSecondary">{{nextStep.secondary}} →</view>
+
+            <view class="org-share">
+                <button class="nb-btn nb-btn-ghost org-share-btn" open-type="share">分享邀请</button>
+                <button class="nb-btn nb-btn-ghost org-share-btn" bindtap="copyInvite">复制文字</button>
+            </view>
+            <text class="org-foot">你亲自分享给朋友，点开就能进；别人转出去的，需要你通过。</text>
+        </view>
+
+        <!-- 结算入口（非组织者） -->
+        <view class="settle-entry nb-card-flat" wx:if="{{!organizer && closedPanel}}" bindtap="goSettle">
+            <text class="settle-entry-title">看这次的花费和分摊</text>
+            <text class="settle-entry-arrow">→</text>
+        </view>
+
+        <view class="footer">
+            <text class="footer-text">下拉可以刷新。安排有变化时，这里会提示你重新确认。</text>
+            <text class="footer-link" wx:if="{{!organizer}}" bindtap="hideMine">不想再看到这个活动？从我的列表隐藏</text>
+        </view>
+    </block>
+</view>
+
+<!-- 成员 -->
+<view class="nb-mask" wx:if="{{showMembers}}" bindtap="closeMembers"></view>
+<view class="nb-sheet" wx:if="{{showMembers}}">
+    <view class="nb-sheet-head">
+        <text class="nb-sheet-title">成员</text>
+        <text class="nb-close" bindtap="closeMembers">×</text>
+    </view>
+
+    <block wx:if="{{organizer}}">
+        <view class="sheet-section" wx:if="{{pending.length > 0}}">
+            <text class="section-label">等你通过（{{pending.length}}）</text>
+            <view class="mrow" wx:for="{{pending}}" wx:key="id">
+                <view class="mrow-avatar mrow-avatar-ph">{{item.initial}}</view>
+                <view class="mrow-main">
+                    <text class="mrow-name">{{item.user_name || '朋友'}}</text>
+                    <text class="mrow-sub">申请加入</text>
+                </view>
+                <view class="mrow-ops">
+                    <text class="mrow-op mrow-op-ok" data-id="{{item.id}}" data-action="approve" bindtap="review">通过</text>
+                    <text class="mrow-op" data-id="{{item.id}}" data-action="reject" bindtap="review">拒绝</text>
+                </view>
+            </view>
+        </view>
+        <view class="sheet-section" wx:else>
+            <text class="sheet-empty">没有待审批的申请。</text>
+        </view>
+    </block>
+
+    <view class="sheet-section">
+        <text class="section-label">已加入（{{members.length}}）</text>
+        <view class="mrow" wx:for="{{members}}" wx:key="id">
+            <view class="mrow-avatar mrow-avatar-ph">{{item.initial}}</view>
+            <view class="mrow-main">
+                <text class="mrow-name">{{item.user_name || '朋友'}}</text>
+                <text class="mrow-sub">{{item.role === 'organizer' ? '发起人' : (item.source === 'invite' ? '受邀加入' : '申请通过')}}</text>
+            </view>
+            <view class="mrow-ops" wx:if="{{organizer && item.role !== 'organizer'}}">
+                <text class="mrow-op mrow-op-del" data-id="{{item.id}}" data-action="remove" bindtap="review">移出</text>
+            </view>
+        </view>
+    </view>
+
+    <button class="nb-btn nb-btn-primary submit" wx:if="{{organizer}}" open-type="share">分享给朋友，邀请他加入</button>
+</view>
+
+<!-- 管理设置 -->
+<view class="nb-mask" wx:if="{{showManage}}" bindtap="closeManage"></view>
+<view class="nb-sheet" wx:if="{{showManage}}">
+    <view class="nb-sheet-head">
+        <text class="nb-sheet-title">管理设置</text>
+        <text class="nb-close" bindtap="closeManage">×</text>
+    </view>
+    <text class="manage-tip">这些操作朋友那边看不到。</text>
+
+    <button class="nb-btn manage-btn" bindtap="openMembers">成员审核与邀请（{{pendingCount}} 待处理）</button>
+    <button class="nb-btn manage-btn" bindtap="hideMine">从我的列表隐藏</button>
+    <text class="manage-note">只是从你自己的列表里拿掉，报名和名单都不变。</text>
+
+    <button class="nb-btn manage-btn" wx:if="{{a.phase !== 'closed'}}" bindtap="finishActivity">结束活动，关闭报名</button>
+
+    <button class="nb-btn manage-btn" bindtap="archive">归档活动</button>
+    <button class="nb-btn manage-btn manage-btn-danger" bindtap="removeActivity">删除活动</button>
+</view>
+
+<!-- 称呼 -->
+<view class="nb-mask" wx:if="{{showName}}" bindtap="closeName"></view>
+<view class="nb-sheet" wx:if="{{showName}}">
+    <view class="nb-sheet-head">
+        <text class="nb-sheet-title">你的称呼</text>
+        <text class="nb-close" bindtap="closeName">×</text>
+    </view>
+    <view class="profile-row">
+        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+            <view class="avatar-ph">选头像</view>
+        </button>
+        <view class="profile-main">
+            <text class="nb-field-label">称呼</text>
+            <input class="nb-input" type="nickname" value="{{nameInput}}" bindinput="onNameInput" bindblur="onNameInput" placeholder="点这里，可一键填微信昵称" placeholder-class="nb-placeholder" maxlength="20" />
+        </view>
+    </view>
+    <view class="nb-note">这个名字会出现在名单和投票里，之后不用再填。</view>
+    <button class="nb-btn nb-btn-primary submit" bindtap="saveName">保存并继续</button>
+</view>
